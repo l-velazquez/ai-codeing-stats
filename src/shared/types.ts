@@ -1,3 +1,7 @@
+import type { ResolvedTheme, Settings, ThemePreference } from "./settings";
+
+export type { ResolvedTheme, Settings, ThemePreference, WindowBounds } from "./settings";
+
 export type Provider = "codex" | "claude" | "opencode";
 export type RangeKey = "7d" | "30d" | "90d" | "all";
 
@@ -216,5 +220,11 @@ export interface TokenaryBridge {
   github: (month: string, refresh?: boolean) => Promise<GitHubMonthSnapshot>;
   openPath: (path: string) => Promise<void>;
   openUrl: (url: string) => Promise<void>;
+  settings: {
+    get: () => Promise<Settings>;
+    set: (patch: Partial<Settings>) => Promise<Settings>;
+  };
+  /** Resolved synchronously from process.argv so the theme is known pre-paint. */
+  initial: { theme: ThemePreference; resolved: ResolvedTheme };
   platform: string;
 }

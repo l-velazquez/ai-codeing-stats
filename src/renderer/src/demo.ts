@@ -1,4 +1,5 @@
 import { EMPTY_TOKENS } from "../../shared/tokenMath";
+import { demoState } from "./lib/demoState";
 import type { Provider, RangeKey, StatsSnapshot, TokenTotals } from "../../shared/types";
 
 const DAY = 86_400_000;
@@ -14,8 +15,123 @@ function tokens(input: number, cached: number, output: number, reasoning = 0): T
   };
 }
 
+function emptySnapshot(range: RangeKey, now: number): StatsSnapshot {
+  return {
+    generatedAt: now,
+    range,
+    since: null,
+    summary: {
+      cost: 0,
+      tokens: EMPTY_TOKENS,
+      totalTokens: 0,
+      sessions: 0,
+      cacheHitRate: 0,
+      savings: 0,
+      pricedPercent: 1,
+      projectedMonthly: 0,
+      activeDays: 0,
+    },
+    daily: [],
+    models: [],
+    providers: [],
+    projects: [],
+    sessions: [],
+    sources: (["codex", "claude", "opencode"] as Provider[]).map((provider) => ({
+      provider,
+      label: provider === "codex" ? "Codex" : provider === "claude" ? "Claude Code" : "OpenCode",
+      path:
+        provider === "codex"
+          ? "~/.codex/sessions"
+          : provider === "claude"
+            ? "~/.claude/projects"
+            : "~/.local/share/opencode/opencode.db",
+      state: "missing",
+      files: 0,
+      records: 0,
+      detail: "No local usage metadata found yet.",
+    })),
+    subscriptions: demoSubscriptions(now),
+    warnings: [],
+  };
+}
+
+function demoSubscriptions(now: number): StatsSnapshot["subscriptions"] {
+  const state = demoState();
+
+  if (state === "fresh" || state === "empty") {
+    return [
+      {
+        provider: "codex",
+        state: "unavailable",
+        plan: null,
+        updatedAt: null,
+        windows: [],
+        detail: "Use Codex once, then refresh to capture its latest allowance.",
+      },
+      {
+        provider: "claude",
+        state: "unavailable",
+        plan: null,
+        updatedAt: null,
+        windows: [],
+        detail: "Connect Claude Code to read its allowance from the official status line.",
+        capture: { kind: "claude-statusline", state: "not-configured" },
+      },
+    ];
+  }
+
+  if (state === "waiting") {
+    return [
+      {
+        provider: "codex",
+        state: "unavailable",
+        plan: null,
+        updatedAt: null,
+        windows: [],
+        detail: "Use Codex once, then refresh to capture its latest allowance.",
+      },
+      {
+        provider: "claude",
+        state: "unavailable",
+        plan: null,
+        updatedAt: null,
+        windows: [],
+        detail: "Claude Code will report its allowance after the next assistant response.",
+        capture: { kind: "claude-statusline", state: "waiting" },
+      },
+    ];
+  }
+
+  return [
+    {
+      provider: "codex",
+      state: "live",
+      plan: "team",
+      updatedAt: now - 90_000,
+      windows: [
+        { label: "Session limit", usedPercent: 34, windowMinutes: 300, resetsAt: now + 3.2 * 3_600_000 },
+        { label: "Weekly limit", usedPercent: 61, windowMinutes: 10_080, resetsAt: now + 3.4 * DAY },
+      ],
+      detail: "Read from the latest local Codex rate-limit event.",
+    },
+    {
+      provider: "claude",
+      state: "live",
+      plan: null,
+      updatedAt: now - 45_000,
+      windows: [
+        { label: "5-hour limit", usedPercent: 78, windowMinutes: 300, resetsAt: now + 1.2 * 3_600_000 },
+        { label: "Weekly limit", usedPercent: 41, windowMinutes: 10_080, resetsAt: now + 4.7 * DAY },
+      ],
+      detail: "Captured locally through Claude Code\u2019s official status line.",
+      capture: { kind: "claude-statusline", state: "active" },
+    },
+  ];
+}
+
 export function demoSnapshot(range: RangeKey): StatsSnapshot {
   const now = Date.now();
+  if (demoState() === "empty") return emptySnapshot(range, now);
   const days = range === "7d" ? 7 : range === "90d" ? 90 : range === "all" ? 120 : 30;
   const providers: Provider[] = ["codex", "claude", "opencode"];
   const daily = Array.from({ length: days }, (_, index) => {
@@ -109,31 +225,7 @@ export function demoSnapshot(range: RangeKey): StatsSnapshot {
       records: index === 0 ? 614 : index === 1 ? 392 : 18,
       detail: index < 2 ? `${index === 0 ? 124 : 144} local transcripts` : "18 metered sessions",
     })),
-    subscriptions: [
-      {
-        provider: "codex",
-        state: "live",
-        plan: "team",
-        updatedAt: now - 90_000,
-        windows: [
-          { label: "Session limit", usedPercent: 34, windowMinutes: 300, resetsAt: now + 3.2 * 3_600_000 },
-          { label: "Weekly limit", usedPercent: 61, windowMinutes: 10_080, resetsAt: now + 3.4 * DAY },
-        ],
-        detail: "Read from the latest local Codex rate-limit event.",
-      },
-      {
-        provider: "claude",
-        state: "live",
-        plan: null,
-        updatedAt: now - 45_000,
-        windows: [
-          { label: "5-hour limit", usedPercent: 24, windowMinutes: 300, resetsAt: now + 2.1 * 3_600_000 },
-          { label: "Weekly limit", usedPercent: 41, windowMinutes: 10_080, resetsAt: now + 4.7 * DAY },
-        ],
-        detail: "Captured locally through Claude Code’s official status line.",
-        capture: { kind: "claude-statusline", state: "active" },
-      },
-    ],
+    subscriptions: demoSubscriptions(now),
     warnings: [],
   };
 }

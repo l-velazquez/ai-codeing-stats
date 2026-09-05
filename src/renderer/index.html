@@ -8,6 +8,31 @@
     />
     <meta name="color-scheme" content="dark light" />
     <title>Tokenary</title>
+    <script>
+      // Runs before the deferred module script, so the theme is on <html>
+      // for the very first paint. Setting it in a React effect instead means
+      // one frame of the wrong theme on every launch.
+      (function () {
+        var resolved = "dark";
+        try {
+          var initial = window.tokenary && window.tokenary.initial;
+          if (initial && initial.resolved) {
+            resolved = initial.resolved;
+          } else {
+            // dev:web has no preload bridge.
+            var stored = localStorage.getItem("tokenary:theme");
+            var prefersDark =
+              !window.matchMedia || window.matchMedia("(prefers-color-scheme: dark)").matches;
+            resolved =
+              stored === "dark" || stored === "light" ? stored : prefersDark ? "dark" : "light";
+          }
+        } catch (error) {
+          // Private mode or a blocked accessor: the dark default is fine.
+        }
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.style.colorScheme = resolved;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

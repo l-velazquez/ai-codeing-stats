@@ -1,4 +1,5 @@
 import type { GitHubCommitEntry, GitHubDay, GitHubMonthSnapshot, GitHubRepoMonthActivity } from "../../shared/types";
+import { demoState } from "./lib/demoState";
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
@@ -18,6 +19,36 @@ function commit(repo: string, sha: string, message: string, at: Date): GitHubCom
 }
 
 export function demoGithub(month: string): GitHubMonthSnapshot {
+  const state = demoState();
+  if (state === "fresh" || state === "error") {
+    return {
+      month,
+      login: "",
+      state: "setup",
+      detail: "Tokenary could not find an authenticated GitHub CLI on this Mac.",
+      fetchedAt: Date.now(),
+      days: [],
+      repos: [],
+      totals: { commits: 0, activeDays: 0, repos: 0, pullRequests: 0 },
+      setup: {
+        reason: "needs-auth",
+        command: "gh auth login",
+        helpUrl: "https://cli.github.com/",
+      },
+    };
+  }
+  if (state === "empty") {
+    return {
+      month,
+      login: "demo",
+      state: "ok",
+      detail: "",
+      fetchedAt: Date.now(),
+      days: [],
+      repos: [],
+      totals: { commits: 0, activeDays: 0, repos: 0, pullRequests: 0 },
+    };
+  }
   const now = new Date();
   const year = now.getFullYear();
   const monthIndex = now.getMonth();

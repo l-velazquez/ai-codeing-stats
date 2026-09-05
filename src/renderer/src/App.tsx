@@ -22,6 +22,7 @@ import {
   HardDrive,
   Info,
   Layers3,
+  MonitorCog,
   Moon,
   RefreshCw,
   Search,
@@ -47,11 +48,16 @@ import type {
   SubscriptionUsage,
   SystemCheck,
   SystemCheckSnapshot,
+  ThemePreference,
 } from "../../shared/types";
+import { resolveTheme } from "../../shared/settings";
 import { buildDaySummary, buildInvoiceSummary, currentMonthKey, dayLabel, isDayActive, monthLabel, shiftMonthKey } from "../../shared/invoice";
 import { UsageChart } from "./components/UsageChart";
 import { ProviderMark } from "./components/ProviderMark";
 import { demoGithub } from "./githubDemo";
+import { demoState } from "./lib/demoState";
+import { readDemoSettings, writeDemoSettings } from "./lib/demoSettings";
+import { applyTheme, mirrorPreference, systemPrefersDark, watchSystemTheme } from "./lib/theme";
 import { demoSnapshot } from "./demo";
 import {
   PROVIDERS,
@@ -66,7 +72,6 @@ import {
 } from "./format";
 
 type Page = "overview" | "plans" | "models" | "projects" | "sessions" | "github" | "sources";
-type Theme = "dark" | "light";
 
 const IS_ELECTRON = navigator.userAgent.includes("Electron");
 
@@ -697,7 +702,7 @@ function SystemCheckIcon({ check }: { check: SystemCheck }) {
   return <span className="system-check-icon">{check.id === "github" ? <GitBranch size={15} /> : <Code2 size={15} />}</span>;
 }
 
-function SourcesPage({ snapshot, theme, setTheme }: { snapshot: StatsSnapshot; theme: Theme; setTheme: (theme: Theme) => void }) {
+function SourcesPage({ snapshot, theme, setTheme }: { snapshot: StatsSnapshot; theme: ThemePreference; setTheme: (theme: ThemePreference) => void }) {
   const [system, setSystem] = useState<SystemCheckSnapshot | null>(null);
   const [checkingSystem, setCheckingSystem] = useState(false);
 
@@ -770,10 +775,11 @@ function SourcesPage({ snapshot, theme, setTheme }: { snapshot: StatsSnapshot; t
         <div className="estimate-callout"><Info size={16} /><span>These are “what this would cost through the API” estimates. They are not your ChatGPT, Claude, or Cursor subscription bill.</span></div>
       </section>
       <section className="panel settings-card appearance-card">
-        <div><CardTitle>Appearance</CardTitle><p className="settings-intro">Choose the dashboard theme for this Mac.</p></div>
+        <div><CardTitle>Appearance</CardTitle><p className="settings-intro">Choose the dashboard theme for this Mac. System follows your macOS appearance.</p></div>
         <div className="theme-toggle">
-          <button className={theme === "dark" ? "active" : ""} onClick={() => setTheme("dark")}><Moon size={15} /> Dark</button>
-          <button className={theme === "light" ? "active" : ""} onClick={() => setTheme("light")}><Sun size={15} /> Light</button>
+          <button className={theme === "dark" ? "active" : ""} onClick={() => setTheme("dark")} aria-pressed={theme === "dark"}><Moon size={15} /> Dark</button>
+          <button className={theme === "light" ? "active" : ""} onClick={() => setTheme("light")} aria-pressed={theme === "light"}><Sun size={15} /> Light</button>
+          <button className={theme === "system" ? "active" : ""} onClick={() => setTheme("system")} aria-pressed={theme === "system"}><MonitorCog size={15} /> System</button>
         </div>
       </section>
     </div>
@@ -802,22 +808,57 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [connectingClaude, setConnectingClaude] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [theme, setThemeState] = useState<Theme>(() => (localStorage.getItem("tokenary:theme") === "light" ? "light" : "dark"));
+  const [theme, setThemeState] = useState<ThemePreference>(
+    () => window.tokenary?.initial.theme ?? readDemoSettings().theme,
+  );
+  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
 
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next);
-    localStorage.setItem("tokenary:theme", next);
+  // The stored preference is the source of truth; settings.json in Electron,
+  // localStorage in dev:web. Load it once so a preference written by another
+  // window (or a previous run) wins over the argv hint.
+  useEffect(() => {
+    let cancelled = false;
+    const read = window.tokenary ? window.tokenary.settings.get() : Promise.resolve(readDemoSettings());
+    void read
+      .then((settings) => {
+        if (!cancelled) setThemeState(settings.theme);
+      })
+      .catch(() => {
+        // Keep whatever the pre-paint hint gave us.
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  useEffect(() => watchSystemTheme(setPrefersDark), []);
+
+  const resolvedTheme = resolveTheme(theme, prefersDark);
+
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
+    applyTheme(resolvedTheme);
+    mirrorPreference(theme, resolvedTheme);
+  }, [theme, resolvedTheme]);
+
+  const setTheme = useCallback((next: ThemePreference) => {
+    setThemeState(next);
+    if (window.tokenary) {
+      void window.tokenary.settings.set({ theme: next }).catch(() => {
+        // The in-memory preference still applies for this session.
+      });
+    } else {
+      writeDemoSettings({ theme: next });
+    }
+  }, []);
 
   const load = useCallback(async (nextRange: RangeKey) => {
     setRefreshing(true);
     setError(null);
     try {
       if (!window.tokenary && IS_ELECTRON) throw missingBridgeError();
+      if (!window.tokenary && demoState() === "error") {
+        throw new Error("Tokenary could not read local usage metadata. Check that the coding agents on this Mac have written transcripts.");
+      }
       const next = window.tokenary ? await window.tokenary.scan(nextRange) : demoSnapshot(nextRange);
       setSnapshot(next);
     } catch (reason) {
