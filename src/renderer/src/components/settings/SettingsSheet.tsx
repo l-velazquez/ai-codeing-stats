@@ -1,16 +1,14 @@
 import { ArrowUpRight, ChevronRight, CircleDollarSign, Database, HardDrive, Info, MonitorCog, Moon, RefreshCw, Sun } from "lucide-react";
 import type { StatsSnapshot, ThemePreference } from "@shared/types";
 import { CardTitle } from "@renderer/components/primitives/CardTitle";
+import { Modal } from "@renderer/components/primitives/Modal";
 import { ProviderMark } from "@renderer/components/ProviderMark";
 import { SystemCheckIcon } from "@renderer/components/settings/SystemCheckIcon";
 import { useSystemChecks } from "@renderer/hooks/useSystemChecks";
 import { openPath, openUrl } from "@renderer/lib/bridge";
-import { useRegisterRefresh } from "@renderer/providers/RefreshProvider";
 
-export function SettingsPage({ snapshot, theme, setTheme }: { snapshot: StatsSnapshot; theme: ThemePreference; setTheme: (theme: ThemePreference) => void }) {
+function SettingsBody({ snapshot, theme, setTheme }: { snapshot: StatsSnapshot; theme: ThemePreference; setTheme: (theme: ThemePreference) => void }) {
   const { snapshot: system, checking: checkingSystem, reload: loadSystemChecks } = useSystemChecks();
-
-  useRegisterRefresh(loadSystemChecks, checkingSystem);
 
   return (
     <div className="settings-layout">
@@ -62,5 +60,23 @@ export function SettingsPage({ snapshot, theme, setTheme }: { snapshot: StatsSna
         </div>
       </section>
     </div>
+  );
+}
+
+export function SettingsSheet({
+  snapshot,
+  theme,
+  setTheme,
+  onClose,
+}: {
+  snapshot: StatsSnapshot;
+  theme: ThemePreference;
+  setTheme: (theme: ThemePreference) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Modal title="Settings" onClose={onClose}>
+      <SettingsBody snapshot={snapshot} theme={theme} setTheme={setTheme} />
+    </Modal>
   );
 }

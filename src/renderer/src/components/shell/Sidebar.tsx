@@ -7,10 +7,12 @@ export function Sidebar({
   page,
   onNavigate,
   snapshot,
+  onOpenSettings,
 }: {
   page: PageId;
   onNavigate: (page: PageId) => void;
   snapshot: StatsSnapshot | null;
+  onOpenSettings: () => void;
 }) {
   return (
     <aside className="sidebar">
@@ -20,7 +22,6 @@ export function Sidebar({
       </div>
 
       <nav aria-label="Sections">
-        <span className="nav-label">Workspace</span>
         {NAVIGATION.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -33,15 +34,6 @@ export function Sidebar({
             {id === "sessions" && snapshot ? <small>{snapshot.sessions.length}</small> : null}
           </button>
         ))}
-        <span className="nav-label nav-label--second">System</span>
-        <button
-          className={page === "sources" ? "active" : ""}
-          onClick={() => onNavigate("sources")}
-          aria-current={page === "sources" ? "page" : undefined}
-        >
-          <Settings size={16} />
-          <span>{PAGES.sources.label}</span>
-        </button>
       </nav>
 
       <div className="sidebar-spacer" />
@@ -59,6 +51,10 @@ export function Sidebar({
           ))}
         </div>
       </div>
+
+      <button className="settings-launcher" onClick={onOpenSettings} aria-label="Settings (Command comma)" title="Settings  ⌘,">
+        <Settings size={15} /><span>Settings</span><kbd>⌘,</kbd>
+      </button>
 
       <div className="privacy-pill"><HardDrive size={13} /><span>On-device only</span></div>
     </aside>

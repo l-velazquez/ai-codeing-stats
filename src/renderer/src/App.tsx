@@ -11,6 +11,7 @@ import { LoadingScreen } from "@renderer/components/primitives/LoadingScreen";
 import { useSnapshot } from "@renderer/hooks/useSnapshot";
 import { useGithubMonth } from "@renderer/hooks/useGithubMonth";
 import { useSubscriptionPoll } from "@renderer/hooks/useSubscriptionPoll";
+import { useHotkey } from "@renderer/hooks/useHotkey";
 import { readSettings, writeSettings } from "@renderer/lib/bridge";
 import { applyTheme, mirrorPreference, systemPrefersDark, watchSystemTheme } from "@renderer/lib/theme";
 import { RefreshProvider, useDefaultRefresh } from "@renderer/providers/RefreshProvider";
@@ -20,7 +21,7 @@ import { ModelsPage } from "@renderer/pages/ModelsPage";
 import { ProjectsPage } from "@renderer/pages/ProjectsPage";
 import { SessionsPage } from "@renderer/pages/SessionsPage";
 import { GithubPage } from "@renderer/pages/GithubPage";
-import { SettingsPage } from "@renderer/pages/SettingsPage";
+import { SettingsSheet } from "@renderer/components/settings/SettingsSheet";
 import { dateTime } from "@renderer/format";
 
 function useThemePreference() {
@@ -68,6 +69,7 @@ function AppInner() {
   const [page, setPage] = useState<PageId>("overview");
   const [range, setRange] = useState<RangeKey>("30d");
   const [connectingClaude, setConnectingClaude] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { theme, setTheme } = useThemePreference();
   const { snapshot, status, error, refreshing, reload, applySubscriptions, setError } =
     useSnapshot(range);
@@ -76,6 +78,10 @@ function AppInner() {
   // Left inside GithubPage this state would be destroyed on each visit, undoing
   // the retained-month behaviour it exists to provide.
   const githubMonth = useGithubMonth();
+
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  useHotkey(",", openSettings);
 
   useSubscriptionPoll(applySubscriptions);
   useDefaultRefresh(reload, refreshing);
@@ -98,7 +104,7 @@ function AppInner() {
 
   return (
     <div className="app-shell">
-      <Sidebar page={page} onNavigate={setPage} snapshot={snapshot} />
+      <Sidebar page={page} onNavigate={setPage} snapshot={snapshot} onOpenSettings={openSettings} />
 
       <main>
         <TopBar
@@ -149,7 +155,6 @@ function AppInner() {
                   {page === "projects" ? <ProjectsPage snapshot={snapshot} /> : null}
                   {page === "sessions" ? <SessionsPage snapshot={snapshot} /> : null}
                   {page === "github" ? <GithubPage snapshot={snapshot} month={githubMonth} /> : null}
-                  {page === "sources" ? <SettingsPage snapshot={snapshot} theme={theme} setTheme={setTheme} /> : null}
                 </motion.div>
               </AnimatePresence>
             ) : null}
@@ -161,6 +166,15 @@ function AppInner() {
           </div>
         </div>
       </main>
+
+      {settingsOpen && snapshot ? (
+        <SettingsSheet
+          snapshot={snapshot}
+          theme={theme}
+          setTheme={setTheme}
+          onClose={closeSettings}
+        />
+      ) : null}
     </div>
   );
 }

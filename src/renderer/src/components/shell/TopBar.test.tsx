@@ -34,7 +34,7 @@ describe("TopBar", () => {
   });
 
   it("keeps the theme control available on every page", async () => {
-    const onTheme = renderTopBar("sources");
+    const onTheme = renderTopBar("github");
     const toggle = screen.getByRole("button", { name: /Theme: Dark/ });
     await userEvent.click(toggle);
     expect(onTheme).toHaveBeenCalledWith("light");
