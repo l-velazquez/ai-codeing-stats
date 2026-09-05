@@ -53,6 +53,11 @@ import type {
 import { resolveTheme } from "../../shared/settings";
 import { buildDaySummary, buildInvoiceSummary, currentMonthKey, dayLabel, isDayActive, monthLabel, shiftMonthKey } from "../../shared/invoice";
 import { UsageChart } from "./components/UsageChart";
+import { PAGES, type PageId } from "./app/routes";
+import { Sidebar } from "./components/shell/Sidebar";
+import { TopBar } from "./components/shell/TopBar";
+import { RANGE_LABELS } from "./components/shell/RangeControl";
+import { RefreshProvider, useDefaultRefresh, useRegisterRefresh } from "./providers/RefreshProvider";
 import { ProviderMark } from "./components/ProviderMark";
 import { demoGithub } from "./githubDemo";
 import { demoState } from "./lib/demoState";
@@ -71,29 +76,12 @@ import {
   relative,
 } from "./format";
 
-type Page = "overview" | "plans" | "models" | "projects" | "sessions" | "github" | "sources";
 
 const IS_ELECTRON = navigator.userAgent.includes("Electron");
 
 function missingBridgeError(): Error {
   return new Error("Tokenary could not start its local data bridge. Quit and reopen the app; if this continues, reinstall the latest build.");
 }
-
-const NAVIGATION: { id: Page; label: string; icon: typeof Gauge }[] = [
-  { id: "overview", label: "Overview", icon: Gauge },
-  { id: "plans", label: "Plans", icon: CreditCard },
-  { id: "models", label: "Models", icon: Boxes },
-  { id: "projects", label: "Projects", icon: FolderCode },
-  { id: "sessions", label: "Sessions", icon: TerminalSquare },
-  { id: "github", label: "Contributions", icon: GitBranch },
-];
-
-const RANGE_LABELS: Record<RangeKey, string> = {
-  "7d": "7 days",
-  "30d": "30 days",
-  "90d": "90 days",
-  all: "All time",
-};
 
 function CardTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
@@ -238,7 +226,7 @@ function ActivityCalendar({ snapshot }: { snapshot: StatsSnapshot }) {
   );
 }
 
-function Overview({ snapshot, navigate }: { snapshot: StatsSnapshot; navigate: (page: Page) => void }) {
+function Overview({ snapshot, navigate }: { snapshot: StatsSnapshot; navigate: (page: PageId) => void }) {
   const maxModel = snapshot.models[0]?.cost ?? 1;
   const maxProject = snapshot.projects[0]?.cost ?? 1;
   const inputTokens =
@@ -516,6 +504,11 @@ function GitHubPage({ snapshot }: { snapshot: StatsSnapshot | null }) {
     }
   }, []);
 
+  // Claims the shared top-bar refresh so it refetches the month rather than
+  // silently rescanning local usage, which is why this page no longer needs a
+  // second refresh button of its own.
+  useRegisterRefresh(() => load(month, true), loading);
+
   const copyDay = useCallback((day: GitHubDay) => void copyText(buildDaySummary(day), day.date), [copyText]);
   const copyMonth = useCallback(() => {
     if (view && view.state === "ok") void copyText(buildInvoiceSummary(view), "month");
@@ -534,7 +527,6 @@ function GitHubPage({ snapshot }: { snapshot: StatsSnapshot | null }) {
         </div>
         <div className="gh-toolbar-actions">
           {view && view.state === "ok" ? <span className="muted-label">fetched {relative(view.fetchedAt)} ago · @{view.login}</span> : null}
-          <button className="icon-button" onClick={() => void load(month, true)} disabled={loading} title="Refresh from GitHub"><RefreshCw size={14} className={loading ? "spin" : ""} /></button>
           <button className="copy-summary" onClick={copyMonth} disabled={!hasActivity}>
             <ClipboardCopy size={13} />{copiedMonth ? "Copied — paste it into your invoice" : "Copy invoice summary"}
           </button>
@@ -732,12 +724,13 @@ function SourcesPage({ snapshot, theme, setTheme }: { snapshot: StatsSnapshot; t
     void loadSystemChecks();
   }, [loadSystemChecks]);
 
+  useRegisterRefresh(loadSystemChecks, checkingSystem);
+
   return (
     <div className="settings-layout">
       <section className="panel settings-card">
         <div className="settings-section-head">
           <div><CardTitle>System check</CardTitle><p className="settings-intro">See what this Mac has installed and what still needs attention. Tokenary never installs command-line tools without you.</p></div>
-          <button className="icon-button" onClick={() => void loadSystemChecks()} disabled={checkingSystem} title="Check again"><RefreshCw size={14} className={checkingSystem ? "spin" : ""} /></button>
         </div>
         <div className="system-check-list">
           {system?.checks.map((check) => (
@@ -801,8 +794,8 @@ function LoadingScreen() {
   );
 }
 
-export default function App() {
-  const [page, setPage] = useState<Page>("overview");
+function AppInner() {
+  const [page, setPage] = useState<PageId>("overview");
   const [range, setRange] = useState<RangeKey>("30d");
   const [snapshot, setSnapshot] = useState<StatsSnapshot | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -901,49 +894,31 @@ export default function App() {
     }
   }, []);
 
-  const pageTitle = NAVIGATION.find((item) => item.id === page)?.label ?? "Data Sources";
+  useDefaultRefresh(() => load(range), refreshing);
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="brand-mark"><Activity size={16} /></div>
-          <div><strong>Tokenary</strong><span>AI coding telemetry</span></div>
-        </div>
-        <nav>
-          <span className="nav-label">Workspace</span>
-          {NAVIGATION.map(({ id, label, icon: Icon }) => (
-            <button key={id} className={page === id ? "active" : ""} onClick={() => setPage(id)}><Icon size={16} /><span>{label}</span>{id === "sessions" && snapshot ? <small>{snapshot.sessions.length}</small> : null}</button>
-          ))}
-          <span className="nav-label nav-label--second">System</span>
-          <button className={page === "sources" ? "active" : ""} onClick={() => setPage("sources")}><Settings size={16} /><span>Data & settings</span></button>
-        </nav>
-        <div className="sidebar-spacer" />
-        <div className="source-health">
-          <span>Local sources</span>
-          <div>
-            {snapshot?.sources.map((source) => <i key={source.provider} title={`${source.label}: ${source.state}`} className={source.state} style={{ "--source": PROVIDERS[source.provider].color } as React.CSSProperties} />)}
-          </div>
-        </div>
-        <div className="privacy-pill"><HardDrive size={13} /><span>On-device only</span></div>
-      </aside>
+      <Sidebar page={page} onNavigate={setPage} snapshot={snapshot} />
 
       <main>
-        <header className="topbar">
-          <div className="breadcrumb"><Code2 size={15} /><span>Analytics</span><ChevronRight size={13} /><strong>{pageTitle}</strong></div>
-          <div className="topbar-actions">
-            <div className="range-control">
-              {(Object.keys(RANGE_LABELS) as RangeKey[]).map((key) => <button key={key} className={range === key ? "active" : ""} onClick={() => setRange(key)}>{key === "all" ? "All" : key.toUpperCase()}</button>)}
-            </div>
-            <button className="icon-button" onClick={() => void load(range)} title="Refresh local data" disabled={refreshing}><RefreshCw size={15} className={refreshing ? "spin" : ""} /></button>
-          </div>
-        </header>
+        <TopBar
+          page={page}
+          range={range}
+          onRangeChange={setRange}
+          theme={theme}
+          onThemeChange={setTheme}
+        />
 
         <div className="content-scroll">
           <div className="content-container">
             <div className="page-heading">
-              <div><span className="eyebrow"><Activity size={13} /> Local intelligence</span><h1>{pageTitle}</h1><p>{page === "overview" ? "A clear view of the compute behind your code." : page === "plans" ? "See subscription allowance and measured activity without switching apps." : page === "models" ? "See which models do the work—and what that work is worth." : page === "projects" ? "Understand where your AI development budget goes." : page === "sessions" ? "Every measured coding run, without the conversation content." : page === "github" ? "Day-by-day GitHub contributions, grouped by project—ready to paste into your next invoice." : "Control how Tokenary reads and presents local data."}</p></div>
-              {snapshot ? <div className="last-scanned"><span className="status-dot status-dot--connected" /><div><strong>Live local data</strong><span>Updated {dateTime(snapshot.generatedAt)}</span></div></div> : null}
+              <div><h1>{PAGES[page].label}</h1></div>
+              {snapshot ? (
+                <div className="last-scanned">
+                  <span className="status-dot status-dot--connected" />
+                  <div><strong>Live local data</strong><span>Updated {dateTime(snapshot.generatedAt)}</span></div>
+                </div>
+              ) : null}
             </div>
 
             {error ? <div className="warning-banner"><Info size={15} /><span>{error}</span><button onClick={() => void load(range)}>Try again</button></div> : null}
@@ -967,5 +942,13 @@ export default function App() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <RefreshProvider>
+      <AppInner />
+    </RefreshProvider>
   );
 }
