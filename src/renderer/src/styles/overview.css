@@ -1,7 +1,7 @@
 .overview-hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(285px, .74fr); gap: 14px; }
 .hero { min-height: 405px; padding: 23px 24px 12px; overflow: hidden; }
 .hero-heading { display: flex; justify-content: space-between; align-items: flex-start; }
-.hero-value { font-size: 43px; line-height: 1; font-weight: 640; letter-spacing: -.055em; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.hero-value { font-size: 43px; line-height: 1; font-weight: 600; letter-spacing: -.055em; margin-top: 12px; font-variant-numeric: tabular-nums; }
 .hero-heading p { color: var(--muted); margin: 8px 0 0; font-size: var(--text-sm); }
 .projection-pill { text-align: right; display: grid; gap: 3px; padding: 9px 11px; border-radius: 9px; background: var(--accent-tint); border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); }
 .projection-pill span { color: var(--muted); font-size: var(--text-xs); }

@@ -4,7 +4,7 @@ button.project-row:not(:disabled) { cursor: pointer; }
 button.project-row:not(:disabled):hover { background: color-mix(in srgb, var(--text) 2.2%, transparent); }
 .project-rank-icon { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); background: var(--wash-3); }
 .project-name { min-width: 0; display: grid; gap: 3px; }
-.project-name strong { font-size: var(--text-sm); font-weight: 560; }
+.project-name strong { font-size: var(--text-sm); font-weight: 500; }
 .project-name span { font-size: var(--text-2xs); color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .project-spend-bar { height: 3px; border-radius: 99px; background: var(--wash-4); overflow: hidden; }
 .project-spend-bar i { height: 100%; display: block; border-radius: inherit; background: color-mix(in srgb, var(--accent) 75%, var(--text)); }

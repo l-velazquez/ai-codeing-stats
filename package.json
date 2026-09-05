@@ -17,6 +17,7 @@
     "verify:build": "node scripts/verify-build.mjs"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@vitejs/plugin-react": "^5.1.4",
     "lucide-react": "latest",
     "motion": "latest",

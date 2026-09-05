@@ -50,7 +50,7 @@ export function OverviewPage({
         <div className="hero panel">
           <div className="hero-heading">
             <div>
-              <span className="eyebrow"><CircleDollarSign size={13} /> API-equivalent spend</span>
+              <span className="hero-label">API-equivalent spend</span>
               <div className="hero-value">{money(snapshot.summary.cost)}</div>
               <p>{snapshot.summary.sessions} local sessions · {RANGE_LABELS[snapshot.range].toLowerCase()}</p>
             </div>

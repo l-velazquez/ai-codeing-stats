@@ -9,9 +9,8 @@ export function ModelsPage({ snapshot }: { snapshot: StatsSnapshot }) {
   return (
     <div className="page-stack">
       <section className="model-feature-grid">
-        {snapshot.models.slice(0, 3).map((model, index) => (
+        {snapshot.models.slice(0, 3).map((model) => (
           <div className="panel model-feature" key={`${model.provider}:${model.model}`}>
-            <div className="rank">0{index + 1}</div>
             <ProviderMark provider={model.provider} />
             <div className="model-feature-name"><span>{PROVIDERS[model.provider].label}</span><strong>{modelName(model.model)}</strong></div>
             <div className="model-feature-cost"><strong>{money(model.cost)}</strong><span>{compact(model.totalTokens)} tokens</span></div>

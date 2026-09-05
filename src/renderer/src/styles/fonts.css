@@ -1,0 +1,7 @@
+/* IBM Plex Mono (SIL OFL 1.1), vendored through @fontsource so the app has no
+   runtime network dependency. Latin subset, three weights -- the only ones the
+   type scale uses. It carries every figure in the app: costs, token counts,
+   percentages, countdowns, commit SHAs and model ids. */
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";

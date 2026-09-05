@@ -2,6 +2,7 @@
    so import order is load bearing -- it reproduces the original cascade.
    Keep this list in source order and do not sort it. Components must not
    import their own CSS, or order becomes dependent on JS import order. */
+@import "./fonts.css";
 @import "./tokens.css";
 @import "./base.css";
 @import "./shell.css";

@@ -1,45 +1,75 @@
+/* Tokenary is a meter: it measures a resource you are spending against a limit
+   that resets. The palette follows from that rather than decorating it. Each
+   family owns a domain, which is what keeps blue, indigo and mint from becoming
+   a gradient soup:
+
+     mint / aqua    allowance -- headroom, live, "you're fine"
+     blue / indigo  money -- cost, chart series, focus and selection
+     amber / coral  pressure -- only when a limit is getting tight
+     blue-grey      ground -- all chrome, surfaces and text
+
+   The ground is deliberately blue-tinted rather than neutral black. */
 :root {
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
   font-synthesis: none;
-  --bg: #0a0b0d;
-  --sidebar: #0d0e11;
-  --panel: #101216;
-  --panel-raised: #14171c;
-  --panel-hover: #171a20;
-  --text: #f2f4f6;
-  --text-2: #b6bbc3;
-  --muted: #737a85;
-  --faint: #474d56;
-  --border: rgba(255, 255, 255, 0.075);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --accent: #5b7cff;
-  --accent-2: #4169e1;
-  --accent-tint: rgba(65, 105, 225, 0.14);
-  --chart: #6687ff;
-  --warning: #e5b766;
-  --shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
-  --radius: 12px;
+
+  /* Figures are set in mono with tabular figures so columns of numbers line up
+     by construction rather than by luck. */
+  --font-figure: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --bg: #070b10;
+  --sidebar: #090e14;
+  --panel: #0c121a;
+  --panel-raised: #121a24;
+  --panel-hover: #18222e;
+  --text: #e6edf5;
+  --text-2: #a9b6c6;
+  --muted: #8494a6;
+  --faint: #6b7c90;
+  --border: rgba(150, 180, 210, 0.10);
+  --border-strong: rgba(150, 180, 210, 0.20);
+
+  /* Money */
+  --accent: #5b8def;
+  --accent-2: #6366e8;
+  --accent-tint: rgba(91, 141, 239, 0.14);
+  --chart: #5b8def;
+
+  /* Allowance */
+  --mint: #35d6b0;
+  --mint-tint: rgba(53, 214, 176, 0.12);
+
+  /* Pressure */
+  --warning: #e8b24b;
+  --danger: #f2705c;
+
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+  --radius: 14px;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f5f6f7;
-  --sidebar: #eff1f3;
+  --bg: #eff3f7;
+  --sidebar: #e7edf3;
   --panel: #ffffff;
-  --panel-raised: #f8f9fa;
-  --panel-hover: #f1f3f5;
-  --text: #16191d;
-  --text-2: #505761;
-  --muted: #727a85;
-  --faint: #a4abb3;
-  --border: rgba(17, 24, 39, 0.085);
-  --border-strong: rgba(17, 24, 39, 0.14);
-  --accent: #3157c8;
-  --accent-2: #2446ad;
-  --accent-tint: rgba(49, 87, 200, 0.11);
-  --chart: #3157c8;
-  --shadow: 0 18px 60px rgba(28, 36, 48, 0.08);
+  --panel-raised: #f6f9fc;
+  --panel-hover: #edf2f7;
+  --text: #0e151d;
+  --text-2: #47576a;
+  --muted: #5c6b7e;
+  --faint: #64758a;
+  --border: rgba(16, 40, 66, 0.10);
+  --border-strong: rgba(16, 40, 66, 0.20);
+  --accent: #2c5fd0;
+  --accent-2: #4348c9;
+  --accent-tint: rgba(44, 95, 208, 0.11);
+  --chart: #2c5fd0;
+  --mint: #0f9e80;
+  --mint-tint: rgba(15, 158, 128, 0.12);
+  --warning: #b87a12;
+  --danger: #c8452f;
+  --shadow: 0 18px 60px rgba(28, 36, 48, 0.10);
 }
 
 /* Scales introduced by the stylesheet split. Every value here is identical to
@@ -47,13 +77,19 @@
    emitted CSS is unchanged. Retuning the design means editing these, not
    hunting ~60 call sites. */
 :root {
-  /* Type. The small end is where the accessibility work will land: --text-2xs
-     alone accounts for 34 call sites. */
-  --text-3xs: 7px;
-  --text-2xs: 8px;
-  --text-xs: 9px;
-  --text-sm: 10px;
-  --text-md: 11px;
+  /* Type scale. 11px is the floor: 8px was previously the most-used size in
+     the app, at a tint that failed AA. The three smallest tokens collapse onto
+     the floor rather than being deleted, so the ~60 call sites that used them
+     move up together. */
+  --text-3xs: 11px;
+  --text-2xs: 11px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 13px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
 
   /* Surface washes, previously ad-hoc color-mix percentages inline. Only exact
      duplicates were folded in; the handful of one-off nudges (1.6%, 1.7%,

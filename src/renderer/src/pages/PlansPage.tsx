@@ -14,7 +14,7 @@ export function PlansPage({
   return (
     <div className="page-stack">
       <section className="panel plans-intro">
-        <div><span className="eyebrow"><CreditCard size={13} /> Subscription monitor</span><h2>Your coding allowances, together.</h2><p>Quota percentages come from provider-reported limit events. Local activity stays separate, so estimated token cost is never confused with your subscription bill.</p></div>
+        <div><h2>Allowances</h2><p>Quota percentages come from provider-reported limit events. Local activity stays separate, so estimated token cost is never confused with your subscription bill.</p></div>
         <div className="plans-live-count"><strong>{snapshot.subscriptions.filter((usage) => usage.state === "live").length}</strong><span>of {snapshot.subscriptions.length} live</span></div>
       </section>
       <div className="subscription-grid">

@@ -4,3 +4,32 @@ body { background: var(--bg); color: var(--text); font-size: 13px; -webkit-font-
 button, input { font: inherit; }
 button { color: inherit; }
 button:focus-visible, input:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); outline-offset: 2px; }
+
+/* Every figure in the app is mono with tabular figures, so columns of numbers
+   align by construction. Applied once here rather than at each call site. */
+.hero-value,
+.kpi > strong,
+.allowance-heading strong,
+.allowance-meta,
+.numeric-cell strong,
+.todays-work-figures strong,
+.model-feature-cost strong,
+.project-summary strong,
+.plans-live-count strong,
+.chart-axis span,
+.chart-dates,
+.chart-tooltip strong,
+.gh-commit-time,
+.gh-heat-cell,
+.range-control button,
+.sidebar nav button small,
+.mini-bar + .numeric-cell,
+kbd {
+  font-family: var(--font-figure);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" 1;
+}
+
+/* A restrained weight set. The stylesheet previously used 480, 500, 550, 560,
+   580, 600, 620, 630, 640, 650 and 700 interchangeably. */
+h1, h2 { font-weight: 600; letter-spacing: -0.02em; }
