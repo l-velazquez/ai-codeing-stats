@@ -8,3 +8,5 @@
 .loading-bar i { height: 100%; width: 44%; display: block; background: var(--accent); animation: load 1.4s ease-in-out infinite; }
 @keyframes load { 0% { transform: translateX(-110%); } 100% { transform: translateX(340%); } }
 footer { height: 48px; display: flex; align-items: center; justify-content: space-between; color: var(--faint); font-size: var(--text-2xs); padding: 0 3px; }
+.loading-mark--error { color: #df8a8a; background: color-mix(in srgb, #dc7676 12%, transparent); }
+.loading-screen > button { margin-top: 4px; }
