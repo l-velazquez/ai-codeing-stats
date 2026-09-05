@@ -1,0 +1,10 @@
+.empty-state { min-height: 160px; display: grid; place-items: center; align-content: center; gap: 8px; color: var(--muted); font-size: var(--text-sm); }
+.empty-state--compact { min-height: 75px; }
+.loading-screen { min-height: 420px; display: grid; place-items: center; align-content: center; gap: 8px; }
+.loading-mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--accent-tint); color: var(--accent); margin-bottom: 5px; }
+.loading-screen strong { font-size: 13px; }
+.loading-screen > span { color: var(--muted); font-size: var(--text-xs); }
+.loading-bar { height: 2px; width: 170px; border-radius: 99px; overflow: hidden; background: var(--border); margin-top: 10px; }
+.loading-bar i { height: 100%; width: 44%; display: block; background: var(--accent); animation: load 1.4s ease-in-out infinite; }
+@keyframes load { 0% { transform: translateX(-110%); } 100% { transform: translateX(340%); } }
+footer { height: 48px; display: flex; align-items: center; justify-content: space-between; color: var(--faint); font-size: var(--text-2xs); padding: 0 3px; }

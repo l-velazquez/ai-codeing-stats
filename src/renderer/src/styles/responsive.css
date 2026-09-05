@@ -1,0 +1,16 @@
+@media (max-width: 1120px) {
+  .content-container { padding-left: 24px; padding-right: 24px; }
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .overview-hero { grid-template-columns: 1fr; }
+  .provider-panel { min-height: 245px; }
+  .provider-footnote { margin-top: 20px; }
+  .split-panels { grid-template-columns: 1fr; }
+  .activity-grid { grid-auto-columns: 12px; justify-content: start; }
+  .calendar-card { overflow: hidden; }
+  .model-row { grid-template-columns: minmax(180px,1.3fr) .8fr .62fr .62fr; }
+  .model-row > :last-child { display: none; }
+  .gh-heat-cell { height: 18px; }
+  .model-feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .subscription-grid { grid-template-columns: 1fr; }
+  .gh-toolbar { flex-wrap: wrap; }
+}

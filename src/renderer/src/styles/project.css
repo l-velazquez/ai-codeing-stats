@@ -1,0 +1,13 @@
+.project-panel { min-height: 100px; }
+.project-row { display: grid; grid-template-columns: 25px minmax(180px, 1.3fr) minmax(100px, .9fr) 50px 105px 16px; align-items: center; gap: 12px; width: 100%; padding: 0 17px; background: transparent; color: inherit; border-top: 0; border-left: 0; border-right: 0; text-align: left; }
+button.project-row:not(:disabled) { cursor: pointer; }
+button.project-row:not(:disabled):hover { background: color-mix(in srgb, var(--text) 2.2%, transparent); }
+.project-rank-icon { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); background: var(--wash-3); }
+.project-name { min-width: 0; display: grid; gap: 3px; }
+.project-name strong { font-size: var(--text-sm); font-weight: 560; }
+.project-name span { font-size: var(--text-2xs); color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.project-spend-bar { height: 3px; border-radius: 99px; background: var(--wash-4); overflow: hidden; }
+.project-spend-bar i { height: 100%; display: block; border-radius: inherit; background: color-mix(in srgb, var(--accent) 75%, var(--text)); }
+.provider-dots { display: flex; align-items: center; }
+.provider-dots > span { width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--panel); margin-left: -2px; }
+.row-chevron { color: var(--faint); }

@@ -1,0 +1,12 @@
+.model-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.model-feature { min-height: 185px; padding: 17px; position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; }
+.model-feature .rank { position: absolute; right: 15px; top: 12px; color: var(--wash-4); font-size: 36px; font-weight: 700; letter-spacing: -.07em; }
+.model-feature-name { display: grid; gap: 3px; min-width: 0; }
+.model-feature-name span { color: var(--muted); font-size: var(--text-2xs); }
+.model-feature-name strong { font-size: var(--text-md); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.model-feature-cost { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; margin-top: 17px; }
+.model-feature-cost strong { font-size: 25px; font-weight: 630; letter-spacing: -.04em; }
+.model-feature-cost span { color: var(--muted); font-size: var(--text-2xs); }
+.feature-progress { grid-column: 1 / -1; height: 4px; background: var(--wash-4); border-radius: 99px; overflow: hidden; margin-top: 11px; }
+.feature-progress i { height: 100%; display: block; border-radius: inherit; background: var(--accent); }
+.feature-meta { grid-column: 1 / -1; display: flex; justify-content: space-between; color: var(--muted); font-size: var(--text-2xs); margin-top: 10px; }

@@ -1,0 +1,14 @@
+.usage-chart { height: 274px; margin: 16px 0 0 44px; position: relative; user-select: none; }
+.usage-chart svg { width: 100%; height: 100%; overflow: visible; }
+.chart-grid { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 6; }
+.chart-line-glow { fill: none; stroke: var(--chart); stroke-opacity: .15; stroke-width: 9; vector-effect: non-scaling-stroke; }
+.chart-line { fill: none; stroke: var(--chart); stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+.chart-hover-line { stroke: var(--border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-dasharray: 3 4; }
+.chart-hover-ring { fill: var(--panel); stroke: var(--chart); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.chart-hover-dot { fill: var(--chart); }
+.chart-axis { position: absolute; inset: 0 auto 26px -48px; width: 40px; }
+.chart-axis span { position: absolute; right: 0; color: var(--faint); font-size: var(--text-2xs); transform: translateY(-50%); font-variant-numeric: tabular-nums; }
+.chart-dates { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; color: var(--faint); font-size: var(--text-2xs); }
+.chart-tooltip { position: absolute; top: 38px; transform: translateX(-50%); min-width: 94px; display: grid; gap: 2px; padding: 8px 9px; border-radius: 8px; background: color-mix(in srgb, var(--panel-raised) 96%, transparent); border: 1px solid var(--border-strong); box-shadow: var(--shadow); pointer-events: none; z-index: 5; }
+.chart-tooltip > span, .chart-tooltip small { color: var(--muted); font-size: var(--text-2xs); }
+.chart-tooltip strong { font-size: 12px; font-variant-numeric: tabular-nums; }

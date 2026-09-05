@@ -1,0 +1,25 @@
+/* Split from a single 440-line stylesheet. These are plain global rules,
+   so import order is load bearing -- it reproduces the original cascade.
+   Keep this list in source order and do not sort it. Components must not
+   import their own CSS, or order becomes dependent on JS import order. */
+@import "./tokens.css";
+@import "./base.css";
+@import "./shell.css";
+@import "./topbar.css";
+@import "./content.css";
+@import "./panel.css";
+@import "./overview.css";
+@import "./chart.css";
+@import "./provider.css";
+@import "./kpi.css";
+@import "./table.css";
+@import "./calendar.css";
+@import "./project.css";
+@import "./plans.css";
+@import "./models.css";
+@import "./projects.css";
+@import "./sessions.css";
+@import "./github.css";
+@import "./settings.css";
+@import "./states.css";
+@import "./responsive.css";

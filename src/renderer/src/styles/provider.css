@@ -1,0 +1,25 @@
+.provider-panel { padding: 19px; display: flex; flex-direction: column; min-width: 0; }
+.card-title-row { min-height: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.card-title-row h2 { margin: 0; font-size: var(--text-md); font-weight: 580; letter-spacing: -.01em; }
+.muted-label { color: var(--faint); font-size: var(--text-xs); }
+.provider-stack { height: 5px; width: 100%; display: flex; gap: 2px; overflow: hidden; border-radius: 99px; margin: 22px 0 19px; background: var(--border); }
+.provider-stack i { display: block; height: 100%; min-width: 2px; }
+.provider-list { display: grid; gap: 17px; }
+.provider-item { display: grid; grid-template-columns: 27px minmax(0,1fr) auto; align-items: center; gap: 9px; }
+.provider-item > div:nth-child(2) { display: grid; gap: 3px; min-width: 0; }
+.provider-item strong { font-size: var(--text-sm); font-weight: 560; }
+.provider-item span { color: var(--muted); font-size: var(--text-2xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.provider-value { display: grid; gap: 3px; text-align: right; }
+.provider-value strong { font-variant-numeric: tabular-nums; }
+.provider-mark { width: 27px; height: 27px; border-radius: 7px; display: inline-grid; place-items: center; flex: 0 0 auto; overflow: hidden; }
+.provider-mark--small { width: 21px; height: 21px; border-radius: 6px; }
+.provider-logo { display: block; width: 17px; height: 17px; fill: currentColor; }
+.provider-logo--codex { width: 19px; height: 19px; }
+.provider-logo--claude { color: #d97757; }
+.provider-logo--opencode { width: 18px; height: 18px; border-radius: 4px; }
+.provider-mark--small .provider-logo { width: 13px; height: 13px; }
+.provider-mark--small .provider-logo--codex { width: 15px; height: 15px; }
+:root[data-theme="light"] .provider-mark--codex { color: #16191d !important; }
+.provider-footnote { margin-top: auto; display: flex; align-items: flex-start; gap: 7px; padding-top: 15px; border-top: 1px solid var(--border); color: var(--muted); font-size: var(--text-xs); line-height: 1.45; }
+.provider-footnote svg { flex: 0 0 auto; color: var(--accent); margin-top: 1px; }
+.provider-footnote strong { color: var(--text-2); font-weight: 580; }

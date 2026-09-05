@@ -1,0 +1,68 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  --bg: #0a0b0d;
+  --sidebar: #0d0e11;
+  --panel: #101216;
+  --panel-raised: #14171c;
+  --panel-hover: #171a20;
+  --text: #f2f4f6;
+  --text-2: #b6bbc3;
+  --muted: #737a85;
+  --faint: #474d56;
+  --border: rgba(255, 255, 255, 0.075);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --accent: #5b7cff;
+  --accent-2: #4169e1;
+  --accent-tint: rgba(65, 105, 225, 0.14);
+  --chart: #6687ff;
+  --warning: #e5b766;
+  --shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+  --radius: 12px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f6f7;
+  --sidebar: #eff1f3;
+  --panel: #ffffff;
+  --panel-raised: #f8f9fa;
+  --panel-hover: #f1f3f5;
+  --text: #16191d;
+  --text-2: #505761;
+  --muted: #727a85;
+  --faint: #a4abb3;
+  --border: rgba(17, 24, 39, 0.085);
+  --border-strong: rgba(17, 24, 39, 0.14);
+  --accent: #3157c8;
+  --accent-2: #2446ad;
+  --accent-tint: rgba(49, 87, 200, 0.11);
+  --chart: #3157c8;
+  --shadow: 0 18px 60px rgba(28, 36, 48, 0.08);
+}
+
+/* Scales introduced by the stylesheet split. Every value here is identical to
+   the literal it replaced, so this change is purely a centralisation: the
+   emitted CSS is unchanged. Retuning the design means editing these, not
+   hunting ~60 call sites. */
+:root {
+  /* Type. The small end is where the accessibility work will land: --text-2xs
+     alone accounts for 34 call sites. */
+  --text-3xs: 7px;
+  --text-2xs: 8px;
+  --text-xs: 9px;
+  --text-sm: 10px;
+  --text-md: 11px;
+
+  /* Surface washes, previously ad-hoc color-mix percentages inline. Only exact
+     duplicates were folded in; the handful of one-off nudges (1.6%, 1.7%,
+     2.2%, 4.5%) were deliberately left alone rather than rounded, which would
+     have moved pixels. */
+  --wash-1: color-mix(in srgb, var(--text) 2%, transparent);
+  --wash-2: color-mix(in srgb, var(--text) 3%, transparent);
+  --wash-3: color-mix(in srgb, var(--text) 4%, transparent);
+  --wash-4: color-mix(in srgb, var(--text) 5%, transparent);
+  --wash-5: color-mix(in srgb, var(--text) 7%, transparent);
+  --wash-6: color-mix(in srgb, var(--text) 9%, transparent);
+}
