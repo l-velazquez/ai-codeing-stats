@@ -1,0 +1,66 @@
+{
+  "name": "tokenary",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A private, local-first AI coding usage dashboard for macOS.",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "env -u ELECTRON_RUN_AS_NODE electron-vite dev",
+    "dev:web": "vite --config vite.config.ts",
+    "build": "npm run typecheck && electron-vite build && npm run verify:build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest --config vitest.config.ts run",
+    "test:watch": "vitest --config vitest.config.ts",
+    "dist:mac": "npm run build && electron-builder --mac dmg zip",
+    "preview": "env -u ELECTRON_RUN_AS_NODE electron-vite preview",
+    "verify:build": "node scripts/verify-build.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.4",
+    "lucide-react": "latest",
+    "motion": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "electron": "latest",
+    "electron-builder": "latest",
+    "electron-vite": "latest",
+    "typescript": "latest",
+    "vite": "^7.3.6",
+    "vitest": "latest"
+  },
+  "build": {
+    "appId": "dev.luis.tokenary",
+    "productName": "Tokenary",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json",
+      "THIRD_PARTY_NOTICES.md"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icon.icns"
+    },
+    "dmg": {
+      "title": "Tokenary ${version}",
+      "backgroundColor": "#0c0d0f",
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    }
+  }
+}
