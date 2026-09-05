@@ -7,6 +7,7 @@ import { createInterface } from "node:readline";
 import { promisify } from "node:util";
 import { addTokens, EMPTY_TOKENS, totalTokens } from "../shared/tokenMath";
 import { priceTokens, providerLabel } from "../shared/pricing";
+import { monthlyPace, paceWindowStart } from "../shared/projection";
 import type {
   DailyPoint,
   ModelStat,
@@ -568,7 +569,17 @@ function aggregate(
 
   const inputTotal =
     allTokens.uncachedInput + allTokens.cachedInput + allTokens.cacheWrite5m + allTokens.cacheWrite1h;
-  const coverageDays = Math.max(1, Math.min(30, (now - dailyStart) / DAY));
+  // Pace is deliberately computed from the unfiltered records over a trailing
+  // window, not from the selected range, so switching to 90d or All does not
+  // change what "per month" means.
+  const paceSince = paceWindowStart(now);
+  let paceCost = 0;
+  let paceFirst: number | null = null;
+  for (const record of records) {
+    if (record.timestamp < paceSince) continue;
+    if (paceFirst === null || record.timestamp < paceFirst) paceFirst = record.timestamp;
+    paceCost += priceTokens(record.model, record.tokens, record.reportedCost).cost;
+  }
   const warnings = unpricedModels.size
     ? [`${unpricedModels.size} model${unpricedModels.size === 1 ? "" : "s"} have no verified local price: ${[...unpricedModels].slice(0, 3).join(", ")}`]
     : [];
@@ -585,7 +596,7 @@ function aggregate(
       cacheHitRate: inputTotal === 0 ? 0 : allTokens.cachedInput / inputTotal,
       savings: totalSavings,
       pricedPercent: filtered.length === 0 ? 1 : pricedRecords / filtered.length,
-      projectedMonthly: (totalCost / coverageDays) * 30,
+      projectedMonthly: monthlyPace(paceCost, paceFirst, now),
       activeDays: dayMap.size,
     },
     daily,

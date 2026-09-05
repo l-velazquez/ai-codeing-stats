@@ -921,7 +921,7 @@ export default function App() {
                 </motion.div>
               </AnimatePresence>
             )}
-            <footer><span>Tokenary 0.1</span><span>API-equivalent estimates · no prompts are read</span></footer>
+            <footer><span>Tokenary {__APP_VERSION__}</span><span>API-equivalent estimates · no prompts are read</span></footer>
           </div>
         </div>
       </main>

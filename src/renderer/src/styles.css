@@ -420,21 +420,7 @@ footer { height: 48px; display: flex; align-items: center; justify-content: spac
   .model-row { grid-template-columns: minmax(180px,1.3fr) .8fr .62fr .62fr; }
   .model-row > :last-child { display: none; }
   .gh-heat-cell { height: 18px; }
-}
-
-@media (max-width: 900px) {
-  .app-shell { grid-template-columns: 64px minmax(0,1fr); }
-  .sidebar { padding-left: 8px; padding-right: 8px; }
-  .sidebar-brand { justify-content: center; padding-left: 0; padding-right: 0; }
-  .sidebar-brand > div:last-child, .nav-label, .sidebar nav button span, .sidebar nav button small, .source-health > span, .privacy-pill span { display: none; }
-  .sidebar nav button { justify-content: center; padding: 0; }
-  .source-health { justify-content: center; }
-  .privacy-pill { justify-content: center; padding: 0; }
-  .model-feature-grid { grid-template-columns: 1fr; }
+  .model-feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .subscription-grid { grid-template-columns: 1fr; }
-  .project-summary { grid-template-columns: 1fr 1fr; }
-  .project-summary > div:first-child { grid-column: 1 / -1; }
-  .project-summary-stat:first-of-type { border-left: 0; padding-left: 0; }
   .gh-toolbar { flex-wrap: wrap; }
-  .month-nav strong { min-width: 110px; font-size: 12px; }
 }
