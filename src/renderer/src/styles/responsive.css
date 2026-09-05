@@ -13,4 +13,6 @@
   .model-feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .subscription-grid { grid-template-columns: 1fr; }
   .gh-toolbar { flex-wrap: wrap; }
+  .allowance-headline { grid-template-columns: 1fr; }
+  .todays-work-figures { grid-template-columns: 1fr 1fr; }
 }

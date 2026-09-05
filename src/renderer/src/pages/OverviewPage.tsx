@@ -9,10 +9,27 @@ import { CardTitle } from "@renderer/components/primitives/CardTitle";
 import { EmptyState } from "@renderer/components/primitives/EmptyState";
 import { Kpi } from "@renderer/components/primitives/Kpi";
 import { RANGE_LABELS } from "@renderer/components/shell/RangeControl";
+import { AllowanceHeadline } from "@renderer/components/allowance/AllowanceHeadline";
+import { TodaysWork } from "@renderer/components/data/TodaysWork";
+import type { DayCost } from "@renderer/hooks/useDailyCostIndex";
 import { compact, money, percent } from "@renderer/format";
-import type { StatsSnapshot } from "@shared/types";
+import type { GitHubMonthSnapshot, StatsSnapshot } from "@shared/types";
 
-export function OverviewPage({ snapshot, navigate }: { snapshot: StatsSnapshot; navigate: (page: PageId) => void }) {
+export function OverviewPage({
+  snapshot,
+  navigate,
+  github,
+  spendToday,
+  connectingClaude,
+  onConnectClaude,
+}: {
+  snapshot: StatsSnapshot;
+  navigate: (page: PageId) => void;
+  github: GitHubMonthSnapshot | null;
+  spendToday: DayCost | null;
+  connectingClaude: boolean;
+  onConnectClaude: () => void;
+}) {
   const maxModel = snapshot.models[0]?.cost ?? 1;
   const maxProject = snapshot.projects[0]?.cost ?? 1;
   const inputTokens =
@@ -22,6 +39,13 @@ export function OverviewPage({ snapshot, navigate }: { snapshot: StatsSnapshot; 
     snapshot.summary.tokens.cacheWrite1h;
   return (
     <>
+      <AllowanceHeadline
+        snapshot={snapshot}
+        connecting={connectingClaude}
+        onConnectClaude={onConnectClaude}
+        onOpenDetail={() => navigate("plans")}
+      />
+
       <section className="overview-hero">
         <div className="hero panel">
           <div className="hero-heading">
@@ -46,6 +70,12 @@ export function OverviewPage({ snapshot, navigate }: { snapshot: StatsSnapshot; 
         <Kpi icon={WalletCards} label="Cache savings" value={money(snapshot.summary.savings)} detail="Compared with uncached input" />
         <Kpi icon={Clock3} label="Average session" value={money(snapshot.summary.cost / Math.max(1, snapshot.summary.sessions))} detail={`${compact(snapshot.summary.totalTokens / Math.max(1, snapshot.summary.sessions))} tokens each`} />
       </section>
+
+      <TodaysWork
+        github={github}
+        spendToday={spendToday}
+        onOpenContributions={() => navigate("github")}
+      />
 
       <section className="split-panels">
         <div className="panel list-panel">

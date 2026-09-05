@@ -10,6 +10,7 @@ import { ErrorState } from "@renderer/components/primitives/ErrorState";
 import { LoadingScreen } from "@renderer/components/primitives/LoadingScreen";
 import { useSnapshot } from "@renderer/hooks/useSnapshot";
 import { useGithubMonth } from "@renderer/hooks/useGithubMonth";
+import { useDailyCostIndex } from "@renderer/hooks/useDailyCostIndex";
 import { useSubscriptionPoll } from "@renderer/hooks/useSubscriptionPoll";
 import { useHotkey } from "@renderer/hooks/useHotkey";
 import { readSettings, writeSettings } from "@renderer/lib/bridge";
@@ -22,7 +23,7 @@ import { ProjectsPage } from "@renderer/pages/ProjectsPage";
 import { SessionsPage } from "@renderer/pages/SessionsPage";
 import { GithubPage } from "@renderer/pages/GithubPage";
 import { SettingsSheet } from "@renderer/components/settings/SettingsSheet";
-import { dateTime } from "@renderer/format";
+import { dateTime, localDayKey } from "@renderer/format";
 
 function useThemePreference() {
   const [theme, setThemeState] = useState<ThemePreference>(
@@ -78,6 +79,11 @@ function AppInner() {
   // Left inside GithubPage this state would be destroyed on each visit, undoing
   // the retained-month behaviour it exists to provide.
   const githubMonth = useGithubMonth();
+
+  // Shared with Contributions so both read the same full-history index rather
+  // than the range-limited snapshot.daily.
+  const dailyCost = useDailyCostIndex(snapshot?.generatedAt ?? null);
+  const spendToday = dailyCost.get(localDayKey()) ?? null;
 
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -149,7 +155,14 @@ function AppInner() {
             {status === "ready" && snapshot ? (
               <AnimatePresence mode="wait">
                 <motion.div className="page-content" key={page} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.18 }}>
-                  {page === "overview" ? <OverviewPage snapshot={snapshot} navigate={setPage} /> : null}
+                  {page === "overview" ? <OverviewPage
+                      snapshot={snapshot}
+                      navigate={setPage}
+                      github={githubMonth.data}
+                      spendToday={spendToday}
+                      connectingClaude={connectingClaude}
+                      onConnectClaude={() => void connectClaude()}
+                    /> : null}
                   {page === "plans" ? <PlansPage snapshot={snapshot} connectingClaude={connectingClaude} onConnectClaude={() => void connectClaude()} /> : null}
                   {page === "models" ? <ModelsPage snapshot={snapshot} /> : null}
                   {page === "projects" ? <ProjectsPage snapshot={snapshot} /> : null}

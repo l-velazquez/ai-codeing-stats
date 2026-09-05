@@ -77,3 +77,12 @@ export function cacheRate(tokens: TokenTotals): number {
     tokens.uncachedInput + tokens.cachedInput + tokens.cacheWrite5m + tokens.cacheWrite1h;
   return input === 0 ? 0 : tokens.cachedInput / input;
 }
+
+/**
+ * Today as "YYYY-MM-DD" in local time. The scanner buckets days locally, so
+ * using toISOString here would disagree with it for several hours a day.
+ */
+export function localDayKey(date = new Date()): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}

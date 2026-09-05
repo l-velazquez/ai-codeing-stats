@@ -1,0 +1,37 @@
+.allowance-headline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.allowance-card { padding: 18px 19px 16px; display: flex; flex-direction: column; gap: 15px; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.allowance-card:hover { background: var(--panel-hover); }
+.allowance-card-head { display: flex; align-items: center; gap: 10px; }
+.allowance-card-head > div { display: grid; gap: 2px; }
+.allowance-card-head strong { font-size: var(--text-md); font-weight: 600; }
+.allowance-card-head span { color: var(--muted); font-size: var(--text-xs); text-transform: capitalize; }
+.allowance-more { color: var(--faint); font-size: var(--text-xs); }
+
+/* Pressure is three named steps, and the label beside the bar carries the same
+   information, so the reading never depends on colour alone. */
+.allowance[data-pressure="comfortable"] { --meter: #35d6b0; }
+.allowance[data-pressure="tight"] { --meter: var(--warning); }
+.allowance[data-pressure="critical"] { --meter: #f2705c; }
+.allowance--large .allowance-heading strong { font-size: 26px; letter-spacing: -.03em; }
+.allowance--large .allowance-track { height: 9px; }
+.allowance-track i { background: var(--meter, var(--accent)); box-shadow: 0 0 14px color-mix(in srgb, var(--meter, var(--accent)) 26%, transparent); }
+
+.allowance-invite { padding: 20px 22px; display: flex; align-items: center; gap: 16px; }
+.allowance-invite-mark { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 10px; color: var(--accent); background: var(--accent-tint); }
+.allowance-invite-copy { flex: 1; display: grid; gap: 4px; }
+.allowance-invite-copy strong { font-size: var(--text-lg, 13px); font-weight: 600; }
+.allowance-invite-copy p { margin: 0; color: var(--muted); font-size: var(--text-md); line-height: 1.5; max-width: 62ch; }
+.allowance-invite .connect-button { flex: 0 0 auto; font-size: var(--text-md); min-height: 32px; }
+
+.todays-work { padding: 17px 19px 18px; display: grid; gap: 14px; }
+.todays-work-empty { margin: 0; color: var(--muted); font-size: var(--text-md); }
+.todays-work-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.todays-work-figures > div { display: grid; gap: 3px; padding-left: 13px; border-left: 1px solid var(--border); }
+.todays-work-figures > div:first-child { padding-left: 0; border-left: 0; }
+.todays-work-figures span { color: var(--muted); font-size: var(--text-xs); }
+.todays-work-figures strong { font-size: 21px; font-weight: 620; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.todays-work-figures small { color: var(--faint); font-size: var(--text-xs); }
+.todays-work-repos { display: flex; flex-wrap: wrap; gap: 7px; }
+.todays-work-repos > div { display: flex; align-items: center; gap: 6px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 99px; color: var(--text-2); font-size: var(--text-xs); }
+.todays-work-repos svg { color: var(--faint); }
+.todays-work-repos small { color: var(--muted); font-variant-numeric: tabular-nums; }
