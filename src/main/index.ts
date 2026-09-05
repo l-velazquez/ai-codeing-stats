@@ -88,6 +88,11 @@ function createWindow(): void {
   }
 }
 
+// Without this, an unpackaged run resolves app.getName() to "Electron" and
+// stores preferences under Application Support/Electron, so a development run
+// and the packaged app would keep separate settings and window bounds.
+app.setName("Tokenary");
+
 app.whenReady().then(() => {
   const settings = readSettings();
   // Set before the first window so traffic lights, context menus and native
