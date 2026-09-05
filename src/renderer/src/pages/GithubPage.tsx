@@ -73,10 +73,11 @@ export function GithubPage({
           <button className="copy-summary" onClick={copyMonth} disabled={!hasActivity} data-state={monthCopyState}>
             <ClipboardCopy size={13} />{copyLabel(monthCopyState)}
           </button>
+          <span className="visually-hidden" role="status">{monthCopyState === "copied" ? "Invoice summary copied" : monthCopyState === "failed" ? "Copy failed" : ""}</span>
         </div>
       </section>
 
-      {error ? <div className="warning-banner"><Info size={15} /><span>{error}</span><button onClick={reload}>Try again</button></div> : null}
+      {error ? <div className="warning-banner" role="alert"><Info size={15} /><span>{error}</span><button onClick={reload}>Try again</button></div> : null}
 
       {data?.detail ? <div className="warning-banner warning-banner--soft"><Info size={15} /><span>{data.detail}</span></div> : null}
 

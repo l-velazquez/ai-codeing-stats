@@ -33,3 +33,33 @@ kbd {
 /* A restrained weight set. The stylesheet previously used 480, 500, 550, 560,
    580, 600, 620, 630, 640, 650 and 700 interchangeably. */
 h1, h2 { font-weight: 600; letter-spacing: -0.02em; }
+
+/* A single visible focus ring for every interactive surface. The global rule
+   covered buttons and inputs, but several row-shaped controls painted their own
+   backgrounds over it. */
+.gh-heat-cell:focus-visible,
+.source-row:focus-visible,
+.project-row:focus-visible,
+.gh-commit:focus-visible,
+.gh-repo-row:focus-visible,
+.allowance-card:focus-visible,
+.settings-launcher:focus-visible,
+.data-row:focus-visible,
+.session-row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+/* Motion is an affordance, not decoration: when the system asks for less, the
+   page transition, the refresh spinner and the loading bar all stop. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }

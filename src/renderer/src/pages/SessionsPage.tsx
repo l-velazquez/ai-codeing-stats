@@ -16,7 +16,7 @@ export function SessionsPage({ snapshot }: { snapshot: StatsSnapshot }) {
   return (
     <div className="page-stack">
       <section className="session-toolbar panel">
-        <div className="search-field"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search project or model…" /></div>
+        <div className="search-field"><Search size={15} /><input aria-label="Search sessions by project, model, or provider" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search project or model…" /></div>
         <span>{sessions.length} of {snapshot.sessions.length} sessions</span>
       </section>
       <section className="panel sessions-panel">

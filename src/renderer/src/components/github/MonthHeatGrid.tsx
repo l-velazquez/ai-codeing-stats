@@ -14,7 +14,7 @@ export function MonthHeatGrid({ data }: { data: GitHubMonthSnapshot }) {
   return (
     <div className="panel gh-heat-panel">
       <CardTitle action={<span className="muted-label">{data.totals.activeDays} active days</span>}>Monthly rhythm</CardTitle>
-      <div className="gh-weekdays">{["S", "M", "T", "W", "T", "F", "S"].map((label, index) => <span key={index}>{label}</span>)}</div>
+      <div className="gh-weekdays" aria-hidden="true">{["S", "M", "T", "W", "T", "F", "S"].map((label, index) => <span key={index}>{label}</span>)}</div>
       <div className="gh-heat-grid">
         {Array.from({ length: firstWeekday }, (_, index) => <span key={`pad-${index}`} />)}
         {data.days.map((day) => {
@@ -24,13 +24,15 @@ export function MonthHeatGrid({ data }: { data: GitHubMonthSnapshot }) {
               key={day.date}
               className={`gh-heat-cell${day.date === todayKey ? " gh-heat-today" : ""}${future ? " gh-heat-future" : ""}`}
               title={future ? day.date : `${day.date}: ${day.commits} commits`}
+              aria-label={future ? `${day.date}, no activity yet` : `${day.date}, ${day.commits} ${day.commits === 1 ? "commit" : "commits"}`}
+              disabled={future}
               style={{ "--heat": Math.max(0.06, day.commits / peak) } as React.CSSProperties}
               onClick={() => document.getElementById(`gh-day-${day.date}`)?.scrollIntoView({ behavior: "smooth", block: "center" })}
             />
           );
         })}
       </div>
-      <div className="calendar-footer"><span>Click a day to jump to it</span><span>Less <i /><i /><i /><i /> More</span></div>
+      <div className="calendar-footer"><span>Click a day to jump to it</span><span aria-hidden="true">Less <i /><i /><i /><i /> More</span></div>
     </div>
   );
 }

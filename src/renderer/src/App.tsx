@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Info } from "lucide-react";
 import type { RangeKey, ThemePreference } from "@shared/types";
 import { resolveTheme } from "@shared/settings";
@@ -67,6 +67,7 @@ function useThemePreference() {
 }
 
 function AppInner() {
+  const reduceMotion = useReducedMotion();
   const [page, setPage] = useState<PageId>("overview");
   const [range, setRange] = useState<RangeKey>("30d");
   const [connectingClaude, setConnectingClaude] = useState(false);
@@ -140,7 +141,7 @@ function AppInner() {
               </div>
             ) : null}
             {snapshot?.warnings.map((warning) => (
-              <div className="warning-banner warning-banner--soft" key={warning}>
+              <div className="warning-banner warning-banner--soft" key={warning} role="status">
                 <Info size={15} /><span>{warning}</span>
               </div>
             ))}
@@ -154,7 +155,7 @@ function AppInner() {
 
             {status === "ready" && snapshot ? (
               <AnimatePresence mode="wait">
-                <motion.div className="page-content" key={page} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.18 }}>
+                <motion.div className="page-content" key={page} initial={reduceMotion ? false : { opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -3 }} transition={{ duration: reduceMotion ? 0 : 0.18 }}>
                   {page === "overview" ? <OverviewPage
                       snapshot={snapshot}
                       navigate={setPage}
