@@ -26,3 +26,12 @@ endorsement of Tokenary.
 - OpenAI Blossom source and usage guidelines: https://openai.com/brand/
 - Claude mark source: https://claude.com/
 - OpenCode mark source and MIT license: https://github.com/anomalyco/opencode
+
+## IBM Plex Mono
+
+Tokenary bundles IBM Plex Mono for all numeric readouts, vendored through the
+`@fontsource/ibm-plex-mono` package. IBM Plex is Copyright © 2017 IBM Corp. and
+is licensed under the SIL Open Font License, Version 1.1.
+
+- https://github.com/IBM/plex
+- https://openfontlicense.org/

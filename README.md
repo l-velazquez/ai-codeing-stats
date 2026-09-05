@@ -6,7 +6,7 @@ The app never reads prompt text into its dashboard, does not require an API key,
 
 ## What is included
 
-- Native macOS Electron app with a compact T3 Code-inspired interface
+- Native macOS Electron app that opens on your remaining subscription allowance
 - Live Codex, Claude Code, and OpenCode discovery
 - 7-day, 30-day, 90-day, and all-time ranges
 - Input, cached input, cache creation, output, and reasoning token accounting
@@ -15,11 +15,11 @@ The app never reads prompt text into its dashboard, does not require an API key,
 - Live Codex and Claude Code short-window and weekly subscription allowance, including reset times
 - Searchable session ledger and click-to-open project paths
 - Monthly GitHub contributions ledger: day-by-day commits and pull requests grouped by project, a month heat grid, per-project totals, and one-click copy of an invoice-ready summary (uses your existing `gh` CLI sign-in or a `GITHUB_TOKEN`; nothing leaves your machine but the GitHub API reads)
-- Data-source health plus dark and light themes
+- Data-source health, plus dark, light, and follow-the-system themes reachable from every page
 
 ## Local prerequisites
 
-Tokenary's **Settings → System check** reports whether GitHub access, Git, Codex, Claude Code, and OpenCode are available. Missing tools link to their official setup guides; Tokenary does not install command-line tools automatically.
+Tokenary's **Settings (⌘,) → System check** reports whether GitHub access, Git, Codex, Claude Code, and OpenCode are available. Missing tools link to their official setup guides; Tokenary does not install command-line tools automatically.
 
 The Contributions page does **not** require the `git` executable. It reads the GitHub API and needs one of these authentication methods:
 
@@ -53,6 +53,13 @@ npm test
 npm run build
 ```
 
+To iterate on the interface without Electron, `npm run dev:web` serves the
+renderer on port 4317 against generated data. Append `?state=` to reach the
+states that are otherwise hard to produce on demand: `fresh` (nothing
+connected), `waiting` (status line installed, awaiting its first report),
+`empty` (connected, no recorded usage), and `error` (failing scan and
+unauthenticated GitHub).
+
 To run the optional scan against the providers installed on the current Mac:
 
 ```bash
@@ -67,7 +74,7 @@ RUN_LOCAL_SCAN=1 npx vitest --config vitest.config.ts run src/main/scanner.integ
 | Claude Code | `~/.claude/projects/**/*.jsonl` |
 | OpenCode | `~/.local/share/opencode/opencode.db` |
 
-Claude allowance monitoring uses Claude Code's official [`statusLine` JSON](https://code.claude.com/docs/en/statusline#available-data). From the Plans page, **Connect Claude Code** installs a small local wrapper in `~/.claude/tokenary/` and updates `~/.claude/settings.json`. The wrapper preserves any existing status-line command and stores only the `rate_limits` object; session IDs, workspace paths, transcript paths, prompts, and tool output are not retained. Claude Code supplies the first allowance after the next assistant response.
+Claude allowance monitoring uses Claude Code's official [`statusLine` JSON](https://code.claude.com/docs/en/statusline#available-data). From the home screen or the Plans page, **Connect Claude Code** installs a small local wrapper in `~/.claude/tokenary/` and updates `~/.claude/settings.json`. The wrapper preserves any existing status-line command and stores only the `rate_limits` object; session IDs, workspace paths, transcript paths, prompts, and tool output are not retained. Claude Code supplies the first allowance after the next assistant response.
 
 Codex fork copies and repeated token events are suppressed. Claude assistant blocks are de-duplicated globally by message/request identity. OpenCode's own reported cost is preferred when present.
 
