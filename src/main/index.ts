@@ -1,17 +1,42 @@
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { app, BrowserWindow, ipcMain, nativeTheme, shell } from "electron";
+import { app, BrowserWindow, ipcMain, nativeTheme, powerMonitor, shell } from "electron";
 import icon from "../../resources/icon.png?asset";
 import type { RangeKey } from "../shared/types";
 import { resolveTheme, THEME_BACKGROUND, type Settings } from "../shared/settings";
 import { fetchGithubMonth } from "./github";
 import { installClaudeStatusLine } from "./claudeStatusLine";
-import { invalidateStatsCache, refreshSubscriptions, scanStats } from "./scanner";
+import { cachedStats, invalidateStatsCache, scanStats } from "./scanner";
+import { StatsService } from "./statsService";
+import { MenuBar } from "./menuBar";
 import { checkSystem } from "./systemChecks";
 import { readSettings, usableBounds, writeSettings } from "./settingsStore";
 
 let mainWindow: BrowserWindow | null = null;
 let saveBoundsTimer: NodeJS.Timeout | null = null;
+let menuBar: MenuBar | null = null;
+const stats = new StatsService({
+  refresh: () => { invalidateStatsCache(); return scanStats("7d"); },
+  read: cachedStats,
+});
+
+function broadcast(channel: string, value?: unknown): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) window.webContents.send(channel, value);
+  }
+}
+
+function openDashboard(settings = false): void {
+  menuBar?.hide();
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow(settings);
+  } else {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+    if (settings) mainWindow.webContents.send("tally:open-settings");
+  }
+}
 
 function currentResolvedTheme(settings: Settings): "dark" | "light" {
   return resolveTheme(settings.theme, nativeTheme.shouldUseDarkColors);
@@ -27,7 +52,7 @@ function scheduleBoundsSave(window: BrowserWindow): void {
   }, 400);
 }
 
-function createWindow(): void {
+function createWindow(openSettings = false): void {
   const settings = readSettings();
   const bounds = usableBounds(settings.window);
   const resolved = currentResolvedTheme(settings);
@@ -40,7 +65,7 @@ function createWindow(): void {
     minWidth: 980,
     minHeight: 660,
     show: false,
-    title: "Tokenary",
+    title: "azul-code",
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 18, y: 18 },
     // Painted before the renderer's first frame; must match the theme or a
@@ -58,9 +83,10 @@ function createWindow(): void {
       // Read by the preload before any page script runs, so the pre-paint
       // script in index.html can set the theme on the very first frame.
       additionalArguments: [
-        `--tokenary-theme=${settings.theme}`,
-        `--tokenary-resolved=${resolved}`,
-        `--tokenary-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
+        `--tally-theme=${settings.theme}`,
+        `--tally-accent=${settings.accent}`,
+        `--tally-resolved=${resolved}`,
+        `--tally-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
       ],
     },
   });
@@ -83,18 +109,30 @@ function createWindow(): void {
   });
 
   if (process.env.ELECTRON_RENDERER_URL) {
-    void window.loadURL(process.env.ELECTRON_RENDERER_URL);
+    const url = new URL(process.env.ELECTRON_RENDERER_URL);
+    if (openSettings) url.searchParams.set("settings", "open");
+    void window.loadURL(url.toString());
   } else {
-    void window.loadFile(join(__dirname, "../renderer/index.html"));
+    void window.loadFile(join(__dirname, "../renderer/index.html"), { query: openSettings ? { settings: "open" } : {} });
   }
 }
 
 // Without this, an unpackaged run resolves app.getName() to "Electron" and
 // stores preferences under Application Support/Electron, so a development run
 // and the packaged app would keep separate settings and window bounds.
-app.setName("Tokenary");
+// Keep the existing preferences directory across the display-name change.
+if (app.getPath("userData") === join(app.getPath("appData"), app.getName())) {
+  app.setPath("userData", join(app.getPath("appData"), "Tally"));
+}
+app.setName("azul-code");
+const primaryInstance = app.requestSingleInstanceLock();
+if (!primaryInstance) app.quit();
+app.on("second-instance", () => { if (app.isReady()) openDashboard(); });
 
 app.whenReady().then(() => {
+  if (!primaryInstance) return;
+  // macOS development runs use Electron's bundle icon unless set explicitly.
+  app.dock?.setIcon(icon);
   const settings = readSettings();
   // Set before the first window so traffic lights, context menus and native
   // scrollbars match the chosen theme too, not just the page.
@@ -102,46 +140,67 @@ app.whenReady().then(() => {
 
   nativeTheme.on("updated", () => {
     const current = readSettings();
+    menuBar?.updateTheme();
     if (current.theme !== "system" || mainWindow === null || mainWindow.isDestroyed()) return;
     mainWindow.setBackgroundColor(THEME_BACKGROUND[currentResolvedTheme(current)]);
   });
 
-  ipcMain.handle("tokenary:scan", (_event, range: RangeKey) => scanStats(range));
-  ipcMain.handle("tokenary:subscriptions", () => refreshSubscriptions());
-  ipcMain.handle("tokenary:setup-claude-statusline", async () => {
+  ipcMain.handle("tally:scan", (_event, range: RangeKey, refresh?: boolean) => {
+    if (!["7d", "30d", "90d", "all"].includes(range)) throw new Error("Invalid usage range.");
+    return stats.read(range, refresh === true);
+  });
+  ipcMain.handle("tally:subscriptions", async () => (await stats.read("7d")).subscriptions);
+  ipcMain.handle("tally:menubar-get", () => stats.getState());
+  ipcMain.handle("tally:menubar-refresh", () => stats.refresh());
+  ipcMain.handle("tally:open-dashboard", (_event, settings?: boolean) => openDashboard(settings === true));
+  ipcMain.handle("tally:menubar-hide", () => menuBar?.hide());
+  ipcMain.handle("tally:quit", () => app.quit());
+  ipcMain.handle("tally:setup-claude-statusline", async () => {
     const usage = await installClaudeStatusLine(join(homedir(), ".claude"));
-    invalidateStatsCache();
+    await stats.refresh();
     return usage;
   });
-  ipcMain.handle("tokenary:system-checks", () => checkSystem());
-  ipcMain.handle("tokenary:github", (_event, month: string, refresh?: boolean) => {
+  ipcMain.handle("tally:system-checks", () => checkSystem());
+  ipcMain.handle("tally:github", (_event, month: string, refresh?: boolean) => {
     if (typeof month !== "string") throw new Error("A YYYY-MM month is required.");
     return fetchGithubMonth(month, Boolean(refresh));
   });
-  ipcMain.handle("tokenary:open-path", async (_event, path: string) => {
+  ipcMain.handle("tally:open-path", async (_event, path: string) => {
     if (path) await shell.openPath(path);
   });
-  ipcMain.handle("tokenary:open-url", (_event, url: string) => {
+  ipcMain.handle("tally:open-url", (_event, url: string) => {
     if (typeof url === "string" && /^https?:\/\//.test(url)) shell.openExternal(url);
   });
-  ipcMain.handle("tokenary:settings-get", () => readSettings());
-  ipcMain.handle("tokenary:settings-set", (_event, patch: Partial<Settings>) => {
+  ipcMain.handle("tally:settings-get", () => readSettings());
+  ipcMain.handle("tally:settings-set", (_event, patch: Partial<Settings>) => {
     const next = writeSettings(patch ?? {});
+    menuBar?.configure(next);
     if (patch && "theme" in patch) {
       nativeTheme.themeSource = next.theme;
       if (mainWindow !== null && !mainWindow.isDestroyed()) {
         mainWindow.setBackgroundColor(THEME_BACKGROUND[currentResolvedTheme(next)]);
       }
     }
+    broadcast("tally:settings-changed", next);
     return next;
   });
 
   createWindow();
+  menuBar = new MenuBar(stats, settings, openDashboard);
+  stats.subscribe((state, updated) => {
+    broadcast("tally:menubar-changed", state);
+    if (updated) broadcast("tally:stats-changed");
+  });
+  stats.start();
+  powerMonitor.on("suspend", () => { stats.stop(); menuBar?.hide(); });
+  powerMonitor.on("resume", () => stats.start());
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    openDashboard();
   });
 });
+
+app.on("before-quit", () => { stats.stop(); menuBar?.destroy(); menuBar = null; });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

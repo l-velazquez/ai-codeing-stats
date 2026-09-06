@@ -11,7 +11,7 @@ vi.mock("electron", () => ({
 const { __setSettingsPathForTests, readSettings, usableBounds, writeSettings } = await import("./settingsStore");
 
 function freshPath(): string {
-  const path = join(mkdtempSync(join(tmpdir(), "tokenary-settings-")), "settings.json");
+  const path = join(mkdtempSync(join(tmpdir(), "tally-settings-")), "settings.json");
   __setSettingsPathForTests(path);
   return path;
 }

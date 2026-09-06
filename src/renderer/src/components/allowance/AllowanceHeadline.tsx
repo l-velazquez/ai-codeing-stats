@@ -35,7 +35,7 @@ export function AllowanceHeadline({
           <p>
             {waiting
               ? "Claude Code sends its allowance after the next assistant response. Nothing else to do."
-              : "Tokenary can read how much of your Claude Code and Codex allowance is gone, and when each window resets. It reads what those tools already write on this Mac."}
+              : "azul-code can read how much of your Claude Code and Codex allowance is gone, and when each window resets. It reads what those tools already write on this Mac."}
           </p>
         </div>
         {claude?.capture?.state === "not-configured" ? (

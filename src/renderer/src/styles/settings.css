@@ -40,3 +40,20 @@
 .theme-toggle { display: flex; padding: 2px; border: 1px solid var(--border); background: var(--wash-2); border-radius: 8px; }
 .theme-toggle button { height: 28px; padding: 0 11px; border: 0; background: transparent; border-radius: 6px; color: var(--muted); display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--text-xs); }
 .theme-toggle button.active { background: var(--panel-raised); color: var(--text); box-shadow: 0 1px 5px rgba(0,0,0,.15); }
+
+.appearance-card { display: block; }
+.appearance-mode { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.accent-heading { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); }
+.accent-heading strong { font-size: var(--text-sm); font-weight: 500; }
+.accent-heading > span { font-size: var(--text-xs); color: var(--muted); }
+.accent-options { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 9px; }
+.accent-option { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 6px 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--wash-1); color: var(--muted); cursor: pointer; font-size: var(--text-sm); text-transform: capitalize; transition: background .15s, border-color .15s; }
+.accent-option:hover { background: var(--wash-4); border-color: var(--accent); }
+.accent-option[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--text); }
+.accent-swatch { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(145deg, var(--brand-start), var(--brand-end)); color: #fff; box-shadow: 0 3px 10px color-mix(in srgb, var(--accent-solid) 20%, transparent); }
+.accent-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .appearance-mode { align-items: flex-start; flex-direction: column; }
+  .accent-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .accent-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
+}

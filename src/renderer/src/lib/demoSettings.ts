@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS, normalizeSettings, type Settings } from "../../../shared/settings";
 
-const KEY = "tokenary:settings";
+const KEY = "tally:settings";
 
 /**
  * dev:web has no main process, so preferences live in localStorage there.

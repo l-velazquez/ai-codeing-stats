@@ -13,3 +13,11 @@ if (!existsSync(mainPath) || !readFileSync(mainPath, "utf8").includes("../preloa
 }
 
 console.log("Verified Electron preload bridge bundle.");
+
+for (const asset of ["trayTemplate.png", "trayTemplate@2x.png"]) {
+  if (!existsSync(resolve("resources", asset))) throw new Error(`Missing menu bar asset: ${asset}`);
+  if (!readFileSync(mainPath, "utf8").includes(`../../resources/${asset}`)) throw new Error(`Missing menu bar asset reference: ${asset}`);
+}
+const manifest = JSON.parse(readFileSync(resolve("package.json"), "utf8"));
+if (!manifest.build.files.includes("resources/*.png")) throw new Error("Menu bar icons must be included in the packaged app.");
+console.log("Verified standard and Retina menu bar icons.");

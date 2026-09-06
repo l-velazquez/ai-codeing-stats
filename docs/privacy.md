@@ -1,0 +1,46 @@
+# Privacy and local storage
+
+[Documentation index](index.md)
+
+## What the app reads
+
+azul-code opens local agent transcript files and the OpenCode database to extract usage metadata. It retains normalized token counts, costs, models, timestamps, session IDs, and workspace paths in memory for the dashboard. Prompt text and tool output are not included in the dashboard data model.
+
+“Metadata only” describes what is extracted and displayed. The scanner streams transcript lines, and parsing an assistant JSON record can temporarily bring other fields into process memory. It does not mean the underlying transcript bytes are never read.
+
+## Files written
+
+| Location | Purpose |
+| --- | --- |
+| `~/Library/Application Support/Tally/settings.json` | Desktop preferences and window bounds |
+| `~/.claude/settings.json` | Updated only when connecting Claude allowance capture |
+| `~/.claude/tally/tally-statusline.sh` | Installed allowance wrapper |
+| `~/.claude/tally/previous-statusline-command` | Previous status-line command, when one exists |
+| `~/.claude/tally/rate-limits.json` | Last extracted allowance object |
+| `~/.claude/tally/statusline-input.*` and `rate-limits.json.*` | Temporary wrapper input/output candidates |
+
+Electron may also create normal runtime storage within its user-data directory. Browser previews use localStorage for demo preferences. Usage snapshots and GitHub month results are held in memory rather than an app-managed historical database.
+
+Settings writes use a temporary file and rename with mode `0600`. Failed preference writes are best-effort: the current session may reflect a change that did not persist.
+
+## Claude connection behavior
+
+Connecting installs a shell wrapper and changes `statusLine.command`, preserving other settings fields and chaining an existing command with the original input. Symlinked settings are updated at their resolved target. Legacy `tokenary` wrappers are migrated by inheriting their saved prior command.
+
+The wrapper temporarily writes the **full status-line input** to a restricted local file, extracts only `rate_limits` with macOS `plutil`, and removes temporary files through a shell trap. The retained capture contains only that allowance object. Abrupt termination can leave temporary files behind. An existing chained command receives the full input and retains its own behavior.
+
+## Network and credentials
+
+Local agent analytics require no azul-code account, API key, or usage-upload service. The app has no configured analytics endpoint or cloud usage database.
+
+GitHub integration makes authenticated outbound reads to `api.github.com`, including at dashboard startup when credentials are available. The app resolves a token from `GITHUB_TOKEN`, then `GH_TOKEN` when the former is unset, or an existing `gh auth token` result. It does not save that token in azul-code settings. Repository names, commit subjects, and PR titles returned by GitHub are displayed locally.
+
+Opening setup guides or GitHub links uses your external browser. Copying a contribution summary puts repository/activity details on the system clipboard. Installed tools and any existing Claude status-line command have their own network and storage behavior.
+
+## Reset or remove app-owned data
+
+Quit azul-code before changing its files. To reset desktop preferences, move `~/Library/Application Support/Tally/settings.json` aside, then relaunch. Keep a backup if you want to restore appearance or window settings.
+
+To disconnect Claude manually, first back up `~/.claude/settings.json`. If its status-line command still points to the azul-code wrapper, restore the command from `previous-statusline-command`; if no prior command existed, remove the azul-code `statusLine` configuration. Preserve unrelated settings and any later user changes. Only after disconnecting the command should you remove `~/.claude/tally/`. There is currently no in-app disconnect action.
+
+Removing the app or its preferences does not remove provider transcripts and does not automatically disconnect the Claude wrapper. Do not delete agent history merely to reset azul-code preferences.

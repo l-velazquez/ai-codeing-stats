@@ -9,7 +9,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
   return (
     <div className="loading-screen" role="alert">
       <div className="loading-mark loading-mark--error"><TriangleAlert size={23} /></div>
-      <strong>Tokenary could not read local usage</strong>
+      <strong>azul-code could not read local usage</strong>
       <span>{message}</span>
       <button className="copy-summary" onClick={onRetry}>Try again</button>
     </div>

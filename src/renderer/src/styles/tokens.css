@@ -1,14 +1,5 @@
-/* Tokenary is a meter: it measures a resource you are spending against a limit
-   that resets. The palette follows from that rather than decorating it. Each
-   family owns a domain, which is what keeps blue, indigo and mint from becoming
-   a gradient soup:
-
-     mint / aqua    allowance -- headroom, live, "you're fine"
-     blue / indigo  money -- cost, chart series, focus and selection
-     amber / coral  pressure -- only when a limit is getting tight
-     blue-grey      ground -- all chrome, surfaces and text
-
-   The ground is deliberately blue-tinted rather than neutral black. */
+/* azul-code uses a selectable accent for spending, selection, and focus.
+   Allowance and pressure colors retain their semantic meaning in every theme. */
 :root {
   color-scheme: dark;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
@@ -31,10 +22,13 @@
   --border-strong: rgba(150, 180, 210, 0.20);
 
   /* Money */
-  --accent: #5b8def;
+  --accent: #6695ff;
+  --accent-solid: #2460ff;
+  --brand-start: #1672ff;
+  --brand-end: #003de0;
   --accent-2: #6366e8;
   --accent-tint: rgba(91, 141, 239, 0.14);
-  --chart: #5b8def;
+  --chart: #3975ff;
 
   /* Allowance */
   --mint: #35d6b0;
@@ -108,4 +102,19 @@
   --wash-4: color-mix(in srgb, var(--text) 5%, transparent);
   --wash-5: color-mix(in srgb, var(--text) 7%, transparent);
   --wash-6: color-mix(in srgb, var(--text) 9%, transparent);
+}
+
+/* Accent colors have separate light values to keep small text readable. */
+[data-accent="red"] { --accent: #ff7b83; --accent-light: #bb3348; --accent-solid: #d92c4c; --brand-start: #ee4260; --brand-end: #b71336; }
+[data-accent="orange"] { --accent: #f5a05b; --accent-light: #a84f13; --accent-solid: #c8550c; --brand-start: #e56d14; --brand-end: #a74008; }
+[data-accent="green"] { --accent: #64d69a; --accent-light: #23794c; --accent-solid: #16864d; --brand-start: #1ba565; --brand-end: #096a3c; }
+[data-accent="blue"] { --accent: #6695ff; --accent-light: #174dcc; --accent-solid: #2460ff; --brand-start: #1672ff; --brand-end: #003de0; }
+[data-accent="pink"] { --accent: #f28bc2; --accent-light: #ad3579; --accent-solid: #c92b82; --brand-start: #e743a2; --brand-end: #ab1767; }
+[data-accent="violet"] { --accent: #b49aff; --accent-light: #7045c7; --accent-solid: #7c3de0; --brand-start: #9856f5; --brand-end: #6224c5; }
+:root[data-theme="light"][data-accent], :root[data-theme="light"] [data-accent] { --accent: var(--accent-light); }
+:root[data-accent] {
+  --accent-2: color-mix(in srgb, var(--accent) 78%, var(--text));
+  --accent-tint: color-mix(in srgb, var(--accent-solid) 20%, transparent);
+  --chart: color-mix(in srgb, var(--accent-solid) 86%, var(--accent));
+  --sidebar: color-mix(in srgb, var(--bg) 88%, var(--accent-solid));
 }

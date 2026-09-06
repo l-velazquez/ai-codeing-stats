@@ -5,8 +5,8 @@
  * back to the user agent rather than guessing macOS everywhere.
  */
 export const IS_MAC: boolean =
-  typeof window !== "undefined" && typeof window.tokenary?.platform === "string"
-    ? window.tokenary.platform === "darwin"
+  typeof window !== "undefined" && typeof window.tally?.platform === "string"
+    ? window.tally.platform === "darwin"
     : typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
 /** The modifier every shortcut in the app uses: Command on macOS, Control elsewhere. */

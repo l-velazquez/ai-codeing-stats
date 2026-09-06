@@ -25,7 +25,7 @@ export function demoGithub(month: string): GitHubMonthSnapshot {
       month,
       login: "",
       state: "setup",
-      detail: "Tokenary could not find an authenticated GitHub CLI on this Mac.",
+      detail: "azul-code could not find an authenticated GitHub CLI on this Mac.",
       fetchedAt: Date.now(),
       days: [],
       repos: [],
@@ -62,7 +62,7 @@ export function demoGithub(month: string): GitHubMonthSnapshot {
     ],
     [now.getDate()]: [
       { repo: "acme/webapp", sha: "d4e77b9", message: "Split invoice PDF renderer into worker", hour: 10 },
-      { repo: "tokenary", sha: "ef20c55", message: "Persist theme choice across restarts", hour: 14 },
+      { repo: "azul-code", sha: "ef20c55", message: "Persist theme choice across restarts", hour: 14 },
     ],
   };
   for (let day = 1; day <= lastDay; day += 1) {

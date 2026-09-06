@@ -7,7 +7,7 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="color-scheme" content="dark light" />
-    <title>Tokenary</title>
+    <title>azul-code</title>
     <script>
       // Runs before the deferred module script, so the theme is on <html>
       // for the very first paint. Setting it in a React effect instead means
@@ -15,12 +15,12 @@
       (function () {
         var resolved = "dark";
         try {
-          var initial = window.tokenary && window.tokenary.initial;
+          var initial = window.tally && window.tally.initial;
           if (initial && initial.resolved) {
             resolved = initial.resolved;
           } else {
             // dev:web has no preload bridge.
-            var stored = localStorage.getItem("tokenary:theme");
+            var stored = localStorage.getItem("tally:theme");
             var prefersDark =
               !window.matchMedia || window.matchMedia("(prefers-color-scheme: dark)").matches;
             resolved =
@@ -29,6 +29,10 @@
         } catch (error) {
           // Private mode or a blocked accessor: the dark default is fine.
         }
+        try {
+          var accent = initial ? initial.accent : JSON.parse(localStorage.getItem("tally:settings") || "{}").accent;
+          document.documentElement.dataset.accent = ["red", "orange", "green", "blue", "pink", "violet"].includes(accent) ? accent : "blue";
+        } catch (_) { document.documentElement.dataset.accent = "blue"; }
         document.documentElement.dataset.theme = resolved;
         document.documentElement.style.colorScheme = resolved;
       })();

@@ -28,7 +28,7 @@ export function PlansPage({
           />
         ))}
       </div>
-      <div className="estimate-callout plans-note"><Info size={16} /><span>Codex refreshes from local limit events. Claude refreshes after responses through its official status-line integration; Tokenary stores only the two allowance windows on this Mac.</span></div>
+      <div className="estimate-callout plans-note"><Info size={16} /><span>Codex refreshes from local limit events. Claude refreshes after responses through its official status-line integration; azul-code stores only the two allowance windows on this Mac.</span></div>
     </div>
   );
 }

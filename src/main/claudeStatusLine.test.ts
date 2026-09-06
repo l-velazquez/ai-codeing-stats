@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -51,7 +51,7 @@ describe("Claude Code status-line allowance", () => {
   });
 
   it("installs atomically and preserves an existing status-line command", async () => {
-    const claudeHome = await mkdtemp(join(tmpdir(), "tokenary-claude-"));
+    const claudeHome = await mkdtemp(join(tmpdir(), "tally-claude-"));
     const settingsPath = join(claudeHome, "settings.json");
     await writeFile(settingsPath, JSON.stringify({
       permissions: { allow: ["Read"] },
@@ -63,22 +63,42 @@ describe("Claude Code status-line allowance", () => {
       permissions: unknown;
       statusLine: { command: string; padding: number };
     };
-    const previous = await readFile(join(claudeHome, "tokenary", "previous-statusline-command"), "utf8");
-    const wrapper = await readFile(join(claudeHome, "tokenary", "tokenary-statusline.sh"), "utf8");
+    const previous = await readFile(join(claudeHome, "tally", "previous-statusline-command"), "utf8");
+    const wrapper = await readFile(join(claudeHome, "tally", "tally-statusline.sh"), "utf8");
 
     expect(settings.permissions).toEqual({ allow: ["Read"] });
     expect(settings.statusLine.padding).toBe(2);
-    expect(settings.statusLine.command).toContain("tokenary-statusline.sh");
+    expect(settings.statusLine.command).toContain("tally-statusline.sh");
     expect(previous).toBe("~/.claude/my-status.sh");
     expect(wrapper).toContain("plutil -extract rate_limits");
     expect(usage.capture?.state).toBe("waiting");
   });
 
+  it("takes over from the pre-rename wrapper instead of chaining it", async () => {
+    const claudeHome = await mkdtemp(join(tmpdir(), "tally-legacy-"));
+    const settingsPath = join(claudeHome, "settings.json");
+    const legacyDirectory = join(claudeHome, "tokenary");
+    await mkdir(legacyDirectory, { recursive: true });
+    await writeFile(join(legacyDirectory, "previous-statusline-command"), "~/.claude/my-status.sh\n");
+    await writeFile(settingsPath, JSON.stringify({
+      statusLine: { type: "command", command: `'${join(legacyDirectory, "tokenary-statusline.sh")}'` },
+    }));
+
+    await installClaudeStatusLine(claudeHome);
+    const settings = JSON.parse(await readFile(settingsPath, "utf8")) as { statusLine: { command: string } };
+    const previous = await readFile(join(claudeHome, "tally", "previous-statusline-command"), "utf8");
+
+    expect(settings.statusLine.command).toContain("tally-statusline.sh");
+    // The user's own status line survives; the stale wrapper is not chained.
+    expect(previous).toBe("~/.claude/my-status.sh");
+    expect(previous).not.toContain("tokenary-statusline.sh");
+  });
+
   it("captures only the rate-limit object from Claude's full status payload", async () => {
-    const home = await mkdtemp(join(tmpdir(), "tokenary-home-"));
+    const home = await mkdtemp(join(tmpdir(), "tally-home-"));
     const claudeHome = join(home, ".claude");
     await installClaudeStatusLine(claudeHome);
-    const wrapper = join(claudeHome, "tokenary", "tokenary-statusline.sh");
+    const wrapper = join(claudeHome, "tally", "tally-statusline.sh");
     const nowSeconds = Math.floor(Date.now() / 1_000);
 
     await runWrapper(wrapper, home, JSON.stringify({
@@ -91,7 +111,7 @@ describe("Claude Code status-line allowance", () => {
       },
     }));
 
-    const captured = JSON.parse(await readFile(join(claudeHome, "tokenary", "rate-limits.json"), "utf8")) as Record<string, unknown>;
+    const captured = JSON.parse(await readFile(join(claudeHome, "tally", "rate-limits.json"), "utf8")) as Record<string, unknown>;
     expect(Object.keys(captured).sort()).toEqual(["five_hour", "seven_day"]);
     expect(JSON.stringify(captured)).not.toContain("must-not-be-retained");
     expect(JSON.stringify(captured)).not.toContain("/private/");

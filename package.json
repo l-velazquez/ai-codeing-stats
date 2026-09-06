@@ -1,5 +1,5 @@
 {
-  "name": "tokenary",
+  "name": "azul-code",
   "version": "0.1.0",
   "private": true,
   "description": "A private, local-first AI coding usage dashboard for macOS.",
@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest --config vitest.config.ts run",
     "test:watch": "vitest --config vitest.config.ts",
+    "test:menubar": "npm run build && env -u ELECTRON_RUN_AS_NODE electron scripts/smoke-menu-bar.cjs",
     "dist:mac": "npm run build && electron-builder --mac dmg zip",
     "preview": "env -u ELECTRON_RUN_AS_NODE electron-vite preview",
     "verify:build": "node scripts/verify-build.mjs"
@@ -40,14 +41,15 @@
     "vitest": "latest"
   },
   "build": {
-    "appId": "dev.luis.tokenary",
-    "productName": "Tokenary",
+    "appId": "dev.luis.tally",
+    "productName": "azul-code",
     "asar": true,
     "directories": {
       "output": "release"
     },
     "files": [
       "out/**/*",
+      "resources/*.png",
       "package.json",
       "THIRD_PARTY_NOTICES.md"
     ],
@@ -60,7 +62,7 @@
       "icon": "build/icon.icns"
     },
     "dmg": {
-      "title": "Tokenary ${version}",
+      "title": "azul-code ${version}",
       "backgroundColor": "#0c0d0f",
       "window": {
         "width": 540,
