@@ -60,6 +60,7 @@ function createWindow(): void {
       additionalArguments: [
         `--tokenary-theme=${settings.theme}`,
         `--tokenary-resolved=${resolved}`,
+        `--tokenary-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
       ],
     },
   });

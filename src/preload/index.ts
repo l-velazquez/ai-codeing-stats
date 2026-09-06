@@ -8,12 +8,13 @@ function argValue(flag: string): string | null {
   return match === undefined ? null : match.slice(prefix.length);
 }
 
-function initialTheme(): { theme: ThemePreference; resolved: ResolvedTheme } {
+function initialState(): { theme: ThemePreference; resolved: ResolvedTheme; sidebarCollapsed: boolean } {
   const theme = argValue("tokenary-theme");
   const resolved = argValue("tokenary-resolved");
   return {
     theme: theme === "dark" || theme === "light" || theme === "system" ? theme : "system",
     resolved: resolved === "light" ? "light" : "dark",
+    sidebarCollapsed: argValue("tokenary-sidebar") === "collapsed",
   };
 }
 
@@ -32,7 +33,7 @@ const bridge: TokenaryBridge = {
     set: (patch: Partial<Settings>) =>
       ipcRenderer.invoke("tokenary:settings-set", patch) as Promise<Settings>,
   },
-  initial: initialTheme(),
+  initial: initialState(),
   platform: process.platform,
 };
 

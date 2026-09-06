@@ -16,6 +16,7 @@ describe("normalizeSettings", () => {
         range: "90d",
         subscriptionPollSeconds: 30,
         window: { width: 1200, height: 800, x: 10, y: 20 },
+        sidebarCollapsed: true,
       }),
     ).toEqual({
       version: 1,
@@ -23,6 +24,7 @@ describe("normalizeSettings", () => {
       range: "90d",
       subscriptionPollSeconds: 30,
       window: { width: 1200, height: 800, x: 10, y: 20 },
+      sidebarCollapsed: true,
     });
   });
 
@@ -49,6 +51,13 @@ describe("normalizeSettings", () => {
       width: 1000,
       height: 700,
     });
+  });
+
+  it("only treats a real boolean as a hidden sidebar", () => {
+    expect(normalizeSettings({ sidebarCollapsed: true }).sidebarCollapsed).toBe(true);
+    // A truthy string from a hand-edited file must not hide the whole navigation.
+    expect(normalizeSettings({ sidebarCollapsed: "yes" }).sidebarCollapsed).toBe(false);
+    expect(normalizeSettings({}).sidebarCollapsed).toBe(false);
   });
 
   it("always reports version 1", () => {

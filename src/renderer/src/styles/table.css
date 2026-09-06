@@ -1,4 +1,4 @@
-.split-panels { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .72fr); gap: 14px; }
+.split-panels { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .72fr); gap: var(--gap-section); }
 .list-panel { overflow: hidden; }
 .list-panel > .card-title-row { padding: 16px 17px 12px; }
 .text-action { display: flex; align-items: center; gap: 3px; border: 0; background: transparent; color: var(--muted); font-size: var(--text-xs); cursor: pointer; padding: 0; }

@@ -45,6 +45,13 @@
   --danger: #f2705c;
 
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+
+  /* Two gaps, not one. Everything on a page used to sit 14px apart, so a row
+     of four KPI cards read as loosely as the boundary between that row and the
+     content under it. --gap-card holds a group of peers together; --gap-section
+     is the wider air between groups. */
+  --gap-card: 14px;
+  --gap-section: 20px;
   --radius: 14px;
 }
 

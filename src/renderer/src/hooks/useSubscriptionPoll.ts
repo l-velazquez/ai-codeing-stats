@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import type { SubscriptionUsage } from "@shared/types";
-import { readSettings } from "@renderer/lib/bridge";
 
-const FALLBACK_SECONDS = 15;
+const REFRESH_INTERVAL_MS = 60_000;
 
 /**
  * Allowance is the one figure that goes stale while you sit on the page, so it
@@ -12,11 +11,12 @@ const FALLBACK_SECONDS = 15;
 export function useSubscriptionPoll(apply: (subscriptions: SubscriptionUsage[]) => void): void {
   useEffect(() => {
     if (!window.tokenary) return;
-    let interval: number | null = null;
     let stopped = false;
+    let pending = false;
 
     const tick = () => {
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || pending) return;
+      pending = true;
       void window.tokenary
         ?.subscriptions()
         .then((subscriptions) => {
@@ -24,22 +24,17 @@ export function useSubscriptionPoll(apply: (subscriptions: SubscriptionUsage[]) 
         })
         .catch(() => {
           // A transient read failure must not replace an otherwise valid dashboard.
-        });
+        })
+        .finally(() => { pending = false; });
     };
 
-    void readSettings()
-      .then((settings) => {
-        if (stopped) return;
-        const seconds = settings.subscriptionPollSeconds || FALLBACK_SECONDS;
-        interval = window.setInterval(tick, seconds * 1000);
-      })
-      .catch(() => {
-        if (!stopped) interval = window.setInterval(tick, FALLBACK_SECONDS * 1000);
-      });
+    const interval = window.setInterval(tick, REFRESH_INTERVAL_MS);
+    document.addEventListener("visibilitychange", tick);
 
     return () => {
       stopped = true;
-      if (interval !== null) window.clearInterval(interval);
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", tick);
     };
   }, [apply]);
 }

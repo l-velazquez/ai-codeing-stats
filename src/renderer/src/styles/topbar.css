@@ -1,5 +1,12 @@
 main { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); }
-.topbar { height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 0 18px; -webkit-app-region: drag; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(18px); position: relative; z-index: 20; }
+/* padding-left is animated with the sidebar: with the sidebar hidden on macOS
+   the traffic lights sit over this bar, and the lead controls must clear them. */
+.topbar { height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 0 18px; transition: padding-left .22s ease; -webkit-app-region: drag; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(18px); position: relative; z-index: 20; }
+/* The traffic lights end at 70px (18px inset + three 12px buttons and their
+   gaps); 24px past that is the same breathing room the bar gives its own edge. */
+:root[data-platform="mac"] .app-shell--collapsed .topbar { padding-left: 94px; }
+.topbar-lead { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar-lead .icon-button { -webkit-app-region: no-drag; flex: 0 0 auto; }
 .topbar-title strong { color: var(--text-2); font-size: var(--text-md); font-weight: 500; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; }
 .range-control { display: flex; align-items: center; height: 28px; padding: 2px; border-radius: 8px; background: var(--wash-4); border: 1px solid var(--border); }

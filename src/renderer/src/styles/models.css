@@ -1,4 +1,4 @@
-.model-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+.model-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: var(--gap-card); }
 .model-feature { min-height: 185px; padding: 17px; position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; }
 .model-feature .rank { position: absolute; right: 15px; top: 12px; color: var(--wash-4); font-size: 36px; font-weight: 700; letter-spacing: -.07em; }
 .model-feature-name { display: grid; gap: 3px; min-width: 0; }

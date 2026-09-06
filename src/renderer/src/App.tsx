@@ -13,6 +13,7 @@ import { useGithubMonth } from "@renderer/hooks/useGithubMonth";
 import { useDailyCostIndex } from "@renderer/hooks/useDailyCostIndex";
 import { useSubscriptionPoll } from "@renderer/hooks/useSubscriptionPoll";
 import { useHotkey } from "@renderer/hooks/useHotkey";
+import { useSidebar } from "@renderer/hooks/useSidebar";
 import { readSettings, writeSettings } from "@renderer/lib/bridge";
 import { applyTheme, mirrorPreference, systemPrefersDark, watchSystemTheme } from "@renderer/lib/theme";
 import { RefreshProvider, useDefaultRefresh } from "@renderer/providers/RefreshProvider";
@@ -73,6 +74,7 @@ function AppInner() {
   const [connectingClaude, setConnectingClaude] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { theme, setTheme } = useThemePreference();
+  const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebar();
   const { snapshot, status, error, refreshing, reload, applySubscriptions, setError } =
     useSnapshot(range);
 
@@ -89,6 +91,7 @@ function AppInner() {
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   useHotkey(",", openSettings);
+  useHotkey("b", toggleSidebar);
 
   useSubscriptionPoll(applySubscriptions);
   useDefaultRefresh(reload, refreshing);
@@ -110,8 +113,14 @@ function AppInner() {
   }, [applySubscriptions, setError, snapshot]);
 
   return (
-    <div className="app-shell">
-      <Sidebar page={page} onNavigate={setPage} snapshot={snapshot} onOpenSettings={openSettings} />
+    <div className={`app-shell${sidebarCollapsed ? " app-shell--collapsed" : ""}`}>
+      <Sidebar
+        page={page}
+        onNavigate={setPage}
+        snapshot={snapshot}
+        onOpenSettings={openSettings}
+        collapsed={sidebarCollapsed}
+      />
 
       <main>
         <TopBar
@@ -120,6 +129,8 @@ function AppInner() {
           onRangeChange={setRange}
           theme={theme}
           onThemeChange={setTheme}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
         />
 
         <div className="content-scroll">

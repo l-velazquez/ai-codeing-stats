@@ -1,4 +1,4 @@
-.overview-hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(285px, .74fr); gap: 14px; }
+.overview-hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(285px, .74fr); gap: var(--gap-section); }
 .hero { min-height: 405px; padding: 23px 24px 12px; overflow: hidden; }
 .hero-heading { display: flex; justify-content: space-between; align-items: flex-start; }
 .hero-value { font-size: 43px; line-height: 1; font-weight: 600; letter-spacing: -.055em; margin-top: 12px; font-variant-numeric: tabular-nums; }
