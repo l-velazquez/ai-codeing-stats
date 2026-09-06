@@ -224,7 +224,10 @@ export interface TokenaryBridge {
     get: () => Promise<Settings>;
     set: (patch: Partial<Settings>) => Promise<Settings>;
   };
-  /** Resolved synchronously from process.argv so the theme is known pre-paint. */
-  initial: { theme: ThemePreference; resolved: ResolvedTheme };
+  /**
+   * Resolved synchronously from process.argv, so the theme and the sidebar
+   * state are both known before the first paint.
+   */
+  initial: { theme: ThemePreference; resolved: ResolvedTheme; sidebarCollapsed: boolean };
   platform: string;
 }

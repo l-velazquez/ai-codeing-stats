@@ -1,5 +1,13 @@
-.app-shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); width: 100%; height: 100%; background: var(--bg); }
-.sidebar { background: var(--sidebar); border-right: 1px solid var(--border); padding: 50px 10px 12px; display: flex; flex-direction: column; min-width: 0; -webkit-app-region: drag; }
+/* The sidebar is a grid track, so hiding it is one animated column width.
+   Chromium interpolates grid-template-columns, and the reduced-motion rule in
+   base.css collapses the transition for anyone who asks for less movement. */
+.app-shell { --sidebar-width: 224px; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); width: 100%; height: 100%; background: var(--bg); transition: grid-template-columns .22s ease; }
+.app-shell--collapsed { --sidebar-width: 0px; }
+.sidebar { background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-width: 0; overflow: hidden; -webkit-app-region: drag; }
+/* Fixed width inside the clipped track: the panel slides away whole rather than
+   squeezing its labels into an ever-narrower column on the way out. */
+.sidebar-inner { width: 224px; height: 100%; padding: 50px 10px 12px; display: flex; flex-direction: column; }
+.app-shell--collapsed .sidebar { border-right-width: 0; }
 .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 9px 23px; }
 .brand-mark { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 8px; color: #0a0b0d; background: var(--accent); box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 15%, transparent); }
 .sidebar-brand > div:last-child { display: grid; gap: 2px; }

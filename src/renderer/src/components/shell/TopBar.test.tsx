@@ -4,7 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import { RefreshProvider } from "@renderer/providers/RefreshProvider";
 import { TopBar } from "./TopBar";
 
-function renderTopBar(page: Parameters<typeof TopBar>[0]["page"], onTheme = vi.fn()) {
+function renderTopBar(
+  page: Parameters<typeof TopBar>[0]["page"],
+  onTheme = vi.fn(),
+  { collapsed = false, onToggleSidebar = vi.fn() } = {},
+) {
   render(
     <RefreshProvider>
       <TopBar
@@ -13,6 +17,8 @@ function renderTopBar(page: Parameters<typeof TopBar>[0]["page"], onTheme = vi.f
         onRangeChange={vi.fn()}
         theme="dark"
         onThemeChange={onTheme}
+        sidebarCollapsed={collapsed}
+        onToggleSidebar={onToggleSidebar}
       />
     </RefreshProvider>,
   );
@@ -38,6 +44,22 @@ describe("TopBar", () => {
     const toggle = screen.getByRole("button", { name: /Theme: Dark/ });
     await userEvent.click(toggle);
     expect(onTheme).toHaveBeenCalledWith("light");
+  });
+
+  it("toggles the sidebar from the top bar", async () => {
+    const onToggleSidebar = vi.fn();
+    renderTopBar("overview", vi.fn(), { onToggleSidebar });
+    await userEvent.click(screen.getByRole("button", { name: /Hide sidebar/ }));
+    expect(onToggleSidebar).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers to show the sidebar again once it is hidden", () => {
+    // The control has to survive the sidebar it hides, or there is no way back
+    // for anyone who does not know the shortcut.
+    renderTopBar("overview", vi.fn(), { collapsed: true });
+    const toggle = screen.getByRole("button", { name: /Show sidebar/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-controls", "app-sidebar");
   });
 
   it("hides refresh until a page claims it", () => {

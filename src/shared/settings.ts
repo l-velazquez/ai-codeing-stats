@@ -16,6 +16,8 @@ export interface Settings {
   readonly range: RangeKey;
   readonly subscriptionPollSeconds: number;
   readonly window: WindowBounds | null;
+  /** Sidebar visibility survives a relaunch: a pane the user hid stays hidden. */
+  readonly sidebarCollapsed: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -24,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   range: "30d",
   subscriptionPollSeconds: 15,
   window: null,
+  sidebarCollapsed: false,
 };
 
 /**
@@ -87,6 +90,10 @@ export function normalizeSettings(raw: unknown): Settings {
     range,
     subscriptionPollSeconds,
     window: normalizeWindow(raw.window),
+    sidebarCollapsed:
+      typeof raw.sidebarCollapsed === "boolean"
+        ? raw.sidebarCollapsed
+        : DEFAULT_SETTINGS.sidebarCollapsed,
   };
 }
 

@@ -129,7 +129,7 @@ async function readLines(
   for await (const line of lines) onLine(line);
 }
 
-async function scanCodex(root: string): Promise<ScanResult> {
+async function scanCodex(root: string, limitsOnly = false): Promise<ScanResult> {
   if (!(await exists(root))) {
     return {
       records: [],
@@ -170,6 +170,7 @@ async function scanCodex(root: string): Promise<ScanResult> {
             subscription = nextSubscription;
           }
         }
+        if (limitsOnly) return;
         const record = parseCodexLine(line, state);
         if (record !== null) records.push(record);
       });
@@ -646,9 +647,13 @@ export async function scanStats(range: RangeKey): Promise<StatsSnapshot> {
 
 export async function refreshSubscriptions(): Promise<SubscriptionUsage[]> {
   if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
-  const claude = await readClaudeStatusLineSubscription(join(homedir(), ".claude"));
+  const [codex, claude] = await Promise.all([
+    scanCodex(join(homedir(), ".codex", "sessions"), true),
+    readClaudeStatusLineSubscription(join(homedir(), ".claude")),
+  ]);
+  if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
   cachedRecords.subscriptions = cachedRecords.subscriptions.map((usage) =>
-    usage.provider === "claude" ? claude : usage,
+    usage.provider === "claude" ? claude : codex.subscription ?? usage,
   );
   return cachedRecords.subscriptions;
 }

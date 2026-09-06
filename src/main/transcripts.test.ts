@@ -111,17 +111,40 @@ describe("pricing", () => {
     const priced = priceTokens(
       "gpt-5.6-sol",
       {
-        uncachedInput: 1_000_000,
-        cachedInput: 1_000_000,
+        uncachedInput: 100_000,
+        cachedInput: 100_000,
         cacheWrite5m: 0,
         cacheWrite1h: 0,
-        output: 100_000,
-        reasoning: 50_000,
+        output: 10_000,
+        reasoning: 5_000,
       },
       null,
     );
-    expect(priced.cost).toBeCloseTo(6.4);
-    expect(priced.savings).toBeCloseTo(3.6);
+    expect(priced.cost).toBeCloseTo(0.64);
+    expect(priced.savings).toBeCloseTo(0.36);
     expect(priced.priced).toBe(true);
+  });
+
+  it("bills a long-context request at the higher tier for the whole request", () => {
+    const tokens = {
+      uncachedInput: 200_000,
+      cachedInput: 200_000,
+      cacheWrite5m: 0,
+      cacheWrite1h: 0,
+      output: 10_000,
+      reasoning: 5_000,
+    };
+    const priced = priceTokens("gpt-6-astra", tokens, null);
+    // 400K input is past the 272K threshold: input rates double, output is 1.5x.
+    expect(priced.cost).toBeCloseTo(200_000 * 20e-6 + 200_000 * 2e-6 + 10_000 * 75e-6);
+  });
+
+  it("leaves a request under the threshold on standard rates", () => {
+    const priced = priceTokens(
+      "gpt-6-astra",
+      { uncachedInput: 200_000, cachedInput: 50_000, cacheWrite5m: 0, cacheWrite1h: 0, output: 10_000, reasoning: 0 },
+      null,
+    );
+    expect(priced.cost).toBeCloseTo(200_000 * 10e-6 + 50_000 * 1e-6 + 10_000 * 50e-6);
   });
 });
