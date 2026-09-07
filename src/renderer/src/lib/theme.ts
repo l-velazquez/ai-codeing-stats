@@ -1,5 +1,11 @@
 import type { ResolvedTheme, ThemePreference } from "../../../shared/types";
 
+import type { AccentColor } from "../../../shared/settings";
+
+export function applyAccent(accent: AccentColor): void {
+  document.documentElement.dataset.accent = accent;
+}
+
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
 export function systemPrefersDark(): boolean {
@@ -18,7 +24,7 @@ export function applyTheme(resolved: ResolvedTheme): void {
  */
 export function mirrorPreference(preference: ThemePreference, resolved: ResolvedTheme): void {
   try {
-    localStorage.setItem("tokenary:theme", preference === "system" ? resolved : preference);
+    localStorage.setItem("tally:theme", preference === "system" ? resolved : preference);
   } catch {
     // Storage can be unavailable; the in-memory preference still applies.
   }

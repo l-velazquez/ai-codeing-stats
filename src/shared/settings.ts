@@ -1,7 +1,14 @@
 import type { RangeKey } from "./types";
 
 export type ThemePreference = "dark" | "light" | "system";
+export const ACCENT_COLORS = ["red", "orange", "green", "blue", "pink", "violet"] as const;
+export type AccentColor = typeof ACCENT_COLORS[number];
+export function normalizeAccent(value: unknown): AccentColor {
+  return ACCENT_COLORS.includes(value as AccentColor) ? value as AccentColor : "blue";
+}
+
 export type ResolvedTheme = "dark" | "light";
+export type MenuBarDisplay = "cost" | "allowance" | "both" | "icon";
 
 export interface WindowBounds {
   readonly width: number;
@@ -13,20 +20,30 @@ export interface WindowBounds {
 export interface Settings {
   readonly version: 1;
   readonly theme: ThemePreference;
+  readonly accent: AccentColor;
   readonly range: RangeKey;
   readonly subscriptionPollSeconds: number;
   readonly window: WindowBounds | null;
   /** Sidebar visibility survives a relaunch: a pane the user hid stays hidden. */
   readonly sidebarCollapsed: boolean;
+  readonly menuBarEnabled: boolean;
+  readonly menuBarDisplay: MenuBarDisplay;
+  readonly menuBarProvider: "codex" | "claude";
+  readonly menuBarWindow: "session" | "weekly";
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   version: 1,
   theme: "system",
+  accent: "blue",
   range: "30d",
   subscriptionPollSeconds: 15,
   window: null,
   sidebarCollapsed: false,
+  menuBarEnabled: true,
+  menuBarDisplay: "cost",
+  menuBarProvider: "codex",
+  menuBarWindow: "session",
 };
 
 /**
@@ -35,8 +52,8 @@ export const DEFAULT_SETTINGS: Settings = {
  * launch flashes dark.
  */
 export const THEME_BACKGROUND: Record<ResolvedTheme, string> = {
-  dark: "#0a0b0d",
-  light: "#f5f6f7",
+  dark: "#070b10",
+  light: "#eff3f7",
 };
 
 const THEME_PREFERENCES: readonly ThemePreference[] = ["dark", "light", "system"];
@@ -87,9 +104,15 @@ export function normalizeSettings(raw: unknown): Settings {
   return {
     version: 1,
     theme,
+    accent: normalizeAccent(raw.accent),
     range,
     subscriptionPollSeconds,
     window: normalizeWindow(raw.window),
+    menuBarEnabled: typeof raw.menuBarEnabled === "boolean" ? raw.menuBarEnabled : DEFAULT_SETTINGS.menuBarEnabled,
+    menuBarDisplay: ["cost", "allowance", "both", "icon"].includes(raw.menuBarDisplay as string)
+      ? raw.menuBarDisplay as MenuBarDisplay : DEFAULT_SETTINGS.menuBarDisplay,
+    menuBarProvider: raw.menuBarProvider === "claude" ? "claude" : "codex",
+    menuBarWindow: raw.menuBarWindow === "weekly" ? "weekly" : "session",
     sidebarCollapsed:
       typeof raw.sidebarCollapsed === "boolean"
         ? raw.sidebarCollapsed

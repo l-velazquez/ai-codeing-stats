@@ -10,7 +10,7 @@ afterEach(() => {
 it("refreshes each minute and stops after unmount", async () => {
   vi.useFakeTimers();
   const subscriptions = vi.fn().mockResolvedValue([]);
-  vi.stubGlobal("tokenary", { subscriptions });
+  vi.stubGlobal("tally", { subscriptions });
   const apply = vi.fn();
   const { unmount } = renderHook(() => useSubscriptionPoll(apply));
   await act(() => vi.advanceTimersByTimeAsync(59_999));
@@ -29,7 +29,7 @@ it("does not overlap reads or apply results after unmount", async () => {
   vi.useFakeTimers();
   let resolve!: (value: []) => void;
   const subscriptions = vi.fn(() => new Promise<[]>((done) => { resolve = done; }));
-  vi.stubGlobal("tokenary", { subscriptions });
+  vi.stubGlobal("tally", { subscriptions });
   const apply = vi.fn();
   const { unmount } = renderHook(() => useSubscriptionPoll(apply));
   await act(() => vi.advanceTimersByTimeAsync(180_000));

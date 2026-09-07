@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import MenuBarApp from "./MenuBarApp";
 import { markPlatform } from "./lib/platform";
 import "./styles/index.css";
 
@@ -10,6 +11,6 @@ markPlatform();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    {new URLSearchParams(window.location.search).get("view") === "menubar" ? <MenuBarApp /> : <App />}
   </React.StrictMode>,
 );

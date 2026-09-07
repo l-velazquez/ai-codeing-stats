@@ -28,12 +28,12 @@ export function useSnapshot(range: RangeKey): SnapshotState {
   const [refreshing, setRefreshing] = useState(false);
   const requestId = useRef(0);
 
-  const load = useCallback(async (target: RangeKey) => {
+  const load = useCallback(async (target: RangeKey, refresh = false) => {
     const id = ++requestId.current;
     setRefreshing(true);
     setError(null);
     try {
-      const next = await scan(target);
+      const next = await scan(target, refresh);
       if (id !== requestId.current) return;
       setSnapshot(next);
       setStatus("ready");
@@ -50,9 +50,14 @@ export function useSnapshot(range: RangeKey): SnapshotState {
 
   useEffect(() => {
     void load(range);
+    const unsubscribe = window.tally?.onStatsChanged?.(() => { void load(range); });
+    const unsubscribeState = window.tally?.menuBar?.onChange((state) => {
+      if (state.error) setError(state.error);
+    });
+    return () => { unsubscribe?.(); unsubscribeState?.(); requestId.current += 1; };
   }, [load, range]);
 
-  const reload = useCallback(() => void load(range), [load, range]);
+  const reload = useCallback(() => void load(range, true), [load, range]);
 
   const applySubscriptions = useCallback((subscriptions: SubscriptionUsage[]) => {
     setSnapshot((current) => (current ? { ...current, subscriptions } : current));

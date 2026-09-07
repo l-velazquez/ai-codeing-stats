@@ -399,7 +399,7 @@ function aggregate(
   now: number,
 ): StatsSnapshot {
   const filtered = records
-    .filter((record) => since === null || record.timestamp >= since)
+    .filter((record) => (since === null || record.timestamp >= since) && record.timestamp <= now)
     .sort((a, b) => a.timestamp - b.timestamp);
   const sessions = new Map<string, MutableSession>();
   const modelMap = new Map<string, ModelStat>();
@@ -660,6 +660,21 @@ export async function refreshSubscriptions(): Promise<SubscriptionUsage[]> {
 
 export function invalidateStatsCache(): void {
   cachedRecords = null;
+}
+
+/** Projection only: all disk reads are coordinated by the main-process service. */
+export function cachedStats(range: RangeKey, today = false): StatsSnapshot {
+  if (cachedRecords === null) throw new Error("Usage has not been scanned yet.");
+  const now = Date.now();
+  if (today) return aggregateToday(cachedRecords.records, cachedRecords.sources, cachedRecords.subscriptions, now);
+  return aggregate(cachedRecords.records, cachedRecords.sources, cachedRecords.subscriptions,
+    range, rangeStart(range, now), now);
+}
+
+export function aggregateToday(records: UsageRecord[], sources: SourceStatus[], subscriptions: SubscriptionUsage[], now: number): StatsSnapshot {
+  const midnight = new Date(now);
+  midnight.setHours(0, 0, 0, 0);
+  return aggregate(records, sources, subscriptions, "7d", midnight.getTime(), now);
 }
 
 export function sourceDisplayName(provider: Provider): string {

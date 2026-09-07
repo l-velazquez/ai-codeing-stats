@@ -198,8 +198,8 @@ function setupSnapshot(month: string, cliInstalled: boolean): GitHubMonthSnapsho
     login: "",
     state: "setup",
     detail: cliInstalled
-      ? "GitHub CLI is installed, but Tokenary could not find a sign-in. Run `gh auth login` in Terminal, then check again."
-      : "GitHub CLI is not installed. Install `gh`, run `gh auth login` in Terminal, then check again. You can also launch Tokenary with GH_TOKEN set.",
+      ? "GitHub CLI is installed, but azul-code could not find a sign-in. Run `gh auth login` in Terminal, then check again."
+      : "GitHub CLI is not installed. Install `gh`, run `gh auth login` in Terminal, then check again. You can also launch azul-code with GH_TOKEN set.",
     fetchedAt: Date.now(),
     days: [],
     repos: [],
@@ -248,7 +248,7 @@ async function ghApi<T>(path: string, token: string): Promise<T> {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
       "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "tokenary-local",
+      "User-Agent": "tally-local",
     },
   });
   if (response.ok) return (await response.json()) as T;

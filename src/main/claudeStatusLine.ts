@@ -2,10 +2,13 @@ import { chmod, mkdir, readFile, realpath, rename, stat, writeFile } from "node:
 import { join } from "node:path";
 import type { SubscriptionUsage, SubscriptionWindow } from "../shared/types";
 
-const TOKENARY_DIRECTORY = "tokenary";
+const TALLY_DIRECTORY = "tally";
 const CAPTURE_FILE = "rate-limits.json";
 const PREVIOUS_COMMAND_FILE = "previous-statusline-command";
-const WRAPPER_FILE = "tokenary-statusline.sh";
+const WRAPPER_FILE = "tally-statusline.sh";
+// Installs made before the rename point settings.json at our own old wrapper.
+const LEGACY_DIRECTORY = "tokenary";
+const LEGACY_WRAPPER = join(LEGACY_DIRECTORY, "tokenary-statusline.sh");
 
 interface ClaudeRateLimitWindow {
   used_percentage?: unknown;
@@ -26,13 +29,14 @@ function shellQuote(value: string): string {
 }
 
 function paths(claudeHome: string) {
-  const tokenaryDirectory = join(claudeHome, TOKENARY_DIRECTORY);
+  const tallyDirectory = join(claudeHome, TALLY_DIRECTORY);
   return {
-    capture: join(tokenaryDirectory, CAPTURE_FILE),
-    previousCommand: join(tokenaryDirectory, PREVIOUS_COMMAND_FILE),
+    capture: join(tallyDirectory, CAPTURE_FILE),
+    previousCommand: join(tallyDirectory, PREVIOUS_COMMAND_FILE),
+    legacyPreviousCommand: join(claudeHome, LEGACY_DIRECTORY, PREVIOUS_COMMAND_FILE),
     settings: join(claudeHome, "settings.json"),
-    tokenaryDirectory,
-    wrapper: join(tokenaryDirectory, WRAPPER_FILE),
+    tallyDirectory,
+    wrapper: join(tallyDirectory, WRAPPER_FILE),
   };
 }
 
@@ -47,7 +51,7 @@ async function readSettings(settingsPath: string): Promise<ClaudeSettings> {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return {};
     if (error instanceof SyntaxError) {
-      throw new Error("Claude Code settings.json is not valid JSON. Fix it before connecting Tokenary.");
+      throw new Error("Claude Code settings.json is not valid JSON. Fix it before connecting azul-code.");
     }
     throw error;
   }
@@ -143,7 +147,7 @@ function unavailableUsage(configured: boolean, detail?: string): SubscriptionUsa
     windows: [],
     detail: detail ?? (configured
       ? "Connected. Start or resume Claude Code, accept its trust prompt if shown, and send a message to capture the limits."
-      : "Connect Tokenary to Claude Code’s status line to capture provider-reported limits locally."),
+      : "Connect azul-code to Claude Code’s status line to capture provider-reported limits locally."),
     capture: { kind: "claude-statusline", state: configured ? "waiting" : "not-configured" },
   };
 }
@@ -156,7 +160,7 @@ export async function readClaudeStatusLineSubscription(claudeHome: string): Prom
     return parseClaudeStatusLineSubscription(contents, metadata.mtimeMs, configured);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return unavailableUsage(configured);
-    return unavailableUsage(configured, "Tokenary could not read the local Claude allowance capture.");
+    return unavailableUsage(configured, "azul-code could not read the local Claude allowance capture.");
   }
 }
 
@@ -165,17 +169,17 @@ function wrapperContents(): string {
 set -u
 umask 077
 
-tokenary_dir="$HOME/.claude/tokenary"
-incoming="$tokenary_dir/statusline-input.$$"
-candidate="$tokenary_dir/rate-limits.json.$$"
-capture="$tokenary_dir/rate-limits.json"
-previous="$tokenary_dir/previous-statusline-command"
+tally_dir="$HOME/.claude/tally"
+incoming="$tally_dir/statusline-input.$$"
+candidate="$tally_dir/rate-limits.json.$$"
+capture="$tally_dir/rate-limits.json"
+previous="$tally_dir/previous-statusline-command"
 
-mkdir -p "$tokenary_dir" || exit 0
+mkdir -p "$tally_dir" || exit 0
 trap 'rm -f "$incoming" "$candidate"' EXIT HUP INT TERM
 cat > "$incoming" || exit 0
 
-# plutil is built into macOS. Extract only rate_limits so Tokenary never stores
+# plutil is built into macOS. Extract only rate_limits so azul-code never stores
 # session identifiers, workspace paths, transcript paths, or other status data.
 if /usr/bin/plutil -extract rate_limits json -o "$candidate" "$incoming" >/dev/null 2>&1; then
   chmod 600 "$candidate"
@@ -186,20 +190,42 @@ if [ -s "$previous" ]; then
   previous_command=$(cat "$previous")
   /bin/sh -c "$previous_command" < "$incoming"
 else
-  printf 'Tokenary · Claude allowance connected\\n'
+  printf 'azul-code · Claude allowance connected\\n'
 fi
 `;
+}
+
+/**
+ * What the new wrapper should chain to. Normally that is whatever status line
+ * was already configured, but an install made before the rename points at our
+ * own old wrapper: chaining it would run a stale copy on every render, so take
+ * over what it was chaining instead.
+ */
+async function inheritedCommand(
+  target: ReturnType<typeof paths>,
+  configuredCommand: unknown,
+  tallyCommand: string,
+): Promise<string | null> {
+  if (typeof configuredCommand !== "string" || configuredCommand === tallyCommand) return null;
+  if (!configuredCommand.includes(LEGACY_WRAPPER)) return configuredCommand;
+  try {
+    const carried = (await readFile(target.legacyPreviousCommand, "utf8")).trim();
+    return carried === "" ? null : carried;
+  } catch {
+    return null;
+  }
 }
 
 export async function installClaudeStatusLine(claudeHome: string): Promise<SubscriptionUsage> {
   const target = paths(claudeHome);
   const settings = await readSettings(target.settings);
   const configuredCommand = settings.statusLine?.command;
-  const tokenaryCommand = shellQuote(target.wrapper);
+  const tallyCommand = shellQuote(target.wrapper);
 
-  await mkdir(target.tokenaryDirectory, { recursive: true, mode: 0o700 });
-  if (typeof configuredCommand === "string" && configuredCommand !== tokenaryCommand) {
-    await writeFile(target.previousCommand, configuredCommand, { encoding: "utf8", mode: 0o600 });
+  await mkdir(target.tallyDirectory, { recursive: true, mode: 0o700 });
+  const previous = await inheritedCommand(target, configuredCommand, tallyCommand);
+  if (previous !== null) {
+    await writeFile(target.previousCommand, previous, { encoding: "utf8", mode: 0o600 });
     await chmod(target.previousCommand, 0o600);
   }
   await writeFile(target.wrapper, wrapperContents(), { encoding: "utf8", mode: 0o700 });
@@ -210,11 +236,11 @@ export async function installClaudeStatusLine(claudeHome: string): Promise<Subsc
     statusLine: {
       ...settings.statusLine,
       type: "command",
-      command: tokenaryCommand,
+      command: tallyCommand,
     },
   };
   const writeTarget = await settingsWritePath(target.settings);
-  const temporarySettings = `${writeTarget}.tokenary-${process.pid}`;
+  const temporarySettings = `${writeTarget}.tally-${process.pid}`;
   await writeFile(temporarySettings, `${JSON.stringify(nextSettings, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
   await rename(temporarySettings, writeTarget);
   await chmod(writeTarget, 0o600);

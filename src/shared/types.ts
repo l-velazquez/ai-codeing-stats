@@ -1,4 +1,5 @@
 import type { ResolvedTheme, Settings, ThemePreference } from "./settings";
+import type { MenuBarState } from "./menuBar";
 
 export type { ResolvedTheme, Settings, ThemePreference, WindowBounds } from "./settings";
 
@@ -212,8 +213,19 @@ export interface SystemCheckSnapshot {
   readonly checks: SystemCheck[];
 }
 
-export interface TokenaryBridge {
-  scan: (range: RangeKey) => Promise<StatsSnapshot>;
+export interface TallyBridge {
+  scan: (range: RangeKey, refresh?: boolean) => Promise<StatsSnapshot>;
+  onStatsChanged: (listener: () => void) => () => void;
+  onSettingsChanged: (listener: (settings: Settings) => void) => () => void;
+  menuBar: {
+    get: () => Promise<MenuBarState>;
+    refresh: () => Promise<MenuBarState>;
+    onChange: (listener: (state: MenuBarState) => void) => () => void;
+    openDashboard: (settings?: boolean) => Promise<void>;
+    hide: () => Promise<void>;
+    quit: () => Promise<void>;
+  };
+  onOpenSettings: (listener: () => void) => () => void;
   subscriptions: () => Promise<SubscriptionUsage[]>;
   setupClaudeStatusLine: () => Promise<SubscriptionUsage>;
   systemChecks: () => Promise<SystemCheckSnapshot>;
@@ -228,6 +240,6 @@ export interface TokenaryBridge {
    * Resolved synchronously from process.argv, so the theme and the sidebar
    * state are both known before the first paint.
    */
-  initial: { theme: ThemePreference; resolved: ResolvedTheme; sidebarCollapsed: boolean };
+  initial: { accent?: import("./settings").AccentColor; theme: ThemePreference; resolved: ResolvedTheme; sidebarCollapsed: boolean };
   platform: string;
 }

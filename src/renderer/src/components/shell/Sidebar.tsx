@@ -1,4 +1,5 @@
-import { Activity, HardDrive, Settings } from "lucide-react";
+import { BrandMark } from "../BrandMark";
+import { HardDrive, Settings } from "lucide-react";
 import type { StatsSnapshot } from "../../../../shared/types";
 import { NAVIGATION, PAGES, type PageId } from "../../app/routes";
 import { PROVIDERS } from "../../format";
@@ -27,8 +28,8 @@ export function Sidebar({
     <aside className="sidebar" id={SIDEBAR_ID} inert={collapsed}>
       <div className="sidebar-inner">
         <div className="sidebar-brand">
-          <div className="brand-mark"><Activity size={16} /></div>
-          <div><strong>Tokenary</strong><span>AI coding telemetry</span></div>
+          <div className="brand-mark"><BrandMark size={29} /></div>
+          <div><strong>azul-code</strong><span>AI usage, clearly.</span></div>
         </div>
 
         <nav aria-label="Sections">

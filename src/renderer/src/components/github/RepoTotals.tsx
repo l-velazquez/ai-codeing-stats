@@ -10,7 +10,7 @@ export function RepoTotals({ data }: { data: GitHubMonthSnapshot }) {
       <CardTitle action={<span className="muted-label">{data.totals.repos} projects</span>}>By project</CardTitle>
       <div className="gh-repo-list">
         {data.repos.map((repo) => (
-          <button key={repo.repo} className="gh-repo-row" onClick={() => void window.tokenary?.openUrl(`https://github.com/${repo.repo}`)} title={`Open ${repo.repo} on GitHub`}>
+          <button key={repo.repo} className="gh-repo-row" onClick={() => void window.tally?.openUrl(`https://github.com/${repo.repo}`)} title={`Open ${repo.repo} on GitHub`}>
             <div className="gh-repo-row-name"><strong>{repo.repo.split("/")[1] ?? repo.repo}</strong><span>{repo.repo}</span></div>
             <span className="mini-bar"><i style={{ width: `${Math.max(4, (repo.commits / max) * 100)}%` }} /></span>
             <div className="numeric-cell"><strong>{repo.commits}</strong><span>{repo.activeDays}d active</span></div>

@@ -27,28 +27,28 @@ const TOOL_DEFINITIONS: ToolDefinition[] = [
     label: "Git",
     commands: ["git"],
     helpUrl: "https://git-scm.com/download/mac",
-    missingDetail: "Optional for Tokenary's API-based contribution ledger, but recommended for local development.",
+    missingDetail: "Optional for azul-code's API-based contribution ledger, but recommended for local development.",
   },
   {
     id: "codex",
     label: "Codex",
     commands: ["codex"],
     helpUrl: "https://learn.chatgpt.com/docs/codex/cli",
-    missingDetail: "Install and use Codex to create local session metadata for Tokenary.",
+    missingDetail: "Install and use Codex to create local session metadata for azul-code.",
   },
   {
     id: "claude",
     label: "Claude Code",
     commands: ["claude"],
     helpUrl: "https://docs.anthropic.com/en/docs/claude-code/getting-started",
-    missingDetail: "Install and use Claude Code to create local project metadata for Tokenary.",
+    missingDetail: "Install and use Claude Code to create local project metadata for azul-code.",
   },
   {
     id: "opencode",
     label: "OpenCode",
     commands: ["opencode", "opencode2"],
     helpUrl: "https://opencode.ai/docs/",
-    missingDetail: "Install and use OpenCode to create the local database Tokenary reads.",
+    missingDetail: "Install and use OpenCode to create the local database azul-code reads.",
   },
 ];
 
@@ -163,7 +163,7 @@ async function toolCheck(definition: ToolDefinition): Promise<SystemCheck> {
     command: definition.commands[0],
     state: found ? "ready" : "missing",
     version: found?.version ?? null,
-    detail: found ? "Installed and available to Tokenary." : definition.missingDetail,
+    detail: found ? "Installed and available to azul-code." : definition.missingDetail,
     helpUrl: definition.helpUrl,
   };
 }

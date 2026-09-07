@@ -21,7 +21,7 @@ Source: https://github.com/pingdotgg/t3code
 OpenAI, Codex, ChatGPT, Claude, Anthropic, and OpenCode names and logos are the
 property of their respective owners. Their marks are shown only to identify the
 local coding tools represented by dashboard data; their presence does not imply
-endorsement of Tokenary.
+endorsement of azul-code.
 
 - OpenAI Blossom source and usage guidelines: https://openai.com/brand/
 - Claude mark source: https://claude.com/
@@ -29,7 +29,7 @@ endorsement of Tokenary.
 
 ## IBM Plex Mono
 
-Tokenary bundles IBM Plex Mono for all numeric readouts, vendored through the
+azul-code bundles IBM Plex Mono for all numeric readouts, vendored through the
 `@fontsource/ibm-plex-mono` package. IBM Plex is Copyright © 2017 IBM Corp. and
 is licensed under the SIL Open Font License, Version 1.1.
 

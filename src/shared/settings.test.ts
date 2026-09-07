@@ -19,6 +19,7 @@ describe("normalizeSettings", () => {
         sidebarCollapsed: true,
       }),
     ).toEqual({
+      ...DEFAULT_SETTINGS,
       version: 1,
       theme: "light",
       range: "90d",
@@ -58,6 +59,15 @@ describe("normalizeSettings", () => {
     // A truthy string from a hand-edited file must not hide the whole navigation.
     expect(normalizeSettings({ sidebarCollapsed: "yes" }).sidebarCollapsed).toBe(false);
     expect(normalizeSettings({}).sidebarCollapsed).toBe(false);
+  });
+
+  it("preserves supported accents and upgrades old or invalid preferences safely", () => {
+    for (const accent of ["red", "orange", "green", "blue", "pink", "violet"]) {
+      expect(normalizeSettings({ accent, theme: "light" })).toMatchObject({ accent, theme: "light" });
+    }
+    for (const accent of [undefined, null, "invalid", 42]) {
+      expect(normalizeSettings({ accent }).accent).toBe("blue");
+    }
   });
 
   it("always reports version 1", () => {

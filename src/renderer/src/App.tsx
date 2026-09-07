@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Info } from "lucide-react";
-import type { RangeKey, ThemePreference } from "@shared/types";
-import { resolveTheme } from "@shared/settings";
+import type { RangeKey } from "@shared/types";
+import { useThemePreference } from "@renderer/hooks/useThemePreference";
 import { PAGES, type PageId } from "@renderer/app/routes";
 import { Sidebar } from "@renderer/components/shell/Sidebar";
 import { TopBar } from "@renderer/components/shell/TopBar";
@@ -11,11 +11,8 @@ import { LoadingScreen } from "@renderer/components/primitives/LoadingScreen";
 import { useSnapshot } from "@renderer/hooks/useSnapshot";
 import { useGithubMonth } from "@renderer/hooks/useGithubMonth";
 import { useDailyCostIndex } from "@renderer/hooks/useDailyCostIndex";
-import { useSubscriptionPoll } from "@renderer/hooks/useSubscriptionPoll";
 import { useHotkey } from "@renderer/hooks/useHotkey";
 import { useSidebar } from "@renderer/hooks/useSidebar";
-import { readSettings, writeSettings } from "@renderer/lib/bridge";
-import { applyTheme, mirrorPreference, systemPrefersDark, watchSystemTheme } from "@renderer/lib/theme";
 import { RefreshProvider, useDefaultRefresh } from "@renderer/providers/RefreshProvider";
 import { OverviewPage } from "@renderer/pages/OverviewPage";
 import { PlansPage } from "@renderer/pages/PlansPage";
@@ -26,54 +23,14 @@ import { GithubPage } from "@renderer/pages/GithubPage";
 import { SettingsSheet } from "@renderer/components/settings/SettingsSheet";
 import { dateTime, localDayKey } from "@renderer/format";
 
-function useThemePreference() {
-  const [theme, setThemeState] = useState<ThemePreference>(
-    () => window.tokenary?.initial.theme ?? "system",
-  );
-  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
-
-  // The stored preference is the source of truth; the argv hint only covers the
-  // first paint.
-  useEffect(() => {
-    let cancelled = false;
-    void readSettings()
-      .then((settings) => {
-        if (!cancelled) setThemeState(settings.theme);
-      })
-      .catch(() => {
-        // Keep whatever the pre-paint hint gave us.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => watchSystemTheme(setPrefersDark), []);
-
-  const resolved = resolveTheme(theme, prefersDark);
-
-  useEffect(() => {
-    applyTheme(resolved);
-    mirrorPreference(theme, resolved);
-  }, [theme, resolved]);
-
-  const setTheme = useCallback((next: ThemePreference) => {
-    setThemeState(next);
-    void writeSettings({ theme: next }).catch(() => {
-      // The in-memory preference still applies for this session.
-    });
-  }, []);
-
-  return { theme, setTheme };
-}
 
 function AppInner() {
   const reduceMotion = useReducedMotion();
   const [page, setPage] = useState<PageId>("overview");
   const [range, setRange] = useState<RangeKey>("30d");
   const [connectingClaude, setConnectingClaude] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const { theme, setTheme } = useThemePreference();
+  const [settingsOpen, setSettingsOpen] = useState(() => new URLSearchParams(window.location.search).get("settings") === "open");
+  const { theme, setTheme, accent, setAccent } = useThemePreference();
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebar();
   const { snapshot, status, error, refreshing, reload, applySubscriptions, setError } =
     useSnapshot(range);
@@ -93,15 +50,15 @@ function AppInner() {
   useHotkey(",", openSettings);
   useHotkey("b", toggleSidebar);
 
-  useSubscriptionPoll(applySubscriptions);
+  useEffect(() => window.tally?.onOpenSettings(openSettings), [openSettings]);
   useDefaultRefresh(reload, refreshing);
 
   const connectClaude = useCallback(async () => {
-    if (!window.tokenary) return;
+    if (!window.tally) return;
     setConnectingClaude(true);
     setError(null);
     try {
-      const claude = await window.tokenary.setupClaudeStatusLine();
+      const claude = await window.tally.setupClaudeStatusLine();
       applySubscriptions(
         (snapshot?.subscriptions ?? []).map((usage) => (usage.provider === "claude" ? claude : usage)),
       );
@@ -185,7 +142,7 @@ function AppInner() {
             ) : null}
 
             <footer>
-              <span>Tokenary {__APP_VERSION__}</span>
+              <span>azul-code {__APP_VERSION__}</span>
               <span>API-equivalent estimates · no prompts are read</span>
             </footer>
           </div>
@@ -197,6 +154,8 @@ function AppInner() {
           snapshot={snapshot}
           theme={theme}
           setTheme={setTheme}
+          accent={accent}
+          setAccent={setAccent}
           onClose={closeSettings}
         />
       ) : null}
