@@ -1,6 +1,6 @@
 .split-panels { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .72fr); gap: var(--gap-section); }
 .list-panel { overflow: hidden; }
-.list-panel > .card-title-row { padding: 16px 17px 12px; }
+.list-panel > .card-title-row { padding: var(--pad-panel) var(--pad-panel) var(--space-3); }
 .text-action { display: flex; align-items: center; gap: 3px; border: 0; background: transparent; color: var(--muted); font-size: var(--text-xs); cursor: pointer; padding: 0; }
 .text-action:hover { color: var(--text); }
 .table-header { min-height: 27px !important; color: var(--faint); font-size: var(--text-2xs); background: color-mix(in srgb, var(--text) 1.6%, transparent); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -19,3 +19,12 @@
 .numeric-cell { text-align: right; display: grid; gap: 3px; }
 .numeric-cell strong { font-size: var(--text-sm); font-weight: 500; font-variant-numeric: tabular-nums; }
 .numeric-cell span { color: var(--muted); font-size: var(--text-2xs); }
+
+/* A table sits in a well rather than bleeding to the panel edge: recessed is a
+   different depth cue from raised, so the rows separate from the card holding
+   them without the page gaining another card. Row padding plus the well's own
+   inset lands the first column on the same left edge as the card title. */
+.table-well { margin: 0 var(--space-2) var(--space-2); overflow: hidden; }
+.table-well > .table-header { border-top: 0; }
+.table-well > .data-row:last-child { border-bottom: 0; }
+.table-well .model-row, .table-well .project-row { padding: 0 var(--space-3); }

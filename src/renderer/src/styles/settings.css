@@ -13,7 +13,7 @@
 .system-check-detail { display: grid; grid-template-columns: 8px 1fr; align-items: center; gap: 3px 5px; min-width: 0; }
 .system-check-detail strong { font-size: var(--text-xs); font-weight: 500; }
 .system-check-detail small { grid-column: 2; color: var(--muted); font-size: var(--text-2xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.system-dot--ready { background: #91d84c; box-shadow: 0 0 0 4px rgba(145,216,76,.1); }
+.system-dot--ready { background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 12%, transparent); }
 .system-dot--action { background: var(--warning); box-shadow: 0 0 0 4px color-mix(in srgb, var(--warning) 11%, transparent); }
 .system-dot--missing { background: var(--muted); }
 .system-check-help { justify-content: flex-end; color: var(--accent); }
@@ -57,3 +57,37 @@
   .accent-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .accent-heading { align-items: flex-start; flex-direction: column; gap: 5px; }
 }
+
+.settings-tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.settings-tabs button { background: transparent; border: 0; border-radius: 6px; padding: 8px 14px; color: var(--muted); cursor: pointer; font: inherit; }
+.settings-tabs button[aria-selected="true"] { background: var(--wash-1); color: var(--text); }
+.diagnostics { display: grid; gap: 16px; }
+.diagnostics h2 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.diagnostics h3 { font-size: 12px; margin: 0; }
+.diagnostics .settings-intro { margin: 0; }
+.resource-heading { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.resource-heading > span { margin-left: auto; font-size: 11px; color: var(--muted); }
+.resource-heading .resource-status { border: 1px solid var(--border); padding: 6px 9px; border-radius: 20px; color: var(--text); }
+.resource-heading .resource-status--error { color: #e66b64; }
+.resource-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; }
+.resource-metric { padding: 19px 16px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--border); }
+.resource-metric > span, .resource-group > span:first-child { text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-size: 10px; }
+.resource-metric strong { font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 500; overflow-wrap: anywhere; }
+.resource-metric small { color: var(--faint); font-size: 10px; line-height: 1.5; }
+.resource-metric:not(:nth-child(3n)), .resource-group:not(:last-child) { border-right: 1px solid var(--border); }
+.resource-group { padding: 16px; display: grid; gap: 12px; border-top: 2px solid var(--accent); }
+.resource-group small { display: block; margin-top: 5px; letter-spacing: 0; text-transform: none; }
+.resource-group strong, .resource-group > span:last-child { font-family: 'IBM Plex Mono', monospace; }
+.resource-host { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.diagnostics dl { margin: 14px 0 0; font-size: 11px; }
+.diagnostics dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.diagnostics dt { color: var(--muted); }
+.diagnostics dd { margin: 0; text-align: right; }
+.resource-history { height: 54px; display: flex; align-items: end; gap: 3px; margin-top: 18px; }
+.resource-history > div { flex: 1; max-width: 12px; background: var(--accent); border-radius: 2px 2px 0 0; }
+.resource-table { overflow-x: auto; margin-top: 12px; }
+.resource-table table { width: 100%; font-size: 11px; border-collapse: collapse; }
+.resource-table th, .resource-table td { padding: 10px 6px; text-align: right; border-bottom: 1px solid var(--border); }
+.resource-table th:first-child, .resource-table td:first-child { text-align: left; }
+.resource-table small { display: block; color: var(--muted); margin-top: 3px; }
+@media (max-width: 620px) { .resource-grid { grid-template-columns: 1fr; } .resource-host { grid-template-columns: 1fr; } .resource-metric { border-right: 0; } }

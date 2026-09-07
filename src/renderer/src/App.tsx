@@ -13,6 +13,8 @@ import { useGithubMonth } from "@renderer/hooks/useGithubMonth";
 import { useDailyCostIndex } from "@renderer/hooks/useDailyCostIndex";
 import { useHotkey } from "@renderer/hooks/useHotkey";
 import { useSidebar } from "@renderer/hooks/useSidebar";
+import { useDayOrder } from "@renderer/hooks/useDayOrder";
+import { useSubscriptionPoll } from "@renderer/hooks/useSubscriptionPoll";
 import { RefreshProvider, useDefaultRefresh } from "@renderer/providers/RefreshProvider";
 import { OverviewPage } from "@renderer/pages/OverviewPage";
 import { PlansPage } from "@renderer/pages/PlansPage";
@@ -32,6 +34,9 @@ function AppInner() {
   const [settingsOpen, setSettingsOpen] = useState(() => new URLSearchParams(window.location.search).get("settings") === "open");
   const { theme, setTheme, accent, setAccent } = useThemePreference();
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebar();
+  // Hoisted for the same reason as githubMonth: page-local state would re-read
+  // from disk and flash the default on every visit to Contributions.
+  const { order: dayOrder, toggle: toggleDayOrder } = useDayOrder();
   const { snapshot, status, error, refreshing, reload, applySubscriptions, setError } =
     useSnapshot(range);
 
@@ -52,6 +57,10 @@ function AppInner() {
 
   useEffect(() => window.tally?.onOpenSettings(openSettings), [openSettings]);
   useDefaultRefresh(reload, refreshing);
+  // Allowance is the one figure that goes stale while you sit on the page, and
+  // the home screen now projects a runway from it. Refreshing on its own also
+  // re-renders the countdown, so the hero cannot silently freeze.
+  useSubscriptionPoll(applySubscriptions);
 
   const connectClaude = useCallback(async () => {
     if (!window.tally) return;
@@ -136,7 +145,7 @@ function AppInner() {
                   {page === "models" ? <ModelsPage snapshot={snapshot} /> : null}
                   {page === "projects" ? <ProjectsPage snapshot={snapshot} /> : null}
                   {page === "sessions" ? <SessionsPage snapshot={snapshot} /> : null}
-                  {page === "github" ? <GithubPage snapshot={snapshot} month={githubMonth} /> : null}
+                  {page === "github" ? <GithubPage snapshot={snapshot} month={githubMonth} order={dayOrder} onToggleOrder={toggleDayOrder} /> : null}
                 </motion.div>
               </AnimatePresence>
             ) : null}

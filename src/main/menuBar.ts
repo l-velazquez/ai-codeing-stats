@@ -4,7 +4,7 @@ import trayIcon from "../../resources/trayTemplate.png?asset";
 import trayIcon2x from "../../resources/trayTemplate@2x.png?asset";
 import { menuBarTitle } from "../shared/menuBar";
 import { panelBounds } from "../shared/panelBounds";
-import { resolveTheme, THEME_BACKGROUND, type Settings } from "../shared/settings";
+import { resolveTheme, themeBackground, type Settings } from "../shared/settings";
 import type { StatsService } from "./statsService";
 
 export class MenuBar {
@@ -50,7 +50,8 @@ export class MenuBar {
   }
 
   updateTheme(): void {
-    this.panel?.setBackgroundColor(THEME_BACKGROUND[resolveTheme(this.settings.theme, nativeTheme.shouldUseDarkColors)]);
+    const resolved = resolveTheme(this.settings.theme, nativeTheme.shouldUseDarkColors);
+    this.panel?.setBackgroundColor(themeBackground(resolved, this.settings.accent));
   }
 
   private updateTitle(): void {
@@ -66,7 +67,7 @@ export class MenuBar {
       width: 360, height: 620, show: false, frame: false, resizable: false,
       maximizable: false, minimizable: false, fullscreenable: false,
       skipTaskbar: true, alwaysOnTop: true, roundedCorners: true,
-      title: "azul-code menu bar", backgroundColor: THEME_BACKGROUND[resolved],
+      title: "azul-code menu bar", backgroundColor: themeBackground(resolved, this.settings.accent),
       webPreferences: {
         preload: join(__dirname, "../preload/index.cjs"), sandbox: true,
         contextIsolation: true, nodeIntegration: false,

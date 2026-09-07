@@ -2,7 +2,7 @@ import { CreditCard, RefreshCw } from "lucide-react";
 import { ProviderMark } from "@renderer/components/ProviderMark";
 import { RANGE_LABELS } from "@renderer/components/shell/RangeControl";
 import { PROVIDERS, compact, money, relative } from "@renderer/format";
-import { resetText } from "@renderer/lib/allowance";
+import { AllowanceMeter } from "@renderer/components/allowance/AllowanceMeter";
 import type { StatsSnapshot, SubscriptionUsage } from "@shared/types";
 
 export function SubscriptionCard({
@@ -18,6 +18,8 @@ export function SubscriptionCard({
 }) {
   const activity = snapshot.providers.find((provider) => provider.provider === usage.provider);
   const isLive = usage.state === "live" && usage.windows.length > 0;
+  const captured = usage.updatedAt === null ? null : relative(usage.updatedAt);
+  const capturedAt = captured === null ? null : captured === "now" ? "Captured just now" : `Captured ${captured} ago`;
   return (
     <section className={`panel subscription-card${isLive ? "" : " subscription-card--unavailable"}`}>
       <div className="subscription-header">
@@ -32,12 +34,12 @@ export function SubscriptionCard({
 
       {isLive ? (
         <div className="allowance-list">
+          {/* The same meter the home screen uses. This markup was duplicated
+              inline, so these bars painted the accent gradient at every level
+              while the home screen coloured by pressure -- one window read as
+              two different states depending on which page you were on. */}
           {usage.windows.map((window) => (
-            <div className="allowance" key={`${window.label}:${window.windowMinutes}`}>
-              <div className="allowance-heading"><span>{window.label}</span><strong>{Math.round(window.usedPercent)}% <small>used</small></strong></div>
-              <div className="allowance-track"><i style={{ width: `${window.usedPercent}%` }} /></div>
-              <div className="allowance-meta"><span>{Math.round(100 - window.usedPercent)}% available</span><span>{resetText(window.resetsAt)}</span></div>
-            </div>
+            <AllowanceMeter key={`${window.label}:${window.windowMinutes}`} window={window} />
           ))}
         </div>
       ) : (
@@ -59,7 +61,7 @@ export function SubscriptionCard({
         <div><span>API equivalent</span><strong>{money(activity?.cost ?? 0)}</strong><small>not your plan bill</small></div>
       </div>
       <div className="subscription-foot">
-        <span>{usage.updatedAt ? `Captured ${relative(usage.updatedAt)} ago` : usage.capture?.state === "waiting" ? "Status line connected" : "Waiting for setup"}</span>
+        <span>{capturedAt ?? (usage.capture?.state === "waiting" ? "Status line connected" : "Waiting for setup")}</span>
         {isLive ? <span>{usage.detail}</span> : null}
       </div>
     </section>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SETTINGS, normalizeSettings, resolveTheme } from "./settings";
+import { ACCENT_COLORS, DEFAULT_SETTINGS, normalizeSettings, resolveTheme, themeBackground } from "./settings";
 
 describe("normalizeSettings", () => {
   it("returns defaults for non-objects", () => {
@@ -70,6 +70,14 @@ describe("normalizeSettings", () => {
     }
   });
 
+  it("keeps the contributions ledger oldest-first unless newest is stored", () => {
+    expect(normalizeSettings({}).contributionsOrder).toBe("oldest");
+    expect(normalizeSettings({ contributionsOrder: "newest" }).contributionsOrder).toBe("newest");
+    for (const value of [undefined, null, "sideways", 42, true]) {
+      expect(normalizeSettings({ contributionsOrder: value }).contributionsOrder).toBe("oldest");
+    }
+  });
+
   it("always reports version 1", () => {
     expect(normalizeSettings({ version: 99 }).version).toBe(1);
   });
@@ -86,5 +94,19 @@ describe("resolveTheme", () => {
   it("follows the system only when asked to", () => {
     expect(resolveTheme("system", true)).toBe("dark");
     expect(resolveTheme("system", false)).toBe("light");
+  });
+});
+
+describe("themeBackground", () => {
+  it("mixes 7% of the accent into the theme's ground, matching --bg", () => {
+    // #05080c with 7% of blue #2460ff: round(5*.93 + 36*.07) = 7, and so on.
+    expect(themeBackground("dark", "blue")).toBe("#070e1d");
+    expect(themeBackground("light", "blue")).toBe("#e1e9f8");
+  });
+
+  it("returns a distinct six-digit hex per accent", () => {
+    const grounds = ACCENT_COLORS.map((accent) => themeBackground("dark", accent));
+    for (const ground of grounds) expect(ground).toMatch(/^#[0-9a-f]{6}$/);
+    expect(new Set(grounds).size).toBe(ACCENT_COLORS.length);
   });
 });

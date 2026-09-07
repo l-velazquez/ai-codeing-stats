@@ -1,0 +1,30 @@
+import { act, fireEvent, render, screen, cleanup } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import { Diagnostics } from "./Diagnostics";
+import type { TallyBridge } from "@shared/types";
+const snapshot = { sampledAt: Date.now(), cpu: 2, memory: 1024, collectionMs: 1, processes: [], host: { platform: "darwin", arch: "arm64", cores: 8, totalMemory: 1024, freeMemory: 512, uptime: 60, onBattery: false, thermal: "nominal", idle: "active", idleSeconds: 0 } };
+afterEach(() => { cleanup(); vi.useRealTimers(); delete window.tally; });
+it("polls, pauses, resumes and stops collection on unmount", async () => {
+  vi.useFakeTimers();
+  const resources = vi.fn().mockResolvedValue(snapshot);
+  window.tally = { resources } as unknown as TallyBridge;
+  const view = render(<Diagnostics />);
+  await act(async () => {});
+  expect(screen.getByText("Native healthy")).toBeInTheDocument();
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+  expect(resources).toHaveBeenCalledTimes(2);
+  fireEvent.click(screen.getByLabelText("Pause monitoring"));
+  await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+  expect(resources).toHaveBeenCalledTimes(2);
+  fireEvent.click(screen.getByLabelText("Resume monitoring"));
+  await act(async () => {});
+  expect(resources).toHaveBeenCalledTimes(3);
+  view.unmount();
+  await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+  expect(resources).toHaveBeenCalledTimes(3);
+});
+it("does not invent native counters in a browser", () => {
+  delete window.tally;
+  render(<Diagnostics />);
+  expect(screen.getByText("Desktop app required")).toBeInTheDocument();
+});

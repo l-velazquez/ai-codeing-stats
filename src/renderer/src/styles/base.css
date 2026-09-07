@@ -13,6 +13,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid color-mix(in srgb
 .allowance-meta,
 .numeric-cell strong,
 .todays-work-figures strong,
+.stat-rail strong,
+.runway-axis,
 .model-feature-cost strong,
 .project-summary strong,
 .plans-live-count strong,
@@ -42,7 +44,7 @@ h1, h2 { font-weight: 600; letter-spacing: -0.02em; }
 .project-row:focus-visible,
 .gh-commit:focus-visible,
 .gh-repo-row:focus-visible,
-.allowance-card:focus-visible,
+.runway-other:focus-visible,
 .settings-launcher:focus-visible,
 .data-row:focus-visible,
 .session-row:focus-visible {

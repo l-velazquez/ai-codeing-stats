@@ -9,17 +9,23 @@
      by construction rather than by luck. */
   --font-figure: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --bg: #070b10;
-  --sidebar: #090e14;
-  --panel: #0c121a;
-  --panel-raised: #121a24;
-  --panel-hover: #18222e;
+  /* The surface ladder. The steps used to be ~2.5% of luminance apart, which
+     meant a panel and the page behind it were the same colour for practical
+     purposes and every card floated in an undifferentiated field. Same hue,
+     wider steps. These are the untinted rungs; the accent block at the end of
+     this file mixes the accent into each one to produce --bg, --panel and the
+     rest, so nothing outside this file reads a *-base token. */
+  --bg-base: #05080c;
+  --surface-sunken-base: #080c12;
+  --sidebar-base: #090e14;
+  --panel-base: #0d141d;
+  --panel-raised-base: #131c26;
+  --panel-hover-base: #18222e;
   --text: #e6edf5;
   --text-2: #a9b6c6;
   --muted: #8494a6;
   --faint: #758598;
-  --border: rgba(150, 180, 210, 0.10);
-  --border-strong: rgba(150, 180, 210, 0.20);
+  --border-ink: #96b4d2;
 
   /* Money */
   --accent: #6695ff;
@@ -38,7 +44,24 @@
   --warning: #e8b24b;
   --danger: #f2705c;
 
+  /* Status. #91d84c was hardcoded at six call sites across three stylesheets
+     with no light-theme value. */
+  --ok: #91d84c;
+
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+
+  /* Depth. A dark UI gets it from a lighter surface plus a top edge highlight,
+     with the ambient shadow doing the rest; a light UI gets it from the shadow
+     alone, tinted with the page hue so it never reads as grey soot. Three
+     levels, plus a well for recessed surfaces -- a well is a different device
+     from a card, so it separates content without adding another rectangle. */
+  --edge: rgba(255, 255, 255, 0.055);
+  --edge-strong: rgba(255, 255, 255, 0.09);
+  --shadow-hue: 6 12 22;
+  --elev-1: 0 1px 2px rgb(var(--shadow-hue) / .30), 0 2px 6px rgb(var(--shadow-hue) / .20), inset 0 1px 0 var(--edge);
+  --elev-2: 0 2px 4px rgb(var(--shadow-hue) / .34), 0 10px 26px rgb(var(--shadow-hue) / .26), inset 0 1px 0 var(--edge);
+  --elev-3: 0 4px 10px rgb(var(--shadow-hue) / .38), 0 22px 52px rgb(var(--shadow-hue) / .34), inset 0 1px 0 var(--edge-strong);
+  --well: inset 0 1px 3px rgb(var(--shadow-hue) / .40);
 
   /* Two gaps, not one. Everything on a page used to sit 14px apart, so a row
      of four KPI cards read as loosely as the boundary between that row and the
@@ -47,21 +70,38 @@
   --gap-card: 14px;
   --gap-section: 20px;
   --radius: 14px;
+
+  /* Spacing and radius scales. Panel padding was unique per component (19px,
+     17px, 16px 17px, 23px 24px 12px, 18px 19px 16px, 20px 22px...), which is
+     what made separate panels read as separately built rather than as one
+     system. --pad-panel is the shared inner padding. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 28px;
+  --space-7: 40px;
+  --pad-panel: 20px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 99px;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #eff3f7;
-  --sidebar: #e7edf3;
-  --panel: #ffffff;
-  --panel-raised: #f6f9fc;
-  --panel-hover: #edf2f7;
+  --bg-base: #eff3f7;
+  --surface-sunken-base: #e8eef4;
+  --sidebar-base: #e7edf3;
+  --panel-base: #ffffff;
+  --panel-raised-base: #ffffff;
+  --panel-hover-base: #edf2f7;
   --text: #0e151d;
   --text-2: #47576a;
   --muted: #5c6b7e;
   --faint: #5b6a7e;
-  --border: rgba(16, 40, 66, 0.10);
-  --border-strong: rgba(16, 40, 66, 0.20);
+  --border-ink: #102842;
   --accent: #2c5fd0;
   --accent-2: #4348c9;
   --accent-tint: rgba(44, 95, 208, 0.11);
@@ -70,7 +110,19 @@
   --mint-tint: rgba(15, 158, 128, 0.12);
   --warning: #b27611;
   --danger: #c8452f;
+  --ok: #4c8a1f;
   --shadow: 0 18px 60px rgba(28, 36, 48, 0.10);
+
+  /* On white there is no lighter surface to step to, so the shadow carries all
+     of the depth. It is tinted with the page hue -- a neutral black shadow on a
+     cool background reads as soot. */
+  --edge: rgba(255, 255, 255, 0.9);
+  --edge-strong: #ffffff;
+  --shadow-hue: 24 40 66;
+  --elev-1: 0 1px 2px rgb(var(--shadow-hue) / .07), 0 2px 6px rgb(var(--shadow-hue) / .05), inset 0 1px 0 var(--edge);
+  --elev-2: 0 2px 4px rgb(var(--shadow-hue) / .08), 0 10px 26px rgb(var(--shadow-hue) / .08), inset 0 1px 0 var(--edge);
+  --elev-3: 0 4px 10px rgb(var(--shadow-hue) / .10), 0 22px 52px rgb(var(--shadow-hue) / .12), inset 0 1px 0 var(--edge-strong);
+  --well: inset 0 1px 3px rgb(var(--shadow-hue) / .09);
 }
 
 /* Scales introduced by the stylesheet split. Every value here is identical to
@@ -91,6 +143,8 @@
   --text-xl: 18px;
   --text-2xl: 22px;
   --text-3xl: 28px;
+  --text-4xl: 34px;
+  --text-5xl: 44px;
 
   /* Surface washes, previously ad-hoc color-mix percentages inline. Only exact
      duplicates were folded in; the handful of one-off nudges (1.6%, 1.7%,
@@ -116,5 +170,30 @@
   --accent-2: color-mix(in srgb, var(--accent) 78%, var(--text));
   --accent-tint: color-mix(in srgb, var(--accent-solid) 20%, transparent);
   --chart: color-mix(in srgb, var(--accent-solid) 86%, var(--accent));
-  --sidebar: color-mix(in srgb, var(--bg) 88%, var(--accent-solid));
+}
+
+/* The accent is the app's ground, not just its highlight. Only the sidebar used
+   to pick it up, so switching accent recoloured the chart and one edge while
+   every panel and the page behind them stayed the same neutral slate. Each rung
+   of the ladder is now its neutral base with a few percent of the accent mixed
+   in. The percentage climbs with the rung, so the steps between surfaces get
+   wider rather than flattening as the tint grows. Written on :root rather than
+   :root[data-accent] so the derivation also covers the pre-paint frame, and so
+   it outranks nothing -- the theme blocks set only the *-base values.
+   --bg is mirrored by themeBackground() in shared/settings.ts, which is what
+   Electron paints the window with: change both together. */
+:root {
+  --bg: color-mix(in srgb, var(--accent-solid) 7%, var(--bg-base));
+  --surface-sunken: color-mix(in srgb, var(--accent-solid) 8%, var(--surface-sunken-base));
+  --sidebar: color-mix(in srgb, var(--accent-solid) 14%, var(--sidebar-base));
+  --panel: color-mix(in srgb, var(--accent-solid) 10%, var(--panel-base));
+  --panel-raised: color-mix(in srgb, var(--accent-solid) 12%, var(--panel-raised-base));
+  --panel-hover: color-mix(in srgb, var(--accent-solid) 15%, var(--panel-hover-base));
+
+  /* Hairlines take the tint in their ink, never in their alpha: mixing an
+     opaque accent into a 10% border would have carried the accent's opacity in
+     with it and made every rule in the app heavier. */
+  --border-tint: color-mix(in srgb, var(--accent-solid) 35%, var(--border-ink));
+  --border: color-mix(in srgb, var(--border-tint) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--border-tint) 20%, transparent);
 }

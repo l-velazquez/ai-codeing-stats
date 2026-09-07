@@ -36,6 +36,8 @@ Search the session ledger by project, displayed model label, or provider. Search
 
 Use the arrows to browse months through the current month. The ledger shows commit subjects and pull requests grouped by local day, alongside a month heat grid and repository totals. Links open GitHub in your browser. A previous month's data stays visible but dimmed while the next month loads.
 
+**Oldest first / Newest first** reverses the day ledger, and the choice survives relaunch. It affects the day cards only: the heat grid stays a calendar, and the copy summary stays chronological.
+
 **Copy invoice summary** copies the month's activity as plain text; day cards also support copying a single day. The summary includes commit subjects, pull request titles, repository names, and totals. It does not calculate billable hours or invoice amounts. Review the text before sharing, especially for private repositories.
 
 Daily AI cost is matched by date across your full local history. It is not attributed to a particular GitHub repository or proof that AI produced a commit. GitHub activity is fetched at app startup as well as through Contributions when credentials are available.

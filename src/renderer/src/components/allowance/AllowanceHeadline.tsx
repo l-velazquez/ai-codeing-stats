@@ -1,15 +1,12 @@
 import { CreditCard, RefreshCw } from "lucide-react";
 import type { StatsSnapshot } from "@shared/types";
-import { PROVIDERS } from "@renderer/format";
-import { ProviderMark } from "@renderer/components/ProviderMark";
-import { AllowanceMeter } from "@renderer/components/allowance/AllowanceMeter";
-import { isLive, worstWindow } from "@renderer/lib/allowance";
+import { RunwayPanel } from "@renderer/components/allowance/RunwayPanel";
+import { isLive } from "@renderer/lib/allowance";
 
 /**
- * The first thing on the home screen, because the question worth asking before
- * starting a long session is whether you are about to run into a limit -- not
- * what last month cost. Allowance is independent of the selected range, and the
- * copy says so rather than letting the range control imply otherwise.
+ * The first thing on the home screen. With a provider reporting it hands off to
+ * RunwayPanel; with nothing connected it invites setup rather than showing
+ * empty meters, because a row of zeroed bars looks like a reading of zero.
  */
 export function AllowanceHeadline({
   snapshot,
@@ -47,31 +44,5 @@ export function AllowanceHeadline({
     );
   }
 
-  return (
-    <section className="allowance-headline">
-      {live.map((usage) => {
-        const worst = worstWindow(usage);
-        return (
-          <button
-            key={usage.provider}
-            className="panel allowance-card"
-            onClick={onOpenDetail}
-            title={`See ${PROVIDERS[usage.provider].label} allowance detail`}
-          >
-            <div className="allowance-card-head">
-              <ProviderMark provider={usage.provider} />
-              <div>
-                <strong>{PROVIDERS[usage.provider].label}</strong>
-                <span>{usage.plan ? `${usage.plan} plan` : "Subscription"}</span>
-              </div>
-            </div>
-            {worst ? <AllowanceMeter window={worst} size="large" /> : null}
-            {usage.windows.length > 1 ? (
-              <span className="allowance-more">{usage.windows.length} windows tracked</span>
-            ) : null}
-          </button>
-        );
-      })}
-    </section>
-  );
+  return <RunwayPanel subscriptions={live} onOpenDetail={onOpenDetail} />;
 }

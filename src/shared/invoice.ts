@@ -1,3 +1,4 @@
+import type { DayOrder } from "./settings";
 import type { GitHubDay, GitHubMonthSnapshot } from "./types";
 
 function pad(value: number): string {
@@ -21,6 +22,16 @@ export function dayLabel(date: string): string {
 
 export function isDayActive(day: GitHubDay): boolean {
   return day.commits > 0 || day.pullRequests.length > 0;
+}
+
+/**
+ * Active days in display order. The month walk in main emits every day of the
+ * month oldest-first, so "newest" is that list reversed. `filter` hands back a
+ * fresh array, so reversing in place cannot disturb the snapshot.
+ */
+export function activeDaysInOrder(days: readonly GitHubDay[], order: DayOrder): GitHubDay[] {
+  const active = days.filter(isDayActive);
+  return order === "newest" ? active.reverse() : active;
 }
 
 function plural(count: number, word: string): string {

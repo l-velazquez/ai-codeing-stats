@@ -1,5 +1,7 @@
 import { useCallback } from "react";
 import {
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
   ArrowUpRight,
   CalendarDays,
   ChevronLeft,
@@ -12,8 +14,9 @@ import {
   Info,
   RefreshCw,
 } from "lucide-react";
+import type { DayOrder } from "@shared/settings";
 import type { GitHubDay, StatsSnapshot } from "@shared/types";
-import { buildDaySummary, buildInvoiceSummary, isDayActive, monthLabel } from "@shared/invoice";
+import { activeDaysInOrder, buildDaySummary, buildInvoiceSummary, monthLabel } from "@shared/invoice";
 import { EmptyState } from "@renderer/components/primitives/EmptyState";
 import { Kpi } from "@renderer/components/primitives/Kpi";
 import { DayCard } from "@renderer/components/github/DayCard";
@@ -35,9 +38,13 @@ function copyLabel(state: "idle" | "copied" | "failed"): string {
 export function GithubPage({
   snapshot,
   month: monthState,
+  order,
+  onToggleOrder,
 }: {
   snapshot: StatsSnapshot | null;
   month: GithubMonthState;
+  order: DayOrder;
+  onToggleOrder: () => void;
 }) {
   const { month, currentMonth, data, stale, loading, error, step, reload } = monthState;
   const { copy, stateFor } = useCopyToClipboard();
@@ -56,7 +63,8 @@ export function GithubPage({
     if (data && data.state === "ok") void copy(buildInvoiceSummary(data), "month");
   }, [copy, data]);
 
-  const activeDays = data?.days.filter(isDayActive) ?? [];
+  const activeDays = activeDaysInOrder(data?.days ?? [], order);
+  const newestFirst = order === "newest";
   const hasActivity = data ? data.totals.commits > 0 || data.totals.pullRequests > 0 : false;
   const monthCopyState = stateFor("month");
 
@@ -69,6 +77,15 @@ export function GithubPage({
           <button className="icon-button" disabled={month >= currentMonth} onClick={() => step(1)} title="Next month" aria-label="Next month"><ChevronRight size={14} /></button>
         </div>
         <div className="gh-toolbar-actions">
+          <button
+            className="order-toggle"
+            onClick={onToggleOrder}
+            title={newestFirst ? "Showing newest day first" : "Showing oldest day first"}
+            aria-label={`Day order: ${newestFirst ? "newest" : "oldest"} first. Activate to reverse.`}
+          >
+            {newestFirst ? <ArrowDownWideNarrow size={13} /> : <ArrowUpNarrowWide size={13} />}
+            {newestFirst ? "Newest first" : "Oldest first"}
+          </button>
           {data && data.state === "ok" ? <span className="muted-label">fetched {relative(data.fetchedAt)} ago · @{data.login}</span> : null}
           <button className="copy-summary" onClick={copyMonth} disabled={!hasActivity} data-state={monthCopyState}>
             <ClipboardCopy size={13} />{copyLabel(monthCopyState)}

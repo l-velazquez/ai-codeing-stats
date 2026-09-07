@@ -14,8 +14,8 @@
 .subscription-identity span { color: var(--muted); font-size: var(--text-2xs); text-transform: capitalize; }
 .subscription-state { height: 24px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 99px; padding: 0 9px; color: var(--muted); font-size: var(--text-2xs); }
 .subscription-state i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
-.subscription-state--live { color: color-mix(in srgb, #91d84c 72%, var(--text)); border-color: color-mix(in srgb, #91d84c 18%, var(--border)); background: color-mix(in srgb, #91d84c 5%, transparent); }
-.subscription-state--live i { background: #91d84c; box-shadow: 0 0 0 3px rgba(145,216,76,.09); }
+.subscription-state--live { color: color-mix(in srgb, var(--ok) 72%, var(--text)); border-color: color-mix(in srgb, var(--ok) 18%, var(--border)); background: color-mix(in srgb, var(--ok) 5%, transparent); }
+.subscription-state--live i { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 10%, transparent); }
 .allowance-list { display: grid; gap: 24px; padding: 26px 1px 25px; }
 .allowance { display: grid; gap: 10px; }
 .allowance-heading, .allowance-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
