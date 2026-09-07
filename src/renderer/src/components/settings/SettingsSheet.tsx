@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Diagnostics } from "./Diagnostics";
 import { ACCENT_COLORS, type AccentColor } from "@shared/settings";
 import { BrandMark } from "@renderer/components/BrandMark";
 import { ArrowUpRight, ChevronRight, CircleDollarSign, Database, HardDrive, Info, MonitorCog, Moon, RefreshCw, Sun } from "lucide-react";
@@ -93,9 +95,14 @@ export function SettingsSheet({
   accent: AccentColor;
   setAccent: (accent: AccentColor) => void;
 }) {
+  const [tab, setTab] = useState<"general" | "diagnostics">("general");
   return (
     <Modal title="Settings" onClose={onClose}>
-      <SettingsBody snapshot={snapshot} theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} />
+      <div className="settings-tabs" role="tablist" aria-label="Settings sections">
+        <button role="tab" aria-selected={tab === "general"} onClick={() => setTab("general")}>General</button>
+        <button role="tab" aria-selected={tab === "diagnostics"} onClick={() => setTab("diagnostics")}>Diagnostics</button>
+      </div>
+      {tab === "general" ? <SettingsBody snapshot={snapshot} theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} /> : <Diagnostics />}
     </Modal>
   );
 }

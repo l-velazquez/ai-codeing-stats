@@ -6,3 +6,13 @@
 .kpi > span { grid-column: 1 / -1; color: var(--muted); font-size: var(--text-2xs); margin-top: 4px; }
 .kpi--accent { border-color: color-mix(in srgb, var(--accent) 18%, var(--border)); background: linear-gradient(150deg, var(--accent-tint), var(--panel) 60%); }
 .kpi--accent .kpi-icon { color: var(--accent); background: var(--accent-tint); }
+
+/* One recessed strip instead of four identical cards. Cells are divided by
+   hairlines, the same device .todays-work-figures and .subscription-activity
+   already use, so the three read as one family. */
+.stat-rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; }
+.stat-rail > div { min-height: 84px; display: grid; align-content: center; gap: var(--space-1); padding: var(--space-4); border-left: 1px solid var(--border); min-width: 0; }
+.stat-rail > div:first-child { border-left: 0; }
+.stat-rail span { color: var(--muted); font-size: var(--text-xs); }
+.stat-rail strong { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -.035em; }
+.stat-rail small { color: var(--faint); font-size: var(--text-2xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

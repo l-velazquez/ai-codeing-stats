@@ -1,4 +1,4 @@
-.provider-panel { padding: 19px; display: flex; flex-direction: column; min-width: 0; }
+.provider-panel { padding: var(--pad-panel); display: flex; flex-direction: column; min-width: 0; }
 .card-title-row { min-height: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 .card-title-row h2 { margin: 0; font-size: var(--text-md); font-weight: 600; letter-spacing: -.01em; }
 .muted-label { color: var(--faint); font-size: var(--text-xs); }

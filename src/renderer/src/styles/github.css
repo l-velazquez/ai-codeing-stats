@@ -5,6 +5,8 @@
 .copy-summary { height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border)); border-radius: 8px; background: var(--accent-tint); color: var(--accent); font-size: var(--text-sm); font-weight: 600; cursor: pointer; white-space: nowrap; }
 .copy-summary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .copy-summary:disabled { opacity: .45; cursor: default; }
+.order-toggle { height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--wash-2); color: var(--muted); font-size: var(--text-xs); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.order-toggle:hover { color: var(--text); background: var(--panel-hover); }
 
 .gh-loading, .gh-setup { min-height: 220px; display: grid; place-items: center; align-content: center; gap: 7px; text-align: center; padding: 20px; }
 .gh-setup strong { font-size: 13px; }

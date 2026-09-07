@@ -19,7 +19,7 @@ The [documentation index](docs/index.md) also covers [data and calculations](doc
 - Model, project, provider, and per-session breakdowns
 - Live Codex and Claude Code short-window and weekly subscription allowance, including reset times
 - Searchable session ledger and click-to-open project paths
-- Monthly GitHub contributions ledger: day-by-day commits and pull requests grouped by project, a month heat grid, per-project totals, and one-click copy of an invoice-ready summary (uses your existing `gh` CLI sign-in or a `GITHUB_TOKEN`; nothing leaves your machine but the GitHub API reads)
+- Monthly GitHub contributions ledger: day-by-day commits and pull requests grouped by project (oldest or newest first, your choice), a month heat grid, per-project totals, and one-click copy of an invoice-ready summary (uses your existing `gh` CLI sign-in or a `GITHUB_TOKEN`; nothing leaves your machine but the GitHub API reads)
 - Data-source health, plus dark, light, and follow-the-system themes reachable from every page
 - A macOS menu bar companion with today's API equivalent, tokens, provider costs, and remaining subscription allowances
 
@@ -119,3 +119,20 @@ azul-code is an independent app inspired by the information density and local-fi
 ### Appearance
 
 The azul-code identity uses a six-arm rounded star and defaults to blue. Choose **Settings → Appearance** for red, orange, green, blue, pink, or violet accents, independently of Dark, Light, or System mode. Colors are saved on this Mac and shared with the menu-bar panel. azul-code keeps the existing Tally settings directory and internal identifiers so the rename preserves preferences.
+
+### Resource diagnostics
+
+Open **Settings → Diagnostics** in the desktop app for live CPU, resident memory,
+process groups, a 60-sample CPU chart, per-process details, and host power/thermal
+state. Sampling runs once a second while the view is visible and can be paused.
+The first sample after a collection gap warms up the CPU counter. Browser preview
+shows an unavailable state instead of simulated measurements.
+
+The monitor covers Electron-managed azul-code processes; external coding agents
+and short-lived CLI subprocesses are excluded. Memory sums working sets and may
+count shared pages more than once. Disk throughput is unavailable through these
+counters. Collection time measures the native collector's wall time, with its
+resource use included in the backend process.
+
+After `npm run build`, run `env -u ELECTRON_RUN_AS_NODE electron scripts/smoke-diagnostics.cjs`
+to verify native readings and capture dark/light screenshots with isolated preferences.

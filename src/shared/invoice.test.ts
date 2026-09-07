@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDaySummary, buildInvoiceSummary, currentMonthKey, dayLabel, monthLabel, shiftMonthKey } from "./invoice";
+import { activeDaysInOrder, buildDaySummary, buildInvoiceSummary, currentMonthKey, dayLabel, monthLabel, shiftMonthKey } from "./invoice";
 import type { GitHubDay, GitHubMonthSnapshot } from "./types";
 
 function sampleDay(date: string): GitHubDay {
@@ -73,5 +73,36 @@ describe("buildInvoiceSummary", () => {
   it("handles an empty month", () => {
     const text = buildInvoiceSummary(sampleSnapshot([]));
     expect(text).toContain("No GitHub activity recorded.");
+  });
+});
+
+describe("activeDaysInOrder", () => {
+  const quiet = (date: string): GitHubDay => ({ date, commits: 0, repos: [], pullRequests: [] });
+  const month = [sampleDay("2026-09-01"), quiet("2026-09-02"), sampleDay("2026-09-03"), sampleDay("2026-09-04")];
+
+  it("drops days with no commits or pull requests", () => {
+    expect(activeDaysInOrder(month, "oldest").map((day) => day.date)).toEqual([
+      "2026-09-01",
+      "2026-09-03",
+      "2026-09-04",
+    ]);
+  });
+
+  it("reverses the month walk for newest first", () => {
+    expect(activeDaysInOrder(month, "newest").map((day) => day.date)).toEqual([
+      "2026-09-04",
+      "2026-09-03",
+      "2026-09-01",
+    ]);
+  });
+
+  it("leaves the snapshot's own array untouched", () => {
+    const days = [...month];
+    activeDaysInOrder(days, "newest");
+    expect(days.map((day) => day.date)).toEqual(["2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"]);
+  });
+
+  it("handles an empty month", () => {
+    expect(activeDaysInOrder([], "newest")).toEqual([]);
   });
 });

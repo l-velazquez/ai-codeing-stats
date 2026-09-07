@@ -214,6 +214,7 @@ export interface SystemCheckSnapshot {
 }
 
 export interface TallyBridge {
+  resources: () => Promise<import("./diagnostics").ResourceSnapshot>;
   scan: (range: RangeKey, refresh?: boolean) => Promise<StatsSnapshot>;
   onStatsChanged: (listener: () => void) => () => void;
   onSettingsChanged: (listener: (settings: Settings) => void) => () => void;

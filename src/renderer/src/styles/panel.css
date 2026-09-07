@@ -1,1 +1,14 @@
-.panel { background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 99%, white 1%), var(--panel)); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 1px 0 color-mix(in srgb, white 2%, transparent) inset; }
+/* The panel is the app's one surface primitive. It used to carry a 1px inset
+   highlight and nothing else, so on a background 2.5% darker than itself it
+   read as a hairline outline rather than an object. --elev-1 gives it an
+   actual ambient shadow; the top edge highlight stays, now tokenised. */
+.panel { background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 99%, white 1%), var(--panel)); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--elev-1); }
+
+/* Reserved for the single most important thing on a page. Exactly one element
+   per page should carry it, or it stops meaning anything. */
+.panel--raised { background: linear-gradient(180deg, color-mix(in srgb, var(--panel-raised) 98%, white 2%), var(--panel-raised)); border-color: var(--border-strong); box-shadow: var(--elev-3); }
+
+/* Recessed, not raised: the second depth device. Tables, rails and tracks sit
+   in a well so they separate from the panel around them without becoming
+   another card floating on top of it. */
+.well { background: var(--surface-sunken); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--well); }

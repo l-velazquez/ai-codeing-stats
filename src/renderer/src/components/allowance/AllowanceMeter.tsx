@@ -1,5 +1,5 @@
 import type { SubscriptionWindow } from "@shared/types";
-import { headroom, PRESSURE_LABELS, pressureOf, resetText } from "@renderer/lib/allowance";
+import { headroom, PRESSURE_LABELS, pressureFor, resetText } from "@renderer/lib/allowance";
 
 /**
  * One allowance window. The fill is coloured by pressure and the state is also
@@ -14,7 +14,7 @@ export function AllowanceMeter({
   size?: "regular" | "large";
 }) {
   const used = Math.round(allowance.usedPercent);
-  const pressure = pressureOf(allowance.usedPercent);
+  const pressure = pressureFor(allowance);
 
   return (
     <div className={`allowance allowance--${size}`} data-pressure={pressure}>

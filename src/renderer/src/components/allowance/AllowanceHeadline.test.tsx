@@ -46,14 +46,43 @@ describe("AllowanceMeter", () => {
 });
 
 describe("AllowanceHeadline", () => {
-  it("leads with the window closest to its limit", () => {
+  it("leads with the window that stops you first, not the fullest one", () => {
     render(
       <AllowanceHeadline snapshot={snapshot([live])} connecting={false} onConnectClaude={vi.fn()} onOpenDetail={vi.fn()} />,
     );
-    // 91% weekly, not the roomier 24% five-hour window: the tighter one is
-    // what will actually stop you working.
-    expect(screen.getByRole("progressbar", { name: /Weekly limit/ })).toBeInTheDocument();
-    expect(screen.queryByRole("progressbar", { name: /5-hour/ })).not.toBeInTheDocument();
+    // The weekly window is 91% gone and, six days into seven, projected to run
+    // out before it resets. The five-hour window is roomier but never runs out,
+    // so it is demoted to the secondary rail rather than leading.
+    expect(screen.getByText(/^9% left\./)).toBeInTheDocument();
+    expect(screen.getByText("76% left")).toBeInTheDocument();
+  });
+
+  it("states the pace projection in words, not only in the chart", () => {
+    render(
+      <AllowanceHeadline snapshot={snapshot([live])} connecting={false} onConnectClaude={vi.fn()} onOpenDetail={vi.fn()} />,
+    );
+    expect(screen.getByText(/On this pace you hit the limit at/)).toBeInTheDocument();
+  });
+
+  it("falls back to a plain meter when the window is too young to read a pace", () => {
+    const fresh: SubscriptionUsage = {
+      ...live,
+      windows: [{ label: "5-hour limit", usedPercent: 3, windowMinutes: 300, resetsAt: Date.now() + 299 * 60_000 }],
+    };
+    render(
+      <AllowanceHeadline snapshot={snapshot([fresh])} connecting={false} onConnectClaude={vi.fn()} onOpenDetail={vi.fn()} />,
+    );
+    expect(screen.getByText(/Too early in this window to read a pace/)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /5-hour limit/ })).toBeInTheDocument();
+  });
+
+  it("says when the reading itself is stale rather than projecting from it", () => {
+    const stale: SubscriptionUsage = { ...live, updatedAt: Date.now() - 40 * 60_000 };
+    render(
+      <AllowanceHeadline snapshot={snapshot([stale])} connecting={false} onConnectClaude={vi.fn()} onOpenDetail={vi.fn()} />,
+    );
+    expect(screen.getByText(/last reported this 40m ago/)).toBeInTheDocument();
+    expect(screen.queryByText(/On this pace/)).not.toBeInTheDocument();
   });
 
   it("invites setup instead of showing empty meters when nothing is connected", async () => {

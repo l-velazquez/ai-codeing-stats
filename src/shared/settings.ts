@@ -9,6 +9,8 @@ export function normalizeAccent(value: unknown): AccentColor {
 
 export type ResolvedTheme = "dark" | "light";
 export type MenuBarDisplay = "cost" | "allowance" | "both" | "icon";
+/** Direction of the Contributions day ledger. The month walk emits days oldest-first. */
+export type DayOrder = "oldest" | "newest";
 
 export interface WindowBounds {
   readonly width: number;
@@ -30,6 +32,7 @@ export interface Settings {
   readonly menuBarDisplay: MenuBarDisplay;
   readonly menuBarProvider: "codex" | "claude";
   readonly menuBarWindow: "session" | "weekly";
+  readonly contributionsOrder: DayOrder;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -44,17 +47,55 @@ export const DEFAULT_SETTINGS: Settings = {
   menuBarDisplay: "cost",
   menuBarProvider: "codex",
   menuBarWindow: "session",
+  contributionsOrder: "oldest",
 };
 
 /**
- * The colour painted by the OS window before the renderer draws its first
- * frame. It must track the ground colour of each theme, or a light-theme
- * launch flashes dark.
+ * The untinted ground of each theme -- --bg-base in tokens.css.
  */
 export const THEME_BACKGROUND: Record<ResolvedTheme, string> = {
-  dark: "#070b10",
+  dark: "#05080c",
   light: "#eff3f7",
 };
+
+/** --accent-solid per accent, mirrored from tokens.css. */
+export const ACCENT_SOLID: Record<AccentColor, string> = {
+  red: "#d92c4c",
+  orange: "#c8550c",
+  green: "#16864d",
+  blue: "#2460ff",
+  pink: "#c92b82",
+  violet: "#7c3de0",
+};
+
+/** The share of the accent mixed into --bg by tokens.css. */
+const BACKGROUND_ACCENT_MIX = 0.07;
+
+function mixChannel(base: number, accent: number): number {
+  return Math.round(base * (1 - BACKGROUND_ACCENT_MIX) + accent * BACKGROUND_ACCENT_MIX);
+}
+
+function channels(hex: string): [number, number, number] {
+  return [
+    Number.parseInt(hex.slice(1, 3), 16),
+    Number.parseInt(hex.slice(3, 5), 16),
+    Number.parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+/**
+ * The colour painted by the OS window before the renderer draws its first
+ * frame. It must track the ground colour of the current theme *and* accent, or
+ * a launch flashes the wrong colour: `color-mix(in srgb, ...)` interpolates in
+ * gamma-encoded sRGB, so the same per-channel blend reproduces --bg exactly.
+ */
+export function themeBackground(theme: ResolvedTheme, accent: AccentColor): string {
+  const base = channels(THEME_BACKGROUND[theme]);
+  const tint = channels(ACCENT_SOLID[accent]);
+  return `#${base
+    .map((value, index) => mixChannel(value, tint[index] ?? 0).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
 
 const THEME_PREFERENCES: readonly ThemePreference[] = ["dark", "light", "system"];
 const RANGES: readonly RangeKey[] = ["7d", "30d", "90d", "all"];
@@ -113,6 +154,7 @@ export function normalizeSettings(raw: unknown): Settings {
       ? raw.menuBarDisplay as MenuBarDisplay : DEFAULT_SETTINGS.menuBarDisplay,
     menuBarProvider: raw.menuBarProvider === "claude" ? "claude" : "codex",
     menuBarWindow: raw.menuBarWindow === "weekly" ? "weekly" : "session",
+    contributionsOrder: raw.contributionsOrder === "newest" ? "newest" : "oldest",
     sidebarCollapsed:
       typeof raw.sidebarCollapsed === "boolean"
         ? raw.sidebarCollapsed

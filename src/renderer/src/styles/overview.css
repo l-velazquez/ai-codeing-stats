@@ -1,5 +1,5 @@
 .overview-hero { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(285px, .74fr); gap: var(--gap-section); }
-.hero { background: linear-gradient(145deg, color-mix(in srgb, var(--accent-solid) 9%, var(--panel)), var(--panel) 65%); border-color: color-mix(in srgb, var(--accent) 22%, var(--border)); min-height: 405px; padding: 23px 24px 12px; overflow: hidden; }
+.hero { background: linear-gradient(145deg, color-mix(in srgb, var(--accent-solid) 9%, var(--panel)), var(--panel) 65%); border-color: color-mix(in srgb, var(--accent) 22%, var(--border)); min-height: 405px; padding: var(--pad-panel) var(--pad-panel) var(--space-3); overflow: hidden; }
 .hero-heading { display: flex; justify-content: space-between; align-items: flex-start; }
 .hero-value { font-size: 43px; line-height: 1; font-weight: 600; letter-spacing: -.055em; margin-top: 12px; font-variant-numeric: tabular-nums; }
 .hero-heading p { color: var(--muted); margin: 8px 0 0; font-size: var(--text-sm); }

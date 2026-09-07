@@ -1,9 +1,10 @@
+import { collectResources } from "./diagnostics";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { app, BrowserWindow, ipcMain, nativeTheme, powerMonitor, shell } from "electron";
 import icon from "../../resources/icon.png?asset";
 import type { RangeKey } from "../shared/types";
-import { resolveTheme, THEME_BACKGROUND, type Settings } from "../shared/settings";
+import { resolveTheme, themeBackground, type Settings } from "../shared/settings";
 import { fetchGithubMonth } from "./github";
 import { installClaudeStatusLine } from "./claudeStatusLine";
 import { cachedStats, invalidateStatsCache, scanStats } from "./scanner";
@@ -68,9 +69,9 @@ function createWindow(openSettings = false): void {
     title: "azul-code",
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 18, y: 18 },
-    // Painted before the renderer's first frame; must match the theme or a
-    // light-theme launch flashes dark.
-    backgroundColor: THEME_BACKGROUND[resolved],
+    // Painted before the renderer's first frame; must match the theme and the
+    // accent, or a launch flashes the wrong ground colour.
+    backgroundColor: themeBackground(resolved, settings.accent),
     icon,
     webPreferences: {
       // Keep the sandboxed preload in CommonJS. Electron's sandboxed preload
@@ -142,7 +143,7 @@ app.whenReady().then(() => {
     const current = readSettings();
     menuBar?.updateTheme();
     if (current.theme !== "system" || mainWindow === null || mainWindow.isDestroyed()) return;
-    mainWindow.setBackgroundColor(THEME_BACKGROUND[currentResolvedTheme(current)]);
+    mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(current), current.accent));
   });
 
   ipcMain.handle("tally:scan", (_event, range: RangeKey, refresh?: boolean) => {
@@ -160,6 +161,7 @@ app.whenReady().then(() => {
     await stats.refresh();
     return usage;
   });
+  ipcMain.handle("tally:resources", () => collectResources());
   ipcMain.handle("tally:system-checks", () => checkSystem());
   ipcMain.handle("tally:github", (_event, month: string, refresh?: boolean) => {
     if (typeof month !== "string") throw new Error("A YYYY-MM month is required.");
@@ -175,11 +177,10 @@ app.whenReady().then(() => {
   ipcMain.handle("tally:settings-set", (_event, patch: Partial<Settings>) => {
     const next = writeSettings(patch ?? {});
     menuBar?.configure(next);
-    if (patch && "theme" in patch) {
-      nativeTheme.themeSource = next.theme;
-      if (mainWindow !== null && !mainWindow.isDestroyed()) {
-        mainWindow.setBackgroundColor(THEME_BACKGROUND[currentResolvedTheme(next)]);
-      }
+    if (patch && "theme" in patch) nativeTheme.themeSource = next.theme;
+    // The accent tints the page ground too, so it repaints the window as well.
+    if (patch && ("theme" in patch || "accent" in patch) && mainWindow !== null && !mainWindow.isDestroyed()) {
+      mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(next), next.accent));
     }
     broadcast("tally:settings-changed", next);
     return next;

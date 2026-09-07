@@ -1,4 +1,4 @@
-import { ChevronRight, CircleDollarSign, Clock3, Database, Layers3, WalletCards } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { PageId } from "@renderer/app/routes";
 import { UsageChart } from "@renderer/components/UsageChart";
 import { ActivityCalendar } from "@renderer/components/data/ActivityCalendar";
@@ -7,7 +7,7 @@ import { ProjectRow } from "@renderer/components/data/ProjectRow";
 import { ProviderBreakdown } from "@renderer/components/data/ProviderBreakdown";
 import { CardTitle } from "@renderer/components/primitives/CardTitle";
 import { EmptyState } from "@renderer/components/primitives/EmptyState";
-import { Kpi } from "@renderer/components/primitives/Kpi";
+import { StatRail } from "@renderer/components/primitives/StatRail";
 import { RANGE_LABELS } from "@renderer/components/shell/RangeControl";
 import { AllowanceHeadline } from "@renderer/components/allowance/AllowanceHeadline";
 import { TodaysWork } from "@renderer/components/data/TodaysWork";
@@ -37,6 +37,7 @@ export function OverviewPage({
     snapshot.summary.tokens.cachedInput +
     snapshot.summary.tokens.cacheWrite5m +
     snapshot.summary.tokens.cacheWrite1h;
+  const sessions = Math.max(1, snapshot.summary.sessions);
   return (
     <>
       <AllowanceHeadline
@@ -64,12 +65,30 @@ export function OverviewPage({
         <ProviderBreakdown snapshot={snapshot} />
       </section>
 
-      <section className="kpi-grid">
-        <Kpi icon={Layers3} label="Processed tokens" value={compact(snapshot.summary.totalTokens)} detail={`${compact(inputTokens)} input · ${compact(snapshot.summary.tokens.output)} output`} />
-        <Kpi icon={Database} label="Cache hit rate" value={percent(snapshot.summary.cacheHitRate)} detail={`${compact(snapshot.summary.tokens.cachedInput)} tokens reused`} accent />
-        <Kpi icon={WalletCards} label="Cache savings" value={money(snapshot.summary.savings)} detail="Compared with uncached input" />
-        <Kpi icon={Clock3} label="Average session" value={money(snapshot.summary.cost / Math.max(1, snapshot.summary.sessions))} detail={`${compact(snapshot.summary.totalTokens / Math.max(1, snapshot.summary.sessions))} tokens each`} />
-      </section>
+      <StatRail
+        stats={[
+          {
+            label: "Processed tokens",
+            value: compact(snapshot.summary.totalTokens),
+            detail: `${compact(inputTokens)} input · ${compact(snapshot.summary.tokens.output)} output`,
+          },
+          {
+            label: "Cache hit rate",
+            value: percent(snapshot.summary.cacheHitRate),
+            detail: `${compact(snapshot.summary.tokens.cachedInput)} tokens reused`,
+          },
+          {
+            label: "Cache savings",
+            value: money(snapshot.summary.savings),
+            detail: "Compared with uncached input",
+          },
+          {
+            label: "Average session",
+            value: money(snapshot.summary.cost / sessions),
+            detail: `${compact(snapshot.summary.totalTokens / sessions)} tokens each`,
+          },
+        ]}
+      />
 
       <TodaysWork
         github={github}
@@ -80,17 +99,21 @@ export function OverviewPage({
       <section className="split-panels">
         <div className="panel list-panel">
           <CardTitle action={<button className="text-action" onClick={() => navigate("models")}>View all <ChevronRight size={13} /></button>}>Models</CardTitle>
-          <div className="table-header model-row"><span>Model</span><span>Cache efficiency</span><span>Spend</span><span>Tokens</span><span>Runs</span></div>
-          {snapshot.models.slice(0, 5).map((model) => <ModelRow key={`${model.provider}:${model.model}`} model={model} maxCost={maxModel} />)}
-          {snapshot.models.length === 0 ? <EmptyState compactMode label="No model usage in this range" /> : null}
+          <div className="table-well well">
+            <div className="table-header model-row"><span>Model</span><span>Cache efficiency</span><span>Spend</span><span>Tokens</span><span>Runs</span></div>
+            {snapshot.models.slice(0, 5).map((model) => <ModelRow key={`${model.provider}:${model.model}`} model={model} maxCost={maxModel} />)}
+            {snapshot.models.length === 0 ? <EmptyState compactMode label="No model usage in this range" /> : null}
+          </div>
         </div>
         <ActivityCalendar snapshot={snapshot} />
       </section>
 
       <section className="panel list-panel project-panel">
         <CardTitle action={<button className="text-action" onClick={() => navigate("projects")}>View all <ChevronRight size={13} /></button>}>Most active projects</CardTitle>
-        {snapshot.projects.slice(0, 5).map((project) => <ProjectRow key={project.path || project.name} project={project} maxCost={maxProject} />)}
-        {snapshot.projects.length === 0 ? <EmptyState compactMode label="No workspace activity in this range" /> : null}
+        <div className="table-well well">
+          {snapshot.projects.slice(0, 5).map((project) => <ProjectRow key={project.path || project.name} project={project} maxCost={maxProject} />)}
+          {snapshot.projects.length === 0 ? <EmptyState compactMode label="No workspace activity in this range" /> : null}
+        </div>
       </section>
     </>
   );

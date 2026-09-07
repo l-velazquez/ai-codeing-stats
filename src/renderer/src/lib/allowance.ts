@@ -1,4 +1,5 @@
 import type { SubscriptionUsage, SubscriptionWindow } from "@shared/types";
+import { runwayFor } from "@renderer/lib/runway";
 
 /** Human countdown to a window reset. */
 export function resetText(timestamp: number): string {
@@ -52,3 +53,75 @@ export const PRESSURE_LABELS: Record<AllowancePressure, string> = {
   tight: "Getting tight",
   critical: "Nearly used up",
 };
+
+const PRESSURE_RANK: Record<AllowancePressure, number> = { comfortable: 0, tight: 1, critical: 2 };
+
+/**
+ * Pressure including pace, not just the percentage consumed.
+ *
+ * `pressureOf` alone reads a window at 24% used as comfortable even when the
+ * burn rate says it dies in under an hour, which is exactly the reading the
+ * home screen exists to catch. A window on track to hit its limit before the
+ * reset is at least tight, and critical once the runway is under half an hour.
+ */
+export function pressureFor(window: SubscriptionWindow, now = Date.now()): AllowancePressure {
+  const base = pressureOf(window.usedPercent);
+  const projection = runwayFor(window, now);
+  if (projection === null || projection.survivesWindow) return base;
+  const paced: AllowancePressure = projection.runwayMs <= 30 * 60_000 ? "critical" : "tight";
+  return PRESSURE_RANK[paced] > PRESSURE_RANK[base] ? paced : base;
+}
+
+/**
+ * How urgent a window is, as a sort key of (tier, value) compared ascending.
+ *
+ * Tier 0 is a window projected to hit its limit before it resets, ordered by
+ * how soon. Tier 1 is everything else, ordered fullest first. The split
+ * matters because a reset refills the allowance: a window you are not going to
+ * exhaust never stops you, however close to the reset it is, so its time-to-
+ * reset must not be read as runway.
+ */
+function urgency(window: SubscriptionWindow, now: number): [number, number] {
+  const projected = runwayFor(window, now);
+  if (projected !== null && !projected.survivesWindow) return [0, projected.runwayMs];
+  return [1, -window.usedPercent];
+}
+
+function moreUrgent(a: SubscriptionWindow, b: SubscriptionWindow, now: number): boolean {
+  const [tierA, valueA] = urgency(a, now);
+  const [tierB, valueB] = urgency(b, now);
+  return tierA !== tierB ? tierA < tierB : valueA < valueB;
+}
+
+/**
+ * The window that stops you first, which is not the same as the fullest one: a
+ * weekly window at 70% can have a day and a half of runway left while a
+ * five-hour window at 60% has twenty minutes. `worstWindow` answers "most
+ * consumed"; this answers "what stops you first", which is the question the
+ * home screen leads with.
+ */
+export function tightestWindow(
+  usage: SubscriptionUsage,
+  now = Date.now(),
+): SubscriptionWindow | null {
+  if (!isLive(usage)) return null;
+  return usage.windows.reduce<SubscriptionWindow | null>(
+    (tightest, window) =>
+      tightest === null || moreUrgent(window, tightest, now) ? window : tightest,
+    null,
+  );
+}
+
+/** The provider and window the home screen leads with, across every provider. */
+export function leadAllowance(
+  subscriptions: readonly SubscriptionUsage[],
+  now = Date.now(),
+): { usage: SubscriptionUsage; window: SubscriptionWindow } | null {
+  let lead: { usage: SubscriptionUsage; window: SubscriptionWindow } | null = null;
+  for (const usage of subscriptions) {
+    const window = tightestWindow(usage, now);
+    if (!window) continue;
+    if (lead === null || moreUrgent(window, lead.window, now)) lead = { usage, window };
+  }
+  return lead;
+}

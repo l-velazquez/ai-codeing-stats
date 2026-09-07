@@ -43,6 +43,20 @@ export function dateTime(timestamp: number): string {
   }).format(timestamp);
 }
 
+/**
+ * A wall-clock time, with the weekday added once the moment is not today --
+ * "resets 4:10 PM" is unambiguous, "resets 4:10 PM" three days out is not.
+ */
+export function clockTime(timestamp: number, now = Date.now()): string {
+  const sameDay = localDayKey(new Date(timestamp)) === localDayKey(new Date(now));
+  return new Intl.DateTimeFormat(
+    "en-US",
+    sameDay
+      ? { hour: "numeric", minute: "2-digit" }
+      : { weekday: "short", hour: "numeric", minute: "2-digit" },
+  ).format(timestamp);
+}
+
 export function relative(timestamp: number): string {
   const elapsed = Date.now() - timestamp;
   const minutes = Math.floor(elapsed / 60_000);

@@ -21,6 +21,7 @@ function initialState(): TallyBridge["initial"] {
 }
 
 const bridge: TallyBridge = {
+  resources: () => ipcRenderer.invoke("tally:resources"),
   scan: (range: RangeKey, refresh?: boolean) => ipcRenderer.invoke("tally:scan", range, refresh) as Promise<StatsSnapshot>,
   onStatsChanged: (listener) => subscribe("tally:stats-changed", listener),
   onSettingsChanged: (listener) => subscribe("tally:settings-changed", listener),
