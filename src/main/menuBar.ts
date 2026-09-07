@@ -71,7 +71,7 @@ export class MenuBar {
       webPreferences: {
         preload: join(__dirname, "../preload/index.cjs"), sandbox: true,
         contextIsolation: true, nodeIntegration: false,
-        additionalArguments: [`--tally-accent=${this.settings.accent}`, `--tally-theme=${this.settings.theme}`, `--tally-resolved=${resolved}`],
+        additionalArguments: [`--azul-code-accent=${this.settings.accent}`, `--azul-code-theme=${this.settings.theme}`, `--azul-code-resolved=${resolved}`],
       },
     });
     this.panel = panel;

@@ -41,7 +41,7 @@
     "vitest": "latest"
   },
   "build": {
-    "appId": "dev.luis.tally",
+    "appId": "dev.luis.azul-code",
     "productName": "azul-code",
     "asar": true,
     "directories": {

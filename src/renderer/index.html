@@ -15,12 +15,12 @@
       (function () {
         var resolved = "dark";
         try {
-          var initial = window.tally && window.tally.initial;
+          var initial = window.azulCode && window.azulCode.initial;
           if (initial && initial.resolved) {
             resolved = initial.resolved;
           } else {
             // dev:web has no preload bridge.
-            var stored = localStorage.getItem("tally:theme");
+            var stored = localStorage.getItem("azul-code:theme");
             var prefersDark =
               !window.matchMedia || window.matchMedia("(prefers-color-scheme: dark)").matches;
             resolved =
@@ -30,7 +30,7 @@
           // Private mode or a blocked accessor: the dark default is fine.
         }
         try {
-          var accent = initial ? initial.accent : JSON.parse(localStorage.getItem("tally:settings") || "{}").accent;
+          var accent = initial ? initial.accent : JSON.parse(localStorage.getItem("azul-code:settings") || "{}").accent;
           document.documentElement.dataset.accent = ["red", "orange", "green", "blue", "pink", "violet"].includes(accent) ? accent : "blue";
         } catch (_) { document.documentElement.dataset.accent = "blue"; }
         document.documentElement.dataset.theme = resolved;

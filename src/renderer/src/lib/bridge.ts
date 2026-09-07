@@ -17,12 +17,12 @@ export function missingBridgeError(): Error {
 }
 
 function requireBridge(): void {
-  if (!window.tally && IS_ELECTRON) throw missingBridgeError();
+  if (!window.azulCode && IS_ELECTRON) throw missingBridgeError();
 }
 
 export async function scan(range: RangeKey, refresh = false): Promise<StatsSnapshot> {
   requireBridge();
-  if (window.tally) return window.tally.scan(range, refresh);
+  if (window.azulCode) return window.azulCode.scan(range, refresh);
   if (demoState() === "error") {
     throw new Error(
       "azul-code could not read local usage metadata. Check that the coding agents on this Mac have written transcripts.",
@@ -33,7 +33,7 @@ export async function scan(range: RangeKey, refresh = false): Promise<StatsSnaps
 
 export async function fetchGithubMonth(month: string, refresh = false): Promise<GitHubMonthSnapshot> {
   requireBridge();
-  if (window.tally) return window.tally.github(month, refresh);
+  if (window.azulCode) return window.azulCode.github(month, refresh);
   if (demoState() === "error") {
     throw new Error("GitHub activity could not be loaded.");
   }
@@ -41,7 +41,7 @@ export async function fetchGithubMonth(month: string, refresh = false): Promise<
 }
 
 export async function fetchSystemChecks(): Promise<SystemCheckSnapshot> {
-  if (window.tally) return window.tally.systemChecks();
+  if (window.azulCode) return window.azulCode.systemChecks();
   return {
     checkedAt: Date.now(),
     checks: [
@@ -55,19 +55,19 @@ export async function fetchSystemChecks(): Promise<SystemCheckSnapshot> {
 }
 
 export function readSettings(): Promise<Settings> {
-  return window.tally ? window.tally.settings.get() : Promise.resolve(readDemoSettings());
+  return window.azulCode ? window.azulCode.settings.get() : Promise.resolve(readDemoSettings());
 }
 
 export function writeSettings(patch: Partial<Settings>): Promise<Settings> {
-  return window.tally
-    ? window.tally.settings.set(patch)
+  return window.azulCode
+    ? window.azulCode.settings.set(patch)
     : Promise.resolve(writeDemoSettings(patch));
 }
 
 export function openPath(path: string): void {
-  void window.tally?.openPath(path);
+  void window.azulCode?.openPath(path);
 }
 
 export function openUrl(url: string): void {
-  void window.tally?.openUrl(url);
+  void window.azulCode?.openUrl(url);
 }

@@ -56,4 +56,4 @@ npm run dist:mac
 
 This typechecks, builds, verifies required bundles/assets, and creates DMG and ZIP artifacts in `release/`. Open the DMG and install the app in Applications. The repository configures packaging but does not document a signing/notarization release pipeline; a successful build alone is not evidence that an artifact is notarized.
 
-Development and packaged runs normally share preferences under `~/Library/Application Support/Tally/`. The older name preserves preferences across the azul-code rename.
+Development and packaged runs normally share preferences under `~/Library/Application Support/azul-code/`.

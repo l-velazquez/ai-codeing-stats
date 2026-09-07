@@ -8,8 +8,8 @@ export function ProjectRow({ project, maxCost }: { project: ProjectStat; maxCost
   return (
     <button
       className="data-row project-row"
-      onClick={() => void window.tally?.openPath(project.path)}
-      disabled={!project.path || !window.tally}
+      onClick={() => void window.azulCode?.openPath(project.path)}
+      disabled={!project.path || !window.azulCode}
       title={project.path || "No workspace path recorded"}
     >
       <div className="project-rank-icon"><FolderCode size={16} /></div>

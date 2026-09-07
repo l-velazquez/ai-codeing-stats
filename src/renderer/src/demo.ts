@@ -154,11 +154,11 @@ export function demoSnapshot(range: RangeKey): StatsSnapshot {
     { model: "openai/gpt-5.5", provider: "opencode" as const, cost: 6.71, totalTokens: 2_200_000, sessions: 5, records: 5, tokens: tokens(700_000, 1_400_000, 100_000), savings: 0, priced: true },
   ];
   const projects = [
-    ["T3 Code", "/Users/luis/GitHub/t3code", 47.92, 18_420_000, 23, ["codex", "claude"]],
-    ["AI-Coding Stats", "/Users/luis/GitHub/AI-Coding Stats", 31.48, 12_820_000, 17, ["codex"]],
-    ["typeset", "/Users/luis/GitHub/typeset", 22.13, 9_430_000, 14, ["claude", "codex"]],
-    ["turbo-fieldfare", "/Users/luis/GitHub/turbo-fieldfare", 16.87, 8_280_000, 11, ["claude"]],
-    ["Personal site", "/Users/luis/GitHub/personal-site", 8.04, 3_810_000, 8, ["opencode", "codex"]],
+    ["T3 Code", "/Users/example/Projects/t3code", 47.92, 18_420_000, 23, ["codex", "claude"]],
+    ["azul-code", "/Users/example/Projects/azul-code", 31.48, 12_820_000, 17, ["codex"]],
+    ["typeset", "/Users/example/Projects/typeset", 22.13, 9_430_000, 14, ["claude", "codex"]],
+    ["turbo-fieldfare", "/Users/example/Projects/turbo-fieldfare", 16.87, 8_280_000, 11, ["claude"]],
+    ["Personal site", "/Users/example/Projects/personal-site", 8.04, 3_810_000, 8, ["opencode", "codex"]],
   ].map(([name, path, cost, total, sessions, providerList], index) => ({
     name: name as string,
     path: path as string,
@@ -178,7 +178,7 @@ export function demoSnapshot(range: RangeKey): StatsSnapshot {
       provider,
       model,
       models: [model],
-      project: projects[index % projects.length]?.name ?? "AI-Coding Stats",
+      project: projects[index % projects.length]?.name ?? "azul-code",
       path: projects[index % projects.length]?.path ?? "",
       startedAt: end - (18 + index * 3) * 60_000,
       endedAt: end,

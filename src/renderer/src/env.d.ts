@@ -1,12 +1,12 @@
 /// <reference types="vite/client" />
 
-import type { TallyBridge } from "../../shared/types";
+import type { AzulCodeBridge } from "../../shared/types";
 
 declare global {
   const __APP_VERSION__: string;
 
   interface Window {
-    tally?: TallyBridge;
+    azulCode?: AzulCodeBridge;
   }
 }
 

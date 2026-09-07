@@ -10,14 +10,14 @@ const REFRESH_INTERVAL_MS = 60_000;
  */
 export function useSubscriptionPoll(apply: (subscriptions: SubscriptionUsage[]) => void): void {
   useEffect(() => {
-    if (!window.tally) return;
+    if (!window.azulCode) return;
     let stopped = false;
     let pending = false;
 
     const tick = () => {
       if (document.visibilityState === "hidden" || pending) return;
       pending = true;
-      void window.tally
+      void window.azulCode
         ?.subscriptions()
         .then((subscriptions) => {
           if (!stopped) apply(subscriptions);

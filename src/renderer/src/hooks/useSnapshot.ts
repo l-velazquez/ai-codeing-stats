@@ -50,8 +50,8 @@ export function useSnapshot(range: RangeKey): SnapshotState {
 
   useEffect(() => {
     void load(range);
-    const unsubscribe = window.tally?.onStatsChanged?.(() => { void load(range); });
-    const unsubscribeState = window.tally?.menuBar?.onChange((state) => {
+    const unsubscribe = window.azulCode?.onStatsChanged?.(() => { void load(range); });
+    const unsubscribeState = window.azulCode?.menuBar?.onChange((state) => {
       if (state.error) setError(state.error);
     });
     return () => { unsubscribe?.(); unsubscribeState?.(); requestId.current += 1; };

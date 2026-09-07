@@ -55,7 +55,7 @@ function AppInner() {
   useHotkey(",", openSettings);
   useHotkey("b", toggleSidebar);
 
-  useEffect(() => window.tally?.onOpenSettings(openSettings), [openSettings]);
+  useEffect(() => window.azulCode?.onOpenSettings(openSettings), [openSettings]);
   useDefaultRefresh(reload, refreshing);
   // Allowance is the one figure that goes stale while you sit on the page, and
   // the home screen now projects a runway from it. Refreshing on its own also
@@ -63,11 +63,11 @@ function AppInner() {
   useSubscriptionPoll(applySubscriptions);
 
   const connectClaude = useCallback(async () => {
-    if (!window.tally) return;
+    if (!window.azulCode) return;
     setConnectingClaude(true);
     setError(null);
     try {
-      const claude = await window.tally.setupClaudeStatusLine();
+      const claude = await window.azulCode.setupClaudeStatusLine();
       applySubscriptions(
         (snapshot?.subscriptions ?? []).map((usage) => (usage.provider === "claude" ? claude : usage)),
       );

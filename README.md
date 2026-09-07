@@ -102,7 +102,7 @@ RUN_LOCAL_SCAN=1 npx vitest --config vitest.config.ts run src/main/scanner.integ
 | Claude Code | `~/.claude/projects/**/*.jsonl` |
 | OpenCode | `~/.local/share/opencode/opencode.db` |
 
-Claude allowance monitoring uses Claude Code's official [`statusLine` JSON](https://code.claude.com/docs/en/statusline#available-data). From the home screen or the Plans page, **Connect Claude Code** installs a small local wrapper in `~/.claude/tally/` and updates `~/.claude/settings.json`. The wrapper preserves any existing status-line command and retains only the `rate_limits` object. It temporarily writes the full status-line input while extracting that object and forwarding input to the existing command; see [Privacy and local storage](docs/privacy.md#claude-connection-behavior). Claude Code supplies the first allowance after the next assistant response.
+Claude allowance monitoring uses Claude Code's official [`statusLine` JSON](https://code.claude.com/docs/en/statusline#available-data). From the home screen or the Plans page, **Connect Claude Code** installs a small local wrapper in `~/.claude/azul-code/` and updates `~/.claude/settings.json`. The wrapper preserves any existing status-line command and retains only the `rate_limits` object. It temporarily writes the full status-line input while extracting that object and forwarding input to the existing command; see [Privacy and local storage](docs/privacy.md#claude-connection-behavior). Claude Code supplies the first allowance after the next assistant response.
 
 Codex fork copies and repeated token events are suppressed. Claude assistant blocks are de-duplicated globally by message/request identity. OpenCode's own reported cost is preferred when present.
 
@@ -118,7 +118,7 @@ azul-code is an independent app inspired by the information density and local-fi
 
 ### Appearance
 
-The azul-code identity uses a six-arm rounded star and defaults to blue. Choose **Settings → Appearance** for red, orange, green, blue, pink, or violet accents, independently of Dark, Light, or System mode. Colors are saved on this Mac and shared with the menu-bar panel. azul-code keeps the existing Tally settings directory and internal identifiers so the rename preserves preferences.
+The azul-code identity uses a six-arm rounded star and defaults to blue. Choose **Settings → Appearance** for red, orange, green, blue, pink, or violet accents, independently of Dark, Light, or System mode. Colors are saved on this Mac and shared with the menu-bar panel. azul-code uses the same identity for its app data, bridge, IPC channels, and Claude integration.
 
 ### Resource diagnostics
 

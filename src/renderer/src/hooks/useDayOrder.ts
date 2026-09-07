@@ -25,7 +25,7 @@ export function useDayOrder(): { order: DayOrder; toggle: () => void } {
   }, []);
 
   useEffect(
-    () => window.tally?.onSettingsChanged((settings) => setOrder(settings.contributionsOrder)),
+    () => window.azulCode?.onSettingsChanged((settings) => setOrder(settings.contributionsOrder)),
     [],
   );
 

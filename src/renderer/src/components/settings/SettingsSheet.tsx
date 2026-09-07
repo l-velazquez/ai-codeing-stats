@@ -35,7 +35,7 @@ function SettingsBody({ snapshot, theme, setTheme, accent, setAccent }: { snapsh
           </button>)}
         </div>
       </section>
-      {(!window.tally || window.tally.platform === "darwin") ? <MenuBarSettings /> : null}
+      {(!window.azulCode || window.azulCode.platform === "darwin") ? <MenuBarSettings /> : null}
       <section className="panel settings-card">
         <div className="settings-section-head">
           <div><CardTitle>System check</CardTitle><p className="settings-intro">See what this Mac has installed and what still needs attention. azul-code never installs command-line tools without you.</p></div>
@@ -57,7 +57,7 @@ function SettingsBody({ snapshot, theme, setTheme, accent, setAccent }: { snapsh
         <p className="settings-intro">azul-code reads usage metadata directly from the coding agents already installed on this Mac. Prompt text and tool output never enter the dashboard.</p>
         <div className="source-list">
           {snapshot.sources.map((source) => (
-            <button className="source-row" key={source.provider} onClick={() => openPath(source.path)} disabled={!window.tally}>
+            <button className="source-row" key={source.provider} onClick={() => openPath(source.path)} disabled={!window.azulCode}>
               <ProviderMark provider={source.provider} />
               <div><strong>{source.label}</strong><span>{source.path}</span></div>
               <div className="source-detail"><span className={`status-dot status-dot--${source.state}`} /> <strong>{source.state}</strong><small>{source.detail}</small></div>

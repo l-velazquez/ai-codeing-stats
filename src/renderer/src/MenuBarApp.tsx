@@ -97,7 +97,7 @@ export default function MenuBarApp() {
     let active = true;
     let received = false;
     const apply = (value: MenuBarState) => { if (active) setState(value); };
-    const bridge = window.tally?.menuBar;
+    const bridge = window.azulCode?.menuBar;
     const unsubscribe = bridge?.onChange((value) => { received = true; apply(value); });
     if (bridge) void bridge.get().then((value) => { if (!received) apply(value); })
       .catch(() => apply({ summary: null, refreshing: false, error: "azul-code could not load usage. Try refreshing." }));
@@ -107,11 +107,11 @@ export default function MenuBarApp() {
   }, []);
   useThemePreference();
   const refresh = () => {
-    if (!window.tally) { if (!IS_ELECTRON) setState(demoMenuBar()); return; }
-    void window.tally.menuBar.refresh().catch(() => setState((previous) => ({ ...previous, refreshing: false, error: "Refresh failed. Please try again." })));
+    if (!window.azulCode) { if (!IS_ELECTRON) setState(demoMenuBar()); return; }
+    void window.azulCode.menuBar.refresh().catch(() => setState((previous) => ({ ...previous, refreshing: false, error: "Refresh failed. Please try again." })));
   };
   return <MenuBarView state={state} now={now} onRefresh={refresh}
-    onOpen={() => { void window.tally?.menuBar.openDashboard(); }}
-    onSettings={() => { void window.tally?.menuBar.openDashboard(true); }}
-    onQuit={() => { void window.tally?.menuBar.quit(); }} />;
+    onOpen={() => { void window.azulCode?.menuBar.openDashboard(); }}
+    onSettings={() => { void window.azulCode?.menuBar.openDashboard(true); }}
+    onQuit={() => { void window.azulCode?.menuBar.quit(); }} />;
 }

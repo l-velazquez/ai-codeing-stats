@@ -8,7 +8,7 @@ import { readSettings, writeSettings } from "@renderer/lib/bridge";
  */
 export function useSidebar(): { collapsed: boolean; toggle: () => void } {
   const [collapsed, setCollapsed] = useState(
-    () => window.tally?.initial.sidebarCollapsed ?? false,
+    () => window.azulCode?.initial.sidebarCollapsed ?? false,
   );
   const toggled = useRef(false);
 

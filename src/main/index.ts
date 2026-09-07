@@ -35,7 +35,7 @@ function openDashboard(settings = false): void {
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.show();
     mainWindow.focus();
-    if (settings) mainWindow.webContents.send("tally:open-settings");
+    if (settings) mainWindow.webContents.send("azul-code:open-settings");
   }
 }
 
@@ -84,10 +84,10 @@ function createWindow(openSettings = false): void {
       // Read by the preload before any page script runs, so the pre-paint
       // script in index.html can set the theme on the very first frame.
       additionalArguments: [
-        `--tally-theme=${settings.theme}`,
-        `--tally-accent=${settings.accent}`,
-        `--tally-resolved=${resolved}`,
-        `--tally-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
+        `--azul-code-theme=${settings.theme}`,
+        `--azul-code-accent=${settings.accent}`,
+        `--azul-code-resolved=${resolved}`,
+        `--azul-code-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
       ],
     },
   });
@@ -121,9 +121,8 @@ function createWindow(openSettings = false): void {
 // Without this, an unpackaged run resolves app.getName() to "Electron" and
 // stores preferences under Application Support/Electron, so a development run
 // and the packaged app would keep separate settings and window bounds.
-// Keep the existing preferences directory across the display-name change.
 if (app.getPath("userData") === join(app.getPath("appData"), app.getName())) {
-  app.setPath("userData", join(app.getPath("appData"), "Tally"));
+  app.setPath("userData", join(app.getPath("appData"), "azul-code"));
 }
 app.setName("azul-code");
 const primaryInstance = app.requestSingleInstanceLock();
@@ -146,35 +145,35 @@ app.whenReady().then(() => {
     mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(current), current.accent));
   });
 
-  ipcMain.handle("tally:scan", (_event, range: RangeKey, refresh?: boolean) => {
+  ipcMain.handle("azul-code:scan", (_event, range: RangeKey, refresh?: boolean) => {
     if (!["7d", "30d", "90d", "all"].includes(range)) throw new Error("Invalid usage range.");
     return stats.read(range, refresh === true);
   });
-  ipcMain.handle("tally:subscriptions", async () => (await stats.read("7d")).subscriptions);
-  ipcMain.handle("tally:menubar-get", () => stats.getState());
-  ipcMain.handle("tally:menubar-refresh", () => stats.refresh());
-  ipcMain.handle("tally:open-dashboard", (_event, settings?: boolean) => openDashboard(settings === true));
-  ipcMain.handle("tally:menubar-hide", () => menuBar?.hide());
-  ipcMain.handle("tally:quit", () => app.quit());
-  ipcMain.handle("tally:setup-claude-statusline", async () => {
+  ipcMain.handle("azul-code:subscriptions", async () => (await stats.read("7d")).subscriptions);
+  ipcMain.handle("azul-code:menubar-get", () => stats.getState());
+  ipcMain.handle("azul-code:menubar-refresh", () => stats.refresh());
+  ipcMain.handle("azul-code:open-dashboard", (_event, settings?: boolean) => openDashboard(settings === true));
+  ipcMain.handle("azul-code:menubar-hide", () => menuBar?.hide());
+  ipcMain.handle("azul-code:quit", () => app.quit());
+  ipcMain.handle("azul-code:setup-claude-statusline", async () => {
     const usage = await installClaudeStatusLine(join(homedir(), ".claude"));
     await stats.refresh();
     return usage;
   });
-  ipcMain.handle("tally:resources", () => collectResources());
-  ipcMain.handle("tally:system-checks", () => checkSystem());
-  ipcMain.handle("tally:github", (_event, month: string, refresh?: boolean) => {
+  ipcMain.handle("azul-code:resources", () => collectResources());
+  ipcMain.handle("azul-code:system-checks", () => checkSystem());
+  ipcMain.handle("azul-code:github", (_event, month: string, refresh?: boolean) => {
     if (typeof month !== "string") throw new Error("A YYYY-MM month is required.");
     return fetchGithubMonth(month, Boolean(refresh));
   });
-  ipcMain.handle("tally:open-path", async (_event, path: string) => {
+  ipcMain.handle("azul-code:open-path", async (_event, path: string) => {
     if (path) await shell.openPath(path);
   });
-  ipcMain.handle("tally:open-url", (_event, url: string) => {
+  ipcMain.handle("azul-code:open-url", (_event, url: string) => {
     if (typeof url === "string" && /^https?:\/\//.test(url)) shell.openExternal(url);
   });
-  ipcMain.handle("tally:settings-get", () => readSettings());
-  ipcMain.handle("tally:settings-set", (_event, patch: Partial<Settings>) => {
+  ipcMain.handle("azul-code:settings-get", () => readSettings());
+  ipcMain.handle("azul-code:settings-set", (_event, patch: Partial<Settings>) => {
     const next = writeSettings(patch ?? {});
     menuBar?.configure(next);
     if (patch && "theme" in patch) nativeTheme.themeSource = next.theme;
@@ -182,15 +181,15 @@ app.whenReady().then(() => {
     if (patch && ("theme" in patch || "accent" in patch) && mainWindow !== null && !mainWindow.isDestroyed()) {
       mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(next), next.accent));
     }
-    broadcast("tally:settings-changed", next);
+    broadcast("azul-code:settings-changed", next);
     return next;
   });
 
   createWindow();
   menuBar = new MenuBar(stats, settings, openDashboard);
   stats.subscribe((state, updated) => {
-    broadcast("tally:menubar-changed", state);
-    if (updated) broadcast("tally:stats-changed");
+    broadcast("azul-code:menubar-changed", state);
+    if (updated) broadcast("azul-code:stats-changed");
   });
   stats.start();
   powerMonitor.on("suspend", () => { stats.stop(); menuBar?.hide(); });
