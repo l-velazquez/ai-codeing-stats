@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { priceTokens } from "../shared/pricing";
+import { getRate, priceTokens } from "../shared/pricing";
 import { parseCodexSubscription } from "./scanner";
 import { createCodexState, parseClaudeLine, parseCodexLine } from "./transcripts";
 
@@ -107,6 +107,23 @@ describe("Claude transcript parsing", () => {
 });
 
 describe("pricing", () => {
+  it("uses Anthropic's cache rates for Claude Fable 5 and 5.1", () => {
+    expect(getRate("claude-fable-5")).toEqual({
+      input: 10,
+      cached: 1,
+      cacheWrite5m: 12.5,
+      cacheWrite1h: 20,
+      output: 50,
+    });
+    expect(getRate("claude-fable-5-1")).toEqual({
+      input: 10,
+      cached: 0.25,
+      cacheWrite5m: 12.5,
+      cacheWrite1h: 20,
+      output: 50,
+    });
+  });
+
   it("uses discounted cache reads and reports savings", () => {
     const priced = priceTokens(
       "gpt-5.6-sol",
