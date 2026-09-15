@@ -21,3 +21,11 @@ for (const asset of ["trayTemplate.png", "trayTemplate@2x.png"]) {
 const manifest = JSON.parse(readFileSync(resolve("package.json"), "utf8"));
 if (!manifest.build.files.includes("resources/*.png")) throw new Error("Menu bar icons must be included in the packaged app.");
 console.log("Verified standard and Retina menu bar icons.");
+
+for (const file of ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "licenses/IBM-Plex-Mono-OFL.txt"]) {
+  if (!existsSync(resolve(file))) throw new Error(`Missing distribution notice: ${file}`);
+}
+for (const pattern of ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "licenses/**/*"]) {
+  if (!manifest.build.files.includes(pattern)) throw new Error(`Distribution notices must be packaged: ${pattern}`);
+}
+console.log("Verified distribution licenses and notices.");

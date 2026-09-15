@@ -1,138 +1,125 @@
-# azul-code
+<p align="center">
+  <img src="resources/icon.png" width="112" height="112" alt="azul-code logo" />
+</p>
 
-azul-code is a private, local-first macOS dashboard for AI coding usage. It reads token metadata already written by your coding agents and turns it into API-equivalent cost, cache, model, project, and session analytics.
+<h1 align="center">azul-code</h1>
+<p align="center"><strong>AI usage, clearly.</strong></p>
+<p align="center">A local-first macOS dashboard for AI coding usage, subscription allowances, and GitHub contributions.</p>
+<p align="center">
+  <a href="LICENSE">Apache-2.0</a> ·
+  <a href="docs/getting-started.md">Getting started</a> ·
+  <a href="docs/index.md">Documentation</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-The app never reads prompt text into its dashboard, does not require an API key, and does not send usage history to a server.
+See how much you use **Codex, Claude Code, and OpenCode**—across models, projects, and sessions—in one desktop app. Track remaining allowances, understand token costs, and keep a compact summary in your Mac's menu bar.
 
-## Documentation
+Local usage analytics need no account or API key. Usage history stays on your Mac. Optional GitHub contributions use your existing GitHub authentication to read the GitHub API. [Privacy details →](docs/privacy.md)
 
-Start with [Getting started](docs/getting-started.md) or the [User guide](docs/user-guide.md).
-The [documentation index](docs/index.md) also covers [data and calculations](docs/data-and-calculations.md), [privacy and storage](docs/privacy.md), [architecture](docs/architecture.md), [development](docs/development.md), and [troubleshooting](docs/troubleshooting.md).
+![azul-code Overview showing remaining subscription allowance, usage pace, and provider breakdown](docs/images/overview.png)
 
-## What is included
+## What you can see
 
-- Native macOS Electron app that opens on your remaining subscription allowance
-- Live Codex, Claude Code, and OpenCode discovery
-- 7-day, 30-day, 90-day, and all-time ranges
-- Input, cached input, cache creation, output, and reasoning token accounting
-- Standard API-price equivalents, cache savings, and monthly pace
-- Model, project, provider, and per-session breakdowns
-- Live Codex and Claude Code short-window and weekly subscription allowance, including reset times
-- Searchable session ledger and click-to-open project paths
-- Monthly GitHub contributions ledger: day-by-day commits and pull requests grouped by project (oldest or newest first, your choice), a month heat grid, per-project totals, and one-click copy of an invoice-ready summary (uses your existing `gh` CLI sign-in or a `GITHUB_TOKEN`; nothing leaves your machine but the GitHub API reads)
-- Data-source health, plus dark, light, and follow-the-system themes reachable from every page
-- A macOS menu bar companion with today's API equivalent, tokens, provider costs, and remaining subscription allowances
+- **Overview & Plans:** remaining subscription allowance, reset times, usage pace, and API-equivalent cost.
+- **Models:** token totals, cache efficiency, and estimated cost by model.
+- **Projects & Sessions:** workspace breakdowns, a searchable session ledger, and 7-day, 30-day, 90-day, or all-time ranges.
+- **Contributions:** monthly GitHub commits and pull requests, a daily heat grid, project totals, and a copyable invoice summary.
+- **Menu bar:** today's usage and remaining allowance without keeping the dashboard open.
+- **Settings:** data-source health, system checks, resource diagnostics, six accent colors, and dark, light, or system appearance.
 
-## Menu bar
+<details>
+<summary><strong>Explore the Models view</strong></summary>
 
-azul-code's menu bar icon shows today's API-equivalent cost in USD by default. Click it for a compact breakdown, remaining allowances and reset times, a refresh button, and shortcuts to the dashboard and Settings. Right-click for a native quick-action menu.
+![azul-code Models showing per-model usage, cache efficiency, and estimated API-equivalent cost](docs/images/models.png)
 
-In **Settings → Menu bar**, choose cost, allowance, both, or icon only; select the allowance provider and short or weekly window; or turn the companion off. `Cx` means Codex and `Cl` means Claude Code. Percentages show **remaining** allowance. A `*` beside a dollar amount means partial pricing, a source read error, or a stale estimate. Unavailable or stale allowance readings show `—`; using the agent produces a new provider report. Reports older than 15 minutes, or past their reset time, are treated as stale.
+</details>
 
-Usage refreshes once a minute through one shared background service, on opening the panel, at local midnight, and after waking the Mac. Closing the dashboard keeps the menu bar running. **Quit azul-code** exits the app. Today's Codex and Claude totals count individual usage events since local midnight, including sessions that began yesterday. OpenCode supplies session-level totals attributed to the session's latest timestamp; see [source limitations](docs/data-and-calculations.md#local-sources).
+Screenshots show one local installation. Model availability, allowances, and estimates vary by provider and recorded usage.
 
-For a browser preview of the panel, run `npm run dev:web` and open `http://localhost:4317/?view=menubar`. The existing `&state=fresh`, `&state=waiting`, `&state=empty`, and `&state=error` previews work here too.
+## In your menu bar
 
-On macOS, `npm run test:menubar` exercises the compiled app with isolated temporary preferences. It verifies the native tray, preload bridge, panel layout, themes, display settings, background refresh with the dashboard closed, reopening Settings, and disabling/re-enabling the companion. Dark and light screenshots are saved to the temporary path printed by the test. It reads the same local usage sources as the app.
+Keep today's API-equivalent cost, token totals, provider breakdown, and remaining subscription allowance one click away. Refresh usage, open Settings, return to the dashboard, or quit from the companion panel.
 
-## Local prerequisites
+<p align="center">
+  <img src="docs/images/menu-bar.png" width="420" alt="azul-code menu bar companion showing today's usage, provider costs, remaining allowances, and dashboard and quit shortcuts" />
+</p>
 
-azul-code's **Settings (⌘,) → System check** reports whether GitHub access, Git, Codex, Claude Code, and OpenCode are available. Missing tools link to their official setup guides; azul-code does not install command-line tools automatically.
+Choose cost, allowance, both, or icon only in **Settings → Menu bar**. Closing the dashboard keeps the companion running; **Quit azul-code** exits the app.
 
-The Contributions page does **not** require the `git` executable. It reads the GitHub API and needs one of these authentication methods:
+## Get started
 
-- Install [GitHub CLI](https://cli.github.com/), then run `gh auth login`.
-- Launch azul-code with a `GH_TOKEN` or `GITHUB_TOKEN` environment variable.
-
-Git is checked as an optional developer tool. Codex, Claude Code, and OpenCode are also optional: azul-code shows analytics for whichever agents have written supported local usage metadata.
-
-## Run it
+**Requirements:** macOS, Node.js 22.12 or newer within Node 22, and npm. An [`.nvmrc`](.nvmrc) is included for Node version managers. Agent tools are optional; real analytics appear when supported local usage files exist.
 
 ```bash
-npm install
+git clone https://github.com/l-velazquez/ai-codeing-stats.git
+cd ai-codeing-stats
+npm ci
 npm run dev
 ```
 
-The development command explicitly clears `ELECTRON_RUN_AS_NODE`, which lets it work when launched from inside another Electron-based coding tool.
+The repository name is currently `ai-codeing-stats`; the app is named **azul-code**.
 
-To build the macOS installer:
+For a browser preview with generated data:
+
+```bash
+npm run dev:web
+```
+
+Open `http://localhost:4317`. See [preview states](docs/development.md#browser-preview) for empty, waiting, and error scenarios.
+
+### Connect your tools
+
+| Tool | Local usage source | Allowance support |
+| --- | --- | --- |
+| Codex | `~/.codex/sessions/**/*.jsonl` | Recorded short-window and weekly limits |
+| Claude Code | `~/.claude/projects/**/*.jsonl` | Choose **Connect Claude Code**, then send a message in Claude Code |
+| OpenCode | `~/.local/share/opencode/opencode.db` | Usage totals only; requires `sqlite3` |
+
+Claude allowance setup installs a local status-line wrapper and updates `~/.claude/settings.json`, preserving an existing command. Review [connection behavior and removal](docs/privacy.md#claude-connection-behavior).
+
+For **Contributions**, install [GitHub CLI](https://cli.github.com/) and run `gh auth login`. You can also launch the app with `GITHUB_TOKEN` or `GH_TOKEN` in its environment. GitHub is optional; see [setup and coverage](docs/getting-started.md#connect-github).
+
+### About the dollar amounts
+
+**API-equivalent cost is an estimate, not your subscription bill.** It represents recorded token usage at the app's bundled API rates. Unknown models stay visible and are marked as partially priced. Cache handling and provider reporting can affect totals; see [data and calculations](docs/data-and-calculations.md).
+
+The scanner reads local transcript files to extract metadata. Prompt text and tool output are not included in the dashboard data model. [Privacy and local storage](docs/privacy.md) explains the underlying reads, temporary files, and optional network access.
+
+## Build and verify
+
+```bash
+npm test
+npm run build
+```
+
+The build runs TypeScript checks and verifies the preload bundle and required assets. GitHub Actions runs tests and the production build on macOS; Dependabot checks dependency updates.
+
+Create a local macOS package:
 
 ```bash
 npm run dist:mac
 ```
 
-The `.dmg` and `.zip` are written to `release/`.
+DMG and ZIP artifacts are written to `release/` for the build machine's architecture. **Packaging alone does not sign or notarize a release.** See the [public release checklist](docs/releasing.md) before distributing installers. There is no configured automatic-update service.
 
-The app icon is generated from `resources/icon.svg` (full glyph) and
-`resources/icon-small.svg` (simplified art for 16 and 32pt). After editing
-either, regenerate the iconset, `.icns` and `resources/icon.png`:
+## Documentation
 
-```bash
-./scripts/generate-icons.sh
-```
-
-It needs `rsvg-convert` (`brew install librsvg`).
-
-## Verify it
-
-```bash
-npm run typecheck
-npm test
-npm run build
-```
-
-To iterate on the interface without Electron, `npm run dev:web` serves the
-renderer on port 4317 against generated data. Append `?state=` to reach the
-states that are otherwise hard to produce on demand: `fresh` (nothing
-connected), `waiting` (status line installed, awaiting its first report),
-`empty` (connected, no recorded usage), and `error` (failing scan and
-unauthenticated GitHub).
-
-To run the optional scan against the providers installed on the current Mac:
-
-```bash
-RUN_LOCAL_SCAN=1 npx vitest --config vitest.config.ts run src/main/scanner.integration.test.ts
-```
-
-## Local sources
-
-| Provider | Source |
+| Guide | Contents |
 | --- | --- |
-| Codex | `~/.codex/sessions/**/*.jsonl` |
-| Claude Code | `~/.claude/projects/**/*.jsonl` |
-| OpenCode | `~/.local/share/opencode/opencode.db` |
+| [Getting started](docs/getting-started.md) | Setup, first data, and GitHub connection |
+| [User guide](docs/user-guide.md) | Pages, menu bar, appearance, and everyday workflows |
+| [Data and calculations](docs/data-and-calculations.md) | Token accounting, pricing, and source limitations |
+| [Privacy](docs/privacy.md) | Local storage, credentials, and removal |
+| [Development](docs/development.md) | Commands, previews, native smoke checks, and icons |
+| [Architecture](docs/architecture.md) | Processes, IPC, and data flow |
+| [Troubleshooting](docs/troubleshooting.md) | Missing data and launch issues |
 
-Claude allowance monitoring uses Claude Code's official [`statusLine` JSON](https://code.claude.com/docs/en/statusline#available-data). From the home screen or the Plans page, **Connect Claude Code** installs a small local wrapper in `~/.claude/azul-code/` and updates `~/.claude/settings.json`. The wrapper preserves any existing status-line command and retains only the `rate_limits` object. It temporarily writes the full status-line input while extracting that object and forwarding input to the existing command; see [Privacy and local storage](docs/privacy.md#claude-connection-behavior). Claude Code supplies the first allowance after the next assistant response.
+## Contributing and security
 
-Codex fork copies and repeated token events are suppressed. Claude assistant blocks are de-duplicated globally by message/request identity. OpenCode's own reported cost is preferred when present.
+Bug reports and focused pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), use synthetic fixtures, and remove personal paths and account details from screenshots or logs. Report vulnerabilities through the private route in [SECURITY.md](SECURITY.md).
 
-## About the dollar amount
+## License and credits
 
-The dollar amount is an API-price equivalent: what the recorded text-token activity would approximately cost at standard public API list prices. It is not a subscription invoice and does not imply that ChatGPT, Codex, Claude, Cursor, or another plan charged that amount.
+Copyright 2026 Luis Velazquez and azul-code contributors. Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) and [third-party notices](THIRD_PARTY_NOTICES.md) for included material and its separate terms.
 
-The bundled [pricing implementation](src/shared/pricing.ts) records a verification date of 2026-09-05. See [Data and calculations](docs/data-and-calculations.md#pricing) for rate lookup, long-context assumptions, and pricing coverage. Unknown models remain visible and are marked as partially priced instead of being assigned a guessed rate.
-
-## Inspiration
-
-azul-code is an independent app inspired by the information density and local-first ergonomics of [T3 Code](https://github.com/pingdotgg/t3code). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-### Appearance
-
-The azul-code identity uses a six-arm rounded star and defaults to blue. Choose **Settings → Appearance** for red, orange, green, blue, pink, or violet accents, independently of Dark, Light, or System mode. Colors are saved on this Mac and shared with the menu-bar panel. azul-code uses the same identity for its app data, bridge, IPC channels, and Claude integration.
-
-### Resource diagnostics
-
-Open **Settings → Diagnostics** in the desktop app for live CPU, resident memory,
-process groups, a 60-sample CPU chart, per-process details, and host power/thermal
-state. Sampling runs once a second while the view is visible and can be paused.
-The first sample after a collection gap warms up the CPU counter. Browser preview
-shows an unavailable state instead of simulated measurements.
-
-The monitor covers Electron-managed azul-code processes; external coding agents
-and short-lived CLI subprocesses are excluded. Memory sums working sets and may
-count shared pages more than once. Disk throughput is unavailable through these
-counters. Collection time measures the native collector's wall time, with its
-resource use included in the backend process.
-
-After `npm run build`, run `env -u ELECTRON_RUN_AS_NODE electron scripts/smoke-diagnostics.cjs`
-to verify native readings and capture dark/light screenshots with isolated preferences.
+Inspired by the information density and local-first approach of [T3 Code](https://github.com/pingdotgg/t3code). azul-code is an independent project; provider names and logos identify supported tools and do not imply endorsement.
