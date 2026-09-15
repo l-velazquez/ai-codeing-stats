@@ -12,12 +12,12 @@ azul-code opens local agent transcript files and the OpenCode database to extrac
 
 | Location | Purpose |
 | --- | --- |
-| `~/Library/Application Support/Tally/settings.json` | Desktop preferences and window bounds |
+| `~/Library/Application Support/azul-code/settings.json` | Desktop preferences and window bounds |
 | `~/.claude/settings.json` | Updated only when connecting Claude allowance capture |
-| `~/.claude/tally/tally-statusline.sh` | Installed allowance wrapper |
-| `~/.claude/tally/previous-statusline-command` | Previous status-line command, when one exists |
-| `~/.claude/tally/rate-limits.json` | Last extracted allowance object |
-| `~/.claude/tally/statusline-input.*` and `rate-limits.json.*` | Temporary wrapper input/output candidates |
+| `~/.claude/azul-code/azul-code-statusline.sh` | Installed allowance wrapper |
+| `~/.claude/azul-code/previous-statusline-command` | Previous status-line command, when one exists |
+| `~/.claude/azul-code/rate-limits.json` | Last extracted allowance object |
+| `~/.claude/azul-code/statusline-input.*` and `rate-limits.json.*` | Temporary wrapper input/output candidates |
 
 Electron may also create normal runtime storage within its user-data directory. Browser previews use localStorage for demo preferences. Usage snapshots and GitHub month results are held in memory rather than an app-managed historical database.
 
@@ -25,7 +25,7 @@ Settings writes use a temporary file and rename with mode `0600`. Failed prefere
 
 ## Claude connection behavior
 
-Connecting installs a shell wrapper and changes `statusLine.command`, preserving other settings fields and chaining an existing command with the original input. Symlinked settings are updated at their resolved target. Legacy `tokenary` wrappers are migrated by inheriting their saved prior command.
+Connecting installs a shell wrapper and changes `statusLine.command`, preserving other settings fields and chaining an existing command with the original input. Symlinked settings are updated at their resolved target.
 
 The wrapper temporarily writes the **full status-line input** to a restricted local file, extracts only `rate_limits` with macOS `plutil`, and removes temporary files through a shell trap. The retained capture contains only that allowance object. Abrupt termination can leave temporary files behind. An existing chained command receives the full input and retains its own behavior.
 
@@ -39,8 +39,8 @@ Opening setup guides or GitHub links uses your external browser. Copying a contr
 
 ## Reset or remove app-owned data
 
-Quit azul-code before changing its files. To reset desktop preferences, move `~/Library/Application Support/Tally/settings.json` aside, then relaunch. Keep a backup if you want to restore appearance or window settings.
+Quit azul-code before changing its files. To reset desktop preferences, move `~/Library/Application Support/azul-code/settings.json` aside, then relaunch. Keep a backup if you want to restore appearance or window settings.
 
-To disconnect Claude manually, first back up `~/.claude/settings.json`. If its status-line command still points to the azul-code wrapper, restore the command from `previous-statusline-command`; if no prior command existed, remove the azul-code `statusLine` configuration. Preserve unrelated settings and any later user changes. Only after disconnecting the command should you remove `~/.claude/tally/`. There is currently no in-app disconnect action.
+To disconnect Claude manually, first back up `~/.claude/settings.json`. If its status-line command still points to the azul-code wrapper, restore the command from `previous-statusline-command`; if no prior command existed, remove the azul-code `statusLine` configuration. Preserve unrelated settings and any later user changes. Only after disconnecting the command should you remove `~/.claude/azul-code/`. There is currently no in-app disconnect action.
 
 Removing the app or its preferences does not remove provider transcripts and does not automatically disconnect the Claude wrapper. Do not delete agent history merely to reset azul-code preferences.

@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible problem in azul-code.
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities, use SECURITY.md. Remove private paths, account details, tokens, and transcript contents from reports."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: App version or commit, macOS version, Apple Silicon or Intel, and affected agent/provider.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Sanitized screenshots or additional context

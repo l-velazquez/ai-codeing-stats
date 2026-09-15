@@ -1,6 +1,6 @@
 import { DEFAULT_SETTINGS, normalizeSettings, type Settings } from "../../../shared/settings";
 
-const KEY = "tally:settings";
+const KEY = "azul-code:settings";
 
 /**
  * dev:web has no main process, so preferences live in localStorage there.

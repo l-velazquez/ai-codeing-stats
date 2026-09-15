@@ -248,7 +248,7 @@ async function ghApi<T>(path: string, token: string): Promise<T> {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
       "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "tally-local",
+      "User-Agent": "azul-code-local",
     },
   });
   if (response.ok) return (await response.json()) as T;

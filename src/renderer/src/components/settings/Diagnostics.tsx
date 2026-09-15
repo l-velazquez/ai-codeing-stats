@@ -16,14 +16,14 @@ export function Diagnostics() {
   const [paused, setPaused] = useState(false);
   const [history, setHistory] = useState<ResourceSnapshot[]>([]);
   useEffect(() => {
-    if (paused || !window.tally) return;
+    if (paused || !window.azulCode) return;
     let cancelled = false;
     let busy = false;
     const sample = async () => {
       if (document.hidden || busy) return;
       busy = true;
       try {
-        const next = await window.tally!.resources();
+        const next = await window.azulCode!.resources();
         if (!cancelled) {
           setSnapshot(next); setError(null);
           setHistory((items) => [...items, next].slice(-60));
@@ -38,14 +38,14 @@ export function Diagnostics() {
     return () => { cancelled = true; clearInterval(timer); document.removeEventListener("visibilitychange", sample); };
   }, [paused]);
 
-  const status = !window.tally ? "Desktop app required" : error ? "Collection failed" : paused ? "Paused" : snapshot ? "Native healthy" : "Connecting…";
+  const status = !window.azulCode ? "Desktop app required" : error ? "Collection failed" : paused ? "Paused" : snapshot ? "Native healthy" : "Connecting…";
   return <div className="diagnostics">
     <div className="resource-heading"><h2><Activity size={19} /> Resource monitor</h2><span className={`resource-status${error ? " resource-status--error" : ""}`}>{status}</span>
-      <button className="text-action" disabled={!window.tally} onClick={() => setPaused(!paused)} aria-label={paused ? "Resume monitoring" : "Pause monitoring"}>{paused ? <Play size={15} /> : <Pause size={15} />}{paused ? "Resume" : "Pause"}</button>
+      <button className="text-action" disabled={!window.azulCode} onClick={() => setPaused(!paused)} aria-label={paused ? "Resume monitoring" : "Pause monitoring"}>{paused ? <Play size={15} /> : <Pause size={15} />}{paused ? "Resume" : "Pause"}</button>
     </div>
     <p className="settings-intro">Live native counters for azul-code’s Electron processes. Samples every second while this view is visible.</p>
     {error ? <p role="alert" className="warning-banner">{error} Retrying automatically. Displayed measurements are from the last successful sample.</p> : null}
-    {!window.tally ? <section className="panel settings-card">Open Diagnostics in the desktop app to view real CPU, memory, and host measurements. Native counters are unavailable in the browser preview.</section> : null}
+    {!window.azulCode ? <section className="panel settings-card">Open Diagnostics in the desktop app to view real CPU, memory, and host measurements. Native counters are unavailable in the browser preview.</section> : null}
     {snapshot ? <>
       <div className="panel resource-grid">
         <Metric label="Current CPU" value={cpu(snapshot.cpu)} detail="Combined process CPU · 100% = one core" />
@@ -80,6 +80,6 @@ export function Diagnostics() {
         </dl><p className="settings-intro">Collection runs inside the main process. External coding agents and short-lived CLI subprocesses are outside this monitor’s scope.</p></section>
       </div>
       <section className="panel settings-card"><h3>Processes</h3><div className="resource-table"><table><thead><tr><th>Process</th><th>PID</th><th>CPU</th><th>Memory</th></tr></thead><tbody>{snapshot.processes.map((item) => <tr key={`${item.pid}-${item.createdAt}`}><td>{item.name}<small>{item.group}</small></td><td>{item.pid}</td><td>{cpu(item.cpu)}</td><td>{bytes(item.memory)}</td></tr>)}</tbody></table></div></section>
-    </> : window.tally && !error ? <p role="status">Waiting for native resource counters…</p> : null}
+    </> : window.azulCode && !error ? <p role="status">Waiting for native resource counters…</p> : null}
   </div>;
 }

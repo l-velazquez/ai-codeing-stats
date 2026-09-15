@@ -34,7 +34,7 @@ Claude input is already exclusive of cache buckets. Codex and OpenCode subtract 
 
 ## Pricing
 
-The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its current verification comment says 2026-09-05; this is repository metadata, not a fresh independent verification of provider prices.
+The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its verification comment records existing rates as of 2026-09-05 and Claude Fable rates as of 2026-09-14; these dates are repository metadata, not a fresh independent verification of provider prices. See [Anthropic's current pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for the Fable model rates.
 
 A finite nonnegative provider-reported cost takes precedence over the rate table, including zero. This applies to OpenCode costs and Claude `costUSD`. Such records count as priced and contribute zero calculated cache savings.
 

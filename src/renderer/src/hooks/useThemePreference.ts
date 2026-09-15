@@ -5,9 +5,9 @@ import { applyAccent, applyTheme, mirrorPreference, systemPrefersDark, watchSyst
 
 export function useThemePreference() {
   const [theme, setThemeState] = useState<ThemePreference>(
-    () => window.tally?.initial.theme ?? "system",
+    () => window.azulCode?.initial.theme ?? "system",
   );
-  const [accent, setAccentState] = useState<AccentColor>(() => window.tally?.initial.accent ?? "blue");
+  const [accent, setAccentState] = useState<AccentColor>(() => window.azulCode?.initial.accent ?? "blue");
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
 
   // The stored preference is the source of truth; the argv hint only covers the
@@ -27,7 +27,7 @@ export function useThemePreference() {
   }, []);
 
   useEffect(() => watchSystemTheme(setPrefersDark), []);
-  useEffect(() => window.tally?.onSettingsChanged((settings) => { setThemeState(settings.theme); setAccentState(settings.accent); }), []);
+  useEffect(() => window.azulCode?.onSettingsChanged((settings) => { setThemeState(settings.theme); setAccentState(settings.accent); }), []);
 
   const resolved = resolveTheme(theme, prefersDark);
 
@@ -52,4 +52,3 @@ export function useThemePreference() {
 
   return { theme, setTheme, accent, setAccent };
 }
-

@@ -23,22 +23,22 @@ const call = (channel, ...args) => handlers.get(channel)({}, ...args);
 (async () => {
   await import(pathToFileURL(join(process.cwd(), 'out/main/index.js')).href);
   await app.whenReady();
-  await until(() => handlers.has('tally:resources'), 'diagnostics handler');
-  const first = call('tally:resources');
+  await until(() => handlers.has('azul-code:resources'), 'diagnostics handler');
+  const first = call('azul-code:resources');
   assert.equal(first.cpu, null);
   assert.ok(first.memory > 0);
   await pause(1100);
-  assert.equal(typeof call('tally:resources').cpu, 'number');
+  assert.equal(typeof call('azul-code:resources').cpu, 'number');
   const dashboard = BrowserWindow.getAllWindows().find(w => w.getTitle() === 'azul-code');
   await until(async () => !dashboard.webContents.isLoading() && await dashboard.webContents.executeJavaScript('!!document.querySelector(".settings-launcher")'), 'dashboard');
-  await until(() => call('tally:menubar-get').summary, 'initial scan');
+  await until(() => call('azul-code:menubar-get').summary, 'initial scan');
   await dashboard.webContents.executeJavaScript('document.querySelector(".settings-launcher").click()');
   await until(async () => await dashboard.webContents.executeJavaScript('!!document.querySelector(".settings-tabs")'), 'settings');
   await dashboard.webContents.executeJavaScript('document.querySelectorAll(".settings-tabs button")[1].click()');
   await until(async () => await dashboard.webContents.executeJavaScript('!!document.querySelector(".resource-table")'), 'native diagnostics');
   assert.equal(await dashboard.webContents.executeJavaScript('document.querySelector(".modal-body").scrollWidth <= document.querySelector(".modal-body").clientWidth'), true);
   for (const theme of ['dark', 'light']) {
-    await call('tally:settings-set', { theme });
+    await call('azul-code:settings-set', { theme });
     await pause(250);
     writeFileSync(join(artifacts, 'diagnostics-' + theme + '.png'), (await dashboard.webContents.capturePage()).toPNG());
   }

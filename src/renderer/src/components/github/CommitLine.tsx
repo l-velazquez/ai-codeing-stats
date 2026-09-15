@@ -5,7 +5,7 @@ import type { GitHubCommitEntry } from "@shared/types";
 export function CommitLine({ commit }: { commit: GitHubCommitEntry }) {
   const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(commit.at);
   return (
-    <button className="gh-commit" onClick={() => void window.tally?.openUrl(commit.url)} title="Open commit on GitHub">
+    <button className="gh-commit" onClick={() => void window.azulCode?.openUrl(commit.url)} title="Open commit on GitHub">
       <span className="gh-commit-time">{time}</span>
       <strong>{commit.message}</strong>
       <ArrowUpRight size={12} />

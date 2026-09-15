@@ -18,7 +18,8 @@ const LONG_CONTEXT_OUTPUT_FACTOR = 1.5;
 // shape, so they are assumed to share the threshold until confirmed otherwise.
 const GPT_LONG_CONTEXT_FROM = 272_000;
 
-// USD per million tokens. Last verified against official provider pricing on 2026-09-05.
+// USD per million tokens. Existing rates were last verified against official provider pricing
+// on 2026-09-05; Claude Fable rates were verified against Anthropic pricing on 2026-09-14.
 const RATES: Record<string, ModelRate> = {
   "gpt-6-astra": { input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 12.5, output: 50, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.6-sol": { input: 4, cached: 0.4, cacheWrite5m: 5, cacheWrite1h: 5, output: 20, longContextFrom: GPT_LONG_CONTEXT_FROM },
@@ -32,6 +33,8 @@ const RATES: Record<string, ModelRate> = {
   "gpt-5.4-pro": { input: 30, cached: 30, cacheWrite5m: 30, cacheWrite1h: 30, output: 180, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.3-codex": { input: 1.75, cached: 0.175, cacheWrite5m: 1.75, cacheWrite1h: 1.75, output: 14 },
   "gpt-5.2-codex": { input: 1.75, cached: 0.175, cacheWrite5m: 1.75, cacheWrite1h: 1.75, output: 14 },
+  "claude-fable-5": { input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 20, output: 50 },
+  "claude-fable-5-1": { input: 10, cached: 0.25, cacheWrite5m: 12.5, cacheWrite1h: 20, output: 50 },
   "claude-opus-5": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
   "claude-opus-4-8": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
   "claude-opus-4-7": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },

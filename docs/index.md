@@ -10,6 +10,7 @@ azul-code is a macOS desktop app that combines local AI coding usage with a GitH
 | [Privacy and local storage](privacy.md) | Files read and written, network access, credentials, and removal |
 | [Architecture](architecture.md) | Processes, data flow, IPC, caching, and source map |
 | [Development](development.md) | Commands, tests, previews, packaging, and extension points |
+| [Release checklist](releasing.md) | Public source preparation and macOS installer distribution |
 | [Troubleshooting](troubleshooting.md) | Missing data, stale allowances, GitHub errors, and launch problems |
 
 Start with the user guide if the app is already running. Contributors should read the architecture and calculation reference before changing ingestion or totals.

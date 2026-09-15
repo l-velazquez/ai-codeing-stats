@@ -24,7 +24,7 @@ export function applyTheme(resolved: ResolvedTheme): void {
  */
 export function mirrorPreference(preference: ThemePreference, resolved: ResolvedTheme): void {
   try {
-    localStorage.setItem("tally:theme", preference === "system" ? resolved : preference);
+    localStorage.setItem("azul-code:theme", preference === "system" ? resolved : preference);
   } catch {
     // Storage can be unavailable; the in-memory preference still applies.
   }

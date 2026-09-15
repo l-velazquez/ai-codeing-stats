@@ -15,7 +15,7 @@
 | Allowance is stale or `—` | Use the relevant agent to generate a new report; expired windows and old reports cannot be renewed by dashboard refresh alone |
 | Menu bar is absent | Enable it in Settings on macOS; it is not a native browser-preview feature |
 | App keeps running after closing window | Expected macOS behavior; use Quit azul-code to exit |
-| Preferences reset on relaunch | Check access to the Tally settings directory; corrupt/unreadable preferences fall back to defaults |
+| Preferences reset on relaunch | Check access to the azul-code settings directory; corrupt/unreadable preferences fall back to defaults |
 | GitHub asks for setup | Run `gh auth login` or launch with a token environment; refresh Contributions afterward |
 | GitHub rejects credentials | Refresh CLI authentication; verify the app inherited any intended environment token |
 | GitHub reports rate limiting | Wait before retrying; repeated forced refreshes bypass the ten-minute cache |

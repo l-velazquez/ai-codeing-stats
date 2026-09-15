@@ -4,7 +4,7 @@
 
 ## Requirements
 
-The supported desktop target is macOS. Development needs Node.js and npm compatible with the versions in `package-lock.json`; the repository does not pin a Node version. Use `npm ci` to reproduce the locked dependency tree.
+The supported desktop target is macOS. Development uses Node.js 22 (minimum 22.12) and npm. `.nvmrc` selects Node 22. Use `npm ci` to reproduce the locked dependency tree.
 
 Agent CLIs are optional for launching azul-code. Usage appears only when supported local agent files exist. OpenCode ingestion additionally invokes `sqlite3`. GitHub access is optional and separate from local usage; the Contributions page does not need the `git` executable.
 
@@ -54,6 +54,6 @@ The app uses GitHub API reads with your existing access. See [coverage and limit
 npm run dist:mac
 ```
 
-This typechecks, builds, verifies required bundles/assets, and creates DMG and ZIP artifacts in `release/`. Open the DMG and install the app in Applications. The repository configures packaging but does not document a signing/notarization release pipeline; a successful build alone is not evidence that an artifact is notarized.
+This typechecks, builds, verifies required bundles/assets, and creates DMG and ZIP artifacts in `release/`. Open the DMG and install the app in Applications. A successful build alone is not evidence that an artifact is signed or notarized. Follow the [release checklist](releasing.md) before distributing installers.
 
-Development and packaged runs normally share preferences under `~/Library/Application Support/Tally/`. The older name preserves preferences across the azul-code rename.
+Development and packaged runs normally share preferences under `~/Library/Application Support/azul-code/`.

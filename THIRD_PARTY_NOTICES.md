@@ -35,3 +35,5 @@ is licensed under the SIL Open Font License, Version 1.1.
 
 - https://github.com/IBM/plex
 - https://openfontlicense.org/
+
+The complete font license is included in [licenses/IBM-Plex-Mono-OFL.txt](licenses/IBM-Plex-Mono-OFL.txt).

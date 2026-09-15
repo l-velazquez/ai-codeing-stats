@@ -213,7 +213,7 @@ export interface SystemCheckSnapshot {
   readonly checks: SystemCheck[];
 }
 
-export interface TallyBridge {
+export interface AzulCodeBridge {
   resources: () => Promise<import("./diagnostics").ResourceSnapshot>;
   scan: (range: RangeKey, refresh?: boolean) => Promise<StatsSnapshot>;
   onStatsChanged: (listener: () => void) => () => void;

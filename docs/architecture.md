@@ -4,7 +4,7 @@
 
 ## Process boundaries
 
-azul-code uses Electron, React, TypeScript, and electron-vite. The main process owns filesystem access, subprocesses, GitHub requests, native windows, preferences, and the tray. The renderer presents typed snapshots. A sandboxed CommonJS preload exposes a narrow `window.tally` bridge.
+azul-code uses Electron, React, TypeScript, and electron-vite. The main process owns filesystem access, subprocesses, GitHub requests, native windows, preferences, and the tray. The renderer presents typed snapshots. A sandboxed CommonJS preload exposes a narrow `window.azulCode` bridge.
 
 ```mermaid
 flowchart LR
@@ -28,7 +28,7 @@ flowchart LR
 | `src/main/scanner.ts` | Source discovery, OpenCode query, allowance reads, aggregation, record cache |
 | `src/main/statsService.ts` | Shared refresh scheduling, request coalescing, state/error broadcasts |
 | `src/main/menuBar.ts` | Native tray, panel placement/window, quick actions, theme updates |
-| `src/main/claudeStatusLine.ts` | Claude wrapper installation, migration, capture parsing |
+| `src/main/claudeStatusLine.ts` | Claude wrapper installation and capture parsing |
 | `src/main/github.ts` | Credential discovery, API reads, month aggregation/cache |
 | `src/main/systemChecks.ts` | Tool discovery and setup status |
 | `src/main/settingsStore.ts` | Atomic preference persistence and usable window bounds |
@@ -53,7 +53,7 @@ GitHub uses a separate ten-minute in-memory month cache and renderer month curso
 
 ## Bridge contract
 
-[`TallyBridge`](../src/shared/types.ts) is the authoritative interface. Internal names remain `tally` for compatibility.
+[`AzulCodeBridge`](../src/shared/types.ts) is the authoritative interface exposed as `window.azulCode`.
 
 | Bridge group | Operations |
 | --- | --- |
@@ -73,7 +73,7 @@ Windows use sandboxing, context isolation, and disabled Node integration. Main p
 
 Settings normalize unknown/corrupt values into defaults. Main reads them synchronously before creating windows, passes initial theme/sidebar state through preload arguments, and broadcasts later changes across windows. Window bounds are saved after move/resize and on close; off-display positions are discarded when restoring.
 
-The app requests a single-instance lock. A second launch opens the dashboard. The macOS Dock activation event also reopens it. Quit stops the service and destroys the tray. Display naming uses azul-code while `Tally` storage, `tally:*` IPC, and `dev.luis.tally` packaging identity remain in place.
+The app requests a single-instance lock. A second launch opens the dashboard. The macOS Dock activation event also reopens it. Quit stops the service and destroys the tray. The display name, app-data directory, bridge, IPC namespace, and packaging identity all use azul-code.
 
 The settings schema still contains `range` and `subscriptionPollSeconds`; the current dashboard starts at 30d and the refresh service uses a fixed one-minute schedule. Do not assume every persisted field is a live user control.
 

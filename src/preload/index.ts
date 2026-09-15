@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { MenuBarState } from "../shared/menuBar";
 import type { ResolvedTheme, Settings, ThemePreference } from "../shared/types";
-import type { GitHubMonthSnapshot, RangeKey, StatsSnapshot, SubscriptionUsage, SystemCheckSnapshot, TallyBridge } from "../shared/types";
+import type { GitHubMonthSnapshot, RangeKey, StatsSnapshot, SubscriptionUsage, SystemCheckSnapshot, AzulCodeBridge } from "../shared/types";
 
 function argValue(flag: string): string | null {
   const prefix = `--${flag}=`;
@@ -9,49 +9,49 @@ function argValue(flag: string): string | null {
   return match === undefined ? null : match.slice(prefix.length);
 }
 
-function initialState(): TallyBridge["initial"] {
-  const theme = argValue("tally-theme");
-  const resolved = argValue("tally-resolved");
+function initialState(): AzulCodeBridge["initial"] {
+  const theme = argValue("azul-code-theme");
+  const resolved = argValue("azul-code-resolved");
   return {
-    accent: (["red", "orange", "green", "blue", "pink", "violet"].includes(argValue("tally-accent") ?? "") ? argValue("tally-accent") : "blue") as NonNullable<TallyBridge["initial"]["accent"]>,
+    accent: (["red", "orange", "green", "blue", "pink", "violet"].includes(argValue("azul-code-accent") ?? "") ? argValue("azul-code-accent") : "blue") as NonNullable<AzulCodeBridge["initial"]["accent"]>,
     theme: theme === "dark" || theme === "light" || theme === "system" ? theme : "system",
     resolved: resolved === "light" ? "light" : "dark",
-    sidebarCollapsed: argValue("tally-sidebar") === "collapsed",
+    sidebarCollapsed: argValue("azul-code-sidebar") === "collapsed",
   };
 }
 
-const bridge: TallyBridge = {
-  resources: () => ipcRenderer.invoke("tally:resources"),
-  scan: (range: RangeKey, refresh?: boolean) => ipcRenderer.invoke("tally:scan", range, refresh) as Promise<StatsSnapshot>,
-  onStatsChanged: (listener) => subscribe("tally:stats-changed", listener),
-  onSettingsChanged: (listener) => subscribe("tally:settings-changed", listener),
-  onOpenSettings: (listener) => subscribe("tally:open-settings", listener),
+const bridge: AzulCodeBridge = {
+  resources: () => ipcRenderer.invoke("azul-code:resources"),
+  scan: (range: RangeKey, refresh?: boolean) => ipcRenderer.invoke("azul-code:scan", range, refresh) as Promise<StatsSnapshot>,
+  onStatsChanged: (listener) => subscribe("azul-code:stats-changed", listener),
+  onSettingsChanged: (listener) => subscribe("azul-code:settings-changed", listener),
+  onOpenSettings: (listener) => subscribe("azul-code:open-settings", listener),
   menuBar: {
-    get: () => ipcRenderer.invoke("tally:menubar-get") as Promise<MenuBarState>,
-    refresh: () => ipcRenderer.invoke("tally:menubar-refresh") as Promise<MenuBarState>,
-    onChange: (listener) => subscribe("tally:menubar-changed", listener),
-    openDashboard: (settings?: boolean) => ipcRenderer.invoke("tally:open-dashboard", settings) as Promise<void>,
-    hide: () => ipcRenderer.invoke("tally:menubar-hide") as Promise<void>,
-    quit: () => ipcRenderer.invoke("tally:quit") as Promise<void>,
+    get: () => ipcRenderer.invoke("azul-code:menubar-get") as Promise<MenuBarState>,
+    refresh: () => ipcRenderer.invoke("azul-code:menubar-refresh") as Promise<MenuBarState>,
+    onChange: (listener) => subscribe("azul-code:menubar-changed", listener),
+    openDashboard: (settings?: boolean) => ipcRenderer.invoke("azul-code:open-dashboard", settings) as Promise<void>,
+    hide: () => ipcRenderer.invoke("azul-code:menubar-hide") as Promise<void>,
+    quit: () => ipcRenderer.invoke("azul-code:quit") as Promise<void>,
   },
-  subscriptions: () => ipcRenderer.invoke("tally:subscriptions") as Promise<SubscriptionUsage[]>,
+  subscriptions: () => ipcRenderer.invoke("azul-code:subscriptions") as Promise<SubscriptionUsage[]>,
   setupClaudeStatusLine: () =>
-    ipcRenderer.invoke("tally:setup-claude-statusline") as Promise<SubscriptionUsage>,
-  systemChecks: () => ipcRenderer.invoke("tally:system-checks") as Promise<SystemCheckSnapshot>,
+    ipcRenderer.invoke("azul-code:setup-claude-statusline") as Promise<SubscriptionUsage>,
+  systemChecks: () => ipcRenderer.invoke("azul-code:system-checks") as Promise<SystemCheckSnapshot>,
   github: (month: string, refresh?: boolean) =>
-    ipcRenderer.invoke("tally:github", month, refresh) as Promise<GitHubMonthSnapshot>,
-  openPath: (path: string) => ipcRenderer.invoke("tally:open-path", path) as Promise<void>,
-  openUrl: (url: string) => ipcRenderer.invoke("tally:open-url", url) as Promise<void>,
+    ipcRenderer.invoke("azul-code:github", month, refresh) as Promise<GitHubMonthSnapshot>,
+  openPath: (path: string) => ipcRenderer.invoke("azul-code:open-path", path) as Promise<void>,
+  openUrl: (url: string) => ipcRenderer.invoke("azul-code:open-url", url) as Promise<void>,
   settings: {
-    get: () => ipcRenderer.invoke("tally:settings-get") as Promise<Settings>,
+    get: () => ipcRenderer.invoke("azul-code:settings-get") as Promise<Settings>,
     set: (patch: Partial<Settings>) =>
-      ipcRenderer.invoke("tally:settings-set", patch) as Promise<Settings>,
+      ipcRenderer.invoke("azul-code:settings-set", patch) as Promise<Settings>,
   },
   initial: initialState(),
   platform: process.platform,
 };
 
-contextBridge.exposeInMainWorld("tally", bridge);
+contextBridge.exposeInMainWorld("azulCode", bridge);
 
 /** Never expose Electron's event object or arbitrary IPC channel access. */
 function subscribe<T>(channel: string, listener: (value: T) => void): () => void {

@@ -12,7 +12,7 @@ export function MenuBarSettings() {
     let alive = true;
     void readSettings().then((value) => { if (alive) { setSettings(value); setReady(true); } })
       .catch(() => { if (alive) setError("Menu bar settings could not be loaded."); });
-    const unsubscribe = window.tally?.onSettingsChanged((value) => { if (alive) setSettings(value); });
+    const unsubscribe = window.azulCode?.onSettingsChanged((value) => { if (alive) setSettings(value); });
     return () => { alive = false; unsubscribe?.(); };
   }, []);
   async function update(patch: Partial<Settings>) {

@@ -4,3 +4,21 @@ release/
 .DS_Store
 *.log
 build/icon.iconset/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+
+# Local provider data and tooling
+.codex/
+.claude/
+.opencode/
+coverage/
+playwright-report/
+test-results/
