@@ -14,6 +14,13 @@ const state: MenuBarState = { refreshing: false, error: null, summary: {
 } };
 const actions = () => ({ onRefresh: vi.fn(), onOpen: vi.fn(), onSettings: vi.fn(), onQuit: vi.fn() });
 
+it("keeps the padded wrapper main measures the window from", () => {
+  const { container } = render(<MenuBarView state={state} now={now} {...actions()} />);
+  // Moving this padding back onto the scroller would silently under-report the
+  // window height by the padding. See usePanelHeight and menubar.css.
+  expect(container.querySelector(".menubar-content > .menubar-measure")).toBeTruthy();
+});
+
 it("shows API-equivalent dollars and remaining allowance with working actions", () => {
   const handlers = actions();
   render(<MenuBarView state={state} now={now} {...handlers} />);

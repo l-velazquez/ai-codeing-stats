@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Diagnostics } from "./Diagnostics";
-import { ACCENT_COLORS, type AccentColor } from "@shared/settings";
+import { CustomAccentPicker } from "./CustomAccentPicker";
+import { ACCENT_COLORS, customAccentVars, type AccentColor } from "@shared/settings";
 import { BrandMark } from "@renderer/components/BrandMark";
 import { ArrowUpRight, ChevronRight, CircleDollarSign, Database, HardDrive, Info, MonitorCog, Moon, RefreshCw, Sun } from "lucide-react";
 import type { StatsSnapshot, ThemePreference } from "@shared/types";
@@ -12,15 +13,15 @@ import { useSystemChecks } from "@renderer/hooks/useSystemChecks";
 import { openPath, openUrl } from "@renderer/lib/bridge";
 import { MenuBarSettings } from "./MenuBarSettings";
 
-type AppearanceProps = { theme: ThemePreference; setTheme: (theme: ThemePreference) => void; accent: AccentColor; setAccent: (accent: AccentColor) => void };
+type AppearanceProps = { theme: ThemePreference; setTheme: (theme: ThemePreference) => void; accent: AccentColor; setAccent: (accent: AccentColor) => void; customAccent: string; setCustomAccent: (hex: string) => void };
 
-function SettingsBody({ snapshot, theme, setTheme, accent, setAccent }: { snapshot: StatsSnapshot } & AppearanceProps) {
+function SettingsBody({ snapshot, theme, setTheme, accent, setAccent, customAccent, setCustomAccent }: { snapshot: StatsSnapshot } & AppearanceProps) {
   const { snapshot: system, checking: checkingSystem, reload: loadSystemChecks } = useSystemChecks();
 
   return (
     <div className="settings-layout">
       <section className="panel settings-card appearance-card">
-        <div className="appearance-mode"><div><CardTitle>Appearance</CardTitle><p className="settings-intro">Choose your mode and accent. The Dock icon always stays azul blue.</p></div>
+        <div className="appearance-mode"><div><CardTitle>Appearance</CardTitle><p className="settings-intro">Choose your mode and accent, or dial in any color with Custom. The Dock icon always stays azul blue.</p></div>
         <div className="theme-toggle">
           <button className={theme === "dark" ? "active" : ""} onClick={() => setTheme("dark")} aria-pressed={theme === "dark"}><Moon size={15} /> Dark</button>
           <button className={theme === "light" ? "active" : ""} onClick={() => setTheme("light")} aria-pressed={theme === "light"}><Sun size={15} /> Light</button>
@@ -33,7 +34,12 @@ function SettingsBody({ snapshot, theme, setTheme, accent, setAccent }: { snapsh
             <span className="accent-swatch"><BrandMark size={27} /></span>
             <span>{color}</span>
           </button>)}
+          <button className="accent-option" data-accent="custom" aria-pressed={accent === "custom"} onClick={() => setAccent("custom")}>
+            <span className="accent-swatch" style={{ background: `linear-gradient(145deg, ${customAccentVars(customAccent)["--brand-start"]}, ${customAccentVars(customAccent)["--brand-end"]})` }}><BrandMark size={27} /></span>
+            <span>Custom</span>
+          </button>
         </div>
+        {accent === "custom" ? <CustomAccentPicker value={customAccent} onChange={setCustomAccent} /> : null}
       </section>
       {(!window.azulCode || window.azulCode.platform === "darwin") ? <MenuBarSettings /> : null}
       <section className="panel settings-card">
@@ -86,6 +92,8 @@ export function SettingsSheet({
   setTheme,
   accent,
   setAccent,
+  customAccent,
+  setCustomAccent,
   onClose,
 }: {
   snapshot: StatsSnapshot;
@@ -94,6 +102,8 @@ export function SettingsSheet({
   onClose: () => void;
   accent: AccentColor;
   setAccent: (accent: AccentColor) => void;
+  customAccent: string;
+  setCustomAccent: (hex: string) => void;
 }) {
   const [tab, setTab] = useState<"general" | "diagnostics">("general");
   return (
@@ -102,7 +112,7 @@ export function SettingsSheet({
         <button role="tab" aria-selected={tab === "general"} onClick={() => setTab("general")}>General</button>
         <button role="tab" aria-selected={tab === "diagnostics"} onClick={() => setTab("diagnostics")}>Diagnostics</button>
       </div>
-      {tab === "general" ? <SettingsBody snapshot={snapshot} theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} /> : <Diagnostics />}
+      {tab === "general" ? <SettingsBody snapshot={snapshot} theme={theme} setTheme={setTheme} accent={accent} setAccent={setAccent} customAccent={customAccent} setCustomAccent={setCustomAccent} /> : <Diagnostics />}
     </Modal>
   );
 }

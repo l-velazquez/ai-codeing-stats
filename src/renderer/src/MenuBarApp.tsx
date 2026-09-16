@@ -10,6 +10,7 @@ import { pressureOf, resetText } from "@renderer/lib/allowance";
 import { IS_ELECTRON, missingBridgeError } from "@renderer/lib/bridge";
 import { demoSnapshot } from "@renderer/demo";
 import { demoState } from "@renderer/lib/demoState";
+import { usePanelHeight } from "@renderer/hooks/usePanelHeight";
 
 function demoMenuBar(): MenuBarState {
   if (demoState() === "error") return { summary: null, refreshing: false, error: "Local usage could not be read. Try refreshing." };
@@ -51,11 +52,15 @@ export function MenuBarView({ state, now, onRefresh, onOpen, onSettings, onQuit 
   const available = !!summary?.sources.some((source) => source.state === "connected");
   const partial = !!summary && (summary.pricedPercent < 1 || summary.sources.some((source) => source.state === "error"));
   const stale = !!summary && (now - summary.updatedAt > 120_000 || !!state.error);
+  const panel = usePanelHeight(IS_ELECTRON);
   return <div className="menubar-app">
-    <header className="menubar-header"><div><BrandMark size={22} /><strong>azul-code</strong></div>
+    <header className="menubar-header" ref={panel.header}><div><BrandMark size={22} /><strong>azul-code</strong></div>
       <div><button onClick={onRefresh} disabled={state.refreshing} aria-label="Refresh usage" title="Refresh usage"><RefreshCw size={15} className={state.refreshing ? "spin" : ""} /></button>
         <button onClick={onSettings} aria-label="Open settings" title="Settings"><Settings2 size={15} /></button></div></header>
     <main className="menubar-content">
+      {/* Padding lives on this wrapper, not the scroller, so its height is exactly
+          what the window should be. See menubar.css. */}
+      <div className="menubar-measure" ref={panel.measure}>
       <section className="menubar-today" aria-label="Today's usage">
         <div className="menubar-eyebrow"><span>Today</span><span>{new Date(now).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></div>
         <div className="menubar-cost">{summary && today && available ? money(summary.cost) : "—"}</div>
@@ -82,8 +87,9 @@ export function MenuBarView({ state, now, onRefresh, onOpen, onSettings, onQuit 
         <h2>Allowance remaining</h2>
         {summary.subscriptions.map((usage) => <Allowance key={usage.provider} usage={usage} now={now} />)}
       </section> : null}
+      </div>
     </main>
-    <footer className="menubar-footer">
+    <footer className="menubar-footer" ref={panel.footer}>
       <div className="menubar-update" role="status"><i data-stale={stale} />{state.refreshing ? "Refreshing…" : summary ? `${stale ? "Stale · last scan" : "Scanned"} ${relative(summary.updatedAt)}${relative(summary.updatedAt) === "now" ? "" : " ago"}` : "Waiting for usage"}</div>
       <div><button className="menubar-open" onClick={onOpen}>Open azul-code <ArrowUpRight size={14} /></button><button onClick={onQuit}>Quit</button></div>
     </footer>

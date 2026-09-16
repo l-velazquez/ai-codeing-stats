@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { customAccentVars, normalizeHexColor } from "../shared/settings";
 import type { MenuBarState } from "../shared/menuBar";
 import type { ResolvedTheme, Settings, ThemePreference } from "../shared/types";
 import type { GitHubMonthSnapshot, RangeKey, StatsSnapshot, SubscriptionUsage, SystemCheckSnapshot, AzulCodeBridge } from "../shared/types";
@@ -12,8 +13,13 @@ function argValue(flag: string): string | null {
 function initialState(): AzulCodeBridge["initial"] {
   const theme = argValue("azul-code-theme");
   const resolved = argValue("azul-code-resolved");
+  const rawAccent = argValue("azul-code-accent");
+  const accent = (["custom", "red", "orange", "green", "blue", "pink", "violet"].includes(rawAccent ?? "") ? rawAccent : "blue") as NonNullable<AzulCodeBridge["initial"]["accent"]>;
+  const customAccent = normalizeHexColor(argValue("azul-code-custom"));
   return {
-    accent: (["red", "orange", "green", "blue", "pink", "violet"].includes(argValue("azul-code-accent") ?? "") ? argValue("azul-code-accent") : "blue") as NonNullable<AzulCodeBridge["initial"]["accent"]>,
+    accent,
+    customAccent,
+    roles: accent === "custom" ? customAccentVars(customAccent) : null,
     theme: theme === "dark" || theme === "light" || theme === "system" ? theme : "system",
     resolved: resolved === "light" ? "light" : "dark",
     sidebarCollapsed: argValue("azul-code-sidebar") === "collapsed",
@@ -33,6 +39,9 @@ const bridge: AzulCodeBridge = {
     openDashboard: (settings?: boolean) => ipcRenderer.invoke("azul-code:open-dashboard", settings) as Promise<void>,
     hide: () => ipcRenderer.invoke("azul-code:menubar-hide") as Promise<void>,
     quit: () => ipcRenderer.invoke("azul-code:quit") as Promise<void>,
+    // Fire-and-forget: it reports on every content change and wants no reply, so a
+    // promise per report would only risk rejections after the panel is destroyed.
+    setHeight: (height: number) => { ipcRenderer.send("azul-code:menubar-height", height); },
   },
   subscriptions: () => ipcRenderer.invoke("azul-code:subscriptions") as Promise<SubscriptionUsage[]>,
   setupClaudeStatusLine: () =>

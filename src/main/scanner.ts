@@ -1,9 +1,8 @@
 import { execFile } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { access, readdir } from "node:fs/promises";
+import { access, readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
-import { createInterface } from "node:readline";
 import { promisify } from "node:util";
 import { addTokens, EMPTY_TOKENS, totalTokens } from "../shared/tokenMath";
 import { priceTokens, providerLabel } from "../shared/pricing";
@@ -24,7 +23,7 @@ import type {
   UsageRecord,
 } from "../shared/types";
 import { readClaudeStatusLineSubscription } from "./claudeStatusLine";
-import { createCodexState, parseClaudeLine, parseCodexLine } from "./transcripts";
+import { createCodexState, parseClaudeLine, parseCodexLine, type CodexState } from "./transcripts";
 
 const execFileAsync = promisify(execFile);
 const DAY = 86_400_000;
@@ -118,21 +117,140 @@ async function listFiles(root: string, extension: string): Promise<string[]> {
     }
   };
   await walk(root);
-  return files;
+  // Readdir order is not stable across machines, and cross-file dedupe keeps the
+  // first record it sees, so sorting keeps a scan reproducible.
+  return files.sort();
 }
 
-async function readLines(
+const NEWLINE = 0x0a;
+const RETURN = 0x0d;
+
+/**
+ * Streams complete lines starting at a byte offset and returns the offset just
+ * past the last newline. Stopping on a line boundary is what makes resuming
+ * safe: a transcript caught mid-write leaves its half-written final line for the
+ * next pass instead of feeding a truncated line to the parser and losing it.
+ */
+async function readLinesFrom(
   path: string,
+  start: number,
   onLine: (line: string) => void,
-): Promise<void> {
-  const lines = createInterface({ input: createReadStream(path, "utf8"), crlfDelay: Infinity });
-  for await (const line of lines) onLine(line);
+): Promise<number> {
+  let read = 0;
+  let carry: Buffer | null = null;
+  const stream = createReadStream(path, { start });
+  for await (const chunk of stream as AsyncIterable<Buffer>) {
+    read += chunk.length;
+    const buffer: Buffer = carry === null ? chunk : Buffer.concat([carry, chunk]);
+    let offset = 0;
+    for (let index = buffer.indexOf(NEWLINE, offset); index !== -1; index = buffer.indexOf(NEWLINE, offset)) {
+      const end = index > offset && buffer[index - 1] === RETURN ? index - 1 : index;
+      onLine(buffer.toString("utf8", offset, end));
+      offset = index + 1;
+    }
+    // Hold the trailing partial line -- it may also hold half a multi-byte character.
+    carry = offset < buffer.length ? buffer.subarray(offset) : null;
+  }
+  return start + read - (carry?.length ?? 0);
 }
 
-async function scanCodex(root: string, limitsOnly = false): Promise<ScanResult> {
+interface TranscriptFile<C> {
+  /** Byte offset of the end of the last complete line read from this file. */
+  readonly offset: number;
+  readonly size: number;
+  readonly mtimeMs: number;
+  readonly records: UsageRecord[];
+  readonly context: C;
+}
+
+/**
+ * Re-reads only what changed since the last pass.
+ *
+ * Transcripts are append-only, so a file whose size and mtime still match is
+ * reused verbatim and a file that only grew is read from its previous line
+ * boundary. A full parse of a mature transcript directory costs seconds and used
+ * to run on every tick; an unchanged pass now costs one stat() per file, which is
+ * what lets the live refresh run on a short interval.
+ *
+ * `context` carries whatever a provider must remember between lines of one file
+ * (Codex spreads a session's model and workspace across earlier lines), so a
+ * resumed read picks up exactly where the previous one stopped.
+ */
+async function readChangedFiles<C>(
+  root: string,
+  cache: Map<string, TranscriptFile<C>>,
+  fresh: () => C,
+  resume: (context: C) => C,
+  parse: (line: string, context: C, emit: (record: UsageRecord) => void) => void,
+): Promise<{ files: string[]; changed: boolean }> {
+  const files = await listFiles(root, ".jsonl");
+  const present = new Set(files);
+  let changed = false;
+
+  for (const path of cache.keys()) {
+    if (present.has(path)) continue;
+    cache.delete(path);
+    changed = true;
+  }
+
+  for (const path of files) {
+    let info;
+    try {
+      info = await stat(path);
+    } catch {
+      // Vanished between the walk and the stat; the next pass will settle it.
+      if (cache.delete(path)) changed = true;
+      continue;
+    }
+    const cached = cache.get(path);
+    if (cached !== undefined && cached.size === info.size && cached.mtimeMs === info.mtimeMs) continue;
+
+    // Only an append can be resumed: a file that shrank was rotated or rewritten.
+    const previous = cached !== undefined && info.size >= cached.size ? cached : undefined;
+    // The context is cloned so a read that throws part way leaves the cache untouched.
+    const context = previous === undefined ? fresh() : resume(previous.context);
+    const records: UsageRecord[] = [];
+    const emit = (record: UsageRecord) => { records.push(record); };
+    let offset: number;
+    try {
+      offset = await readLinesFrom(path, previous?.offset ?? 0, (line) => parse(line, context, emit));
+    } catch {
+      // A live rollout can rotate while it is being read; keep the rest of the scan.
+      continue;
+    }
+
+    const merged = previous === undefined ? records : [...previous.records, ...records];
+    if (merged.length !== (cached?.records.length ?? 0)) changed = true;
+    cache.set(path, { offset, size: info.size, mtimeMs: info.mtimeMs, records: merged, context });
+  }
+
+  return { files, changed };
+}
+
+interface CodexContext {
+  state: CodexState;
+  subscription: SubscriptionUsage | null;
+}
+
+/** Later wins, and a reading with no timestamp loses to any that has one. */
+function newerSubscription(
+  best: SubscriptionUsage | null,
+  next: SubscriptionUsage | null,
+): SubscriptionUsage | null {
+  if (next === null) return best;
+  if (best === null) return next;
+  return (next.updatedAt ?? 0) > (best.updatedAt ?? -1) ? next : best;
+}
+
+const codexFiles = new Map<string, TranscriptFile<CodexContext>>();
+const claudeFiles = new Map<string, TranscriptFile<null>>();
+
+async function scanCodex(root: string): Promise<ScanResult & { changed: boolean }> {
   if (!(await exists(root))) {
+    codexFiles.clear();
     return {
       records: [],
+      changed: false,
       source: {
         provider: "codex",
         label: "Codex",
@@ -145,42 +263,39 @@ async function scanCodex(root: string, limitsOnly = false): Promise<ScanResult> 
     };
   }
 
-  const files = await listFiles(root, ".jsonl");
+  const { files, changed } = await readChangedFiles<CodexContext>(
+    root,
+    codexFiles,
+    () => ({ state: createCodexState(), subscription: null }),
+    (context) => ({ state: { ...context.state }, subscription: context.subscription }),
+    (line, context, emit) => {
+      if (
+        !line.includes('"token_count"') &&
+        !line.includes('"turn_context"') &&
+        !line.includes('"session_meta"')
+      ) {
+        return;
+      }
+      if (line.includes('"rate_limits"')) {
+        context.subscription = newerSubscription(context.subscription, parseCodexSubscription(line));
+      }
+      const record = parseCodexLine(line, context.state);
+      if (record !== null) emit(record);
+    },
+  );
+
   const records: UsageRecord[] = [];
   let subscription: SubscriptionUsage | undefined;
-  for (const file of files) {
-    const state = createCodexState();
-    try {
-      await readLines(file, (line) => {
-        if (
-          !line.includes('"token_count"') &&
-          !line.includes('"turn_context"') &&
-          !line.includes('"session_meta"')
-        ) {
-          return;
-        }
-        if (line.includes('"rate_limits"')) {
-          const nextSubscription = parseCodexSubscription(line);
-          if (
-            nextSubscription !== null &&
-            (subscription?.updatedAt === null ||
-              subscription?.updatedAt === undefined ||
-              (nextSubscription.updatedAt ?? 0) > subscription.updatedAt)
-          ) {
-            subscription = nextSubscription;
-          }
-        }
-        if (limitsOnly) return;
-        const record = parseCodexLine(line, state);
-        if (record !== null) records.push(record);
-      });
-    } catch {
-      // A live rollout can rotate while it is being read; keep the rest of the scan.
-    }
+  for (const path of files) {
+    const entry = codexFiles.get(path);
+    if (entry === undefined) continue;
+    records.push(...entry.records);
+    subscription = newerSubscription(subscription ?? null, entry.context.subscription) ?? undefined;
   }
 
   return {
     records,
+    changed,
     source: {
       provider: "codex",
       label: "Codex",
@@ -194,10 +309,12 @@ async function scanCodex(root: string, limitsOnly = false): Promise<ScanResult> 
   };
 }
 
-async function scanClaude(root: string): Promise<ScanResult> {
+async function scanClaude(root: string): Promise<ScanResult & { changed: boolean }> {
   if (!(await exists(root))) {
+    claudeFiles.clear();
     return {
       records: [],
+      changed: false,
       source: {
         provider: "claude",
         label: "Claude Code",
@@ -210,28 +327,37 @@ async function scanClaude(root: string): Promise<ScanResult> {
     };
   }
 
-  const files = await listFiles(root, ".jsonl");
+  const { files, changed } = await readChangedFiles<null>(
+    root,
+    claudeFiles,
+    () => null,
+    () => null,
+    (line, _context, emit) => {
+      if (!line.includes('"usage"')) return;
+      const record = parseClaudeLine(line);
+      if (record !== null) emit(record);
+    },
+  );
+
+  // Claude repeats a message across resumed transcripts, so dedupe spans files and
+  // has to run over the merged result rather than inside a single file's parse.
   const records: UsageRecord[] = [];
   const seen = new Set<string>();
-  for (const file of files) {
-    try {
-      await readLines(file, (line) => {
-        if (!line.includes('"usage"')) return;
-        const record = parseClaudeLine(line);
-        if (record === null) return;
-        if (record.dedupeKey !== null) {
-          if (seen.has(record.dedupeKey)) return;
-          seen.add(record.dedupeKey);
-        }
-        records.push(record);
-      });
-    } catch {
-      // Ignore a transcript that disappears during scanning.
+  for (const path of files) {
+    const entry = claudeFiles.get(path);
+    if (entry === undefined) continue;
+    for (const record of entry.records) {
+      if (record.dedupeKey !== null) {
+        if (seen.has(record.dedupeKey)) continue;
+        seen.add(record.dedupeKey);
+      }
+      records.push(record);
     }
   }
 
   return {
     records,
+    changed,
     source: {
       provider: "claude",
       label: "Claude Code",
@@ -243,7 +369,6 @@ async function scanClaude(root: string): Promise<ScanResult> {
     },
   };
 }
-
 interface OpenCodeRow {
   id: string;
   directory: string;
@@ -269,10 +394,16 @@ function openCodeModel(value: string): string {
   return value || "Unknown OpenCode model";
 }
 
-async function scanOpenCode(database: string): Promise<ScanResult> {
+let openCodeSignature: string | null = null;
+
+/** The session table is small and indexed, so it is re-queried in full every pass. */
+async function scanOpenCode(database: string): Promise<ScanResult & { changed: boolean }> {
   if (!(await exists(database))) {
+    const changed = openCodeSignature !== null;
+    openCodeSignature = null;
     return {
       records: [],
+      changed,
       source: {
         provider: "opencode",
         label: "OpenCode",
@@ -315,8 +446,12 @@ async function scanOpenCode(database: string): Promise<ScanResult> {
       reportedCost: Number.isFinite(Number(row.cost)) ? Number(row.cost) : null,
       dedupeKey: `opencode:${row.id}`,
     }));
+    const signature = `${records.length}:${records.reduce((total, record) => total + record.timestamp, 0)}`;
+    const changed = signature !== openCodeSignature;
+    openCodeSignature = signature;
     return {
       records,
+      changed,
       source: {
         provider: "opencode",
         label: "OpenCode",
@@ -328,8 +463,11 @@ async function scanOpenCode(database: string): Promise<ScanResult> {
       },
     };
   } catch (error) {
+    const changed = openCodeSignature !== null;
+    openCodeSignature = null;
     return {
       records: [],
+      changed,
       source: {
         provider: "opencode",
         label: "OpenCode",
@@ -611,44 +749,91 @@ function aggregate(
   };
 }
 
-let cachedRecords: { records: UsageRecord[]; sources: SourceStatus[]; subscriptions: SubscriptionUsage[]; at: number } | null = null;
+interface RecordCache {
+  records: UsageRecord[];
+  sources: SourceStatus[];
+  subscriptions: SubscriptionUsage[];
+  at: number;
+}
+
+let cachedRecords: RecordCache | null = null;
+
+/**
+ * A scan is now cheap enough to run every few seconds, so the short window here
+ * only coalesces callers that arrive together; the main-process service drops
+ * the snapshot itself before each of its own passes.
+ */
+const SNAPSHOT_TTL_MS = 2_000;
+
+let revision = 0;
+let subscriptionSignature = "";
+
+/**
+ * Bumps whenever a pass finds different usage on disk. Callers compare it across
+ * a scan to tell a tick that changed something from the many that did not, which
+ * is what keeps a short refresh interval from re-aggregating and re-rendering
+ * every window while the machine sits idle.
+ */
+export function statsRevision(): number {
+  return revision;
+}
+
+async function collect(now: number): Promise<RecordCache> {
+  const home = homedir();
+  const [results, claudeSubscription] = await Promise.all([
+    Promise.all([
+      scanCodex(join(home, ".codex", "sessions")),
+      scanClaude(join(home, ".claude", "projects")),
+      scanOpenCode(join(home, ".local", "share", "opencode", "opencode.db")),
+    ]),
+    readClaudeStatusLineSubscription(join(home, ".claude")),
+  ]);
+  const subscriptions = [
+    results.find((result) => result.source.provider === "codex")?.subscription ?? {
+      provider: "codex" as const,
+      state: "unavailable" as const,
+      plan: null,
+      updatedAt: null,
+      windows: [],
+      detail: "Use Codex once, then refresh to capture its latest allowance.",
+    },
+    claudeSubscription,
+  ];
+  const cache: RecordCache = {
+    records: results.flatMap((result) => result.records),
+    sources: results.map((result) => result.source),
+    subscriptions,
+    at: now,
+  };
+  cachedRecords = cache;
+  // Allowance moves without any record being written, so it is compared on its
+  // own rather than inferred from the transcript pass.
+  const signature = JSON.stringify(subscriptions);
+  if (results.some((result) => result.changed) || signature !== subscriptionSignature) revision += 1;
+  subscriptionSignature = signature;
+  return cache;
+}
 
 export async function scanStats(range: RangeKey): Promise<StatsSnapshot> {
   const now = Date.now();
-  if (cachedRecords === null || now - cachedRecords.at > 15_000) {
-    const home = homedir();
-    const [results, claudeSubscription] = await Promise.all([
-      Promise.all([
-        scanCodex(join(home, ".codex", "sessions")),
-        scanClaude(join(home, ".claude", "projects")),
-        scanOpenCode(join(home, ".local", "share", "opencode", "opencode.db")),
-      ]),
-      readClaudeStatusLineSubscription(join(home, ".claude")),
-    ]);
-    cachedRecords = {
-      records: results.flatMap((result) => result.records),
-      sources: results.map((result) => result.source),
-      subscriptions: [
-        results.find((result) => result.source.provider === "codex")?.subscription ?? {
-          provider: "codex",
-          state: "unavailable",
-          plan: null,
-          updatedAt: null,
-          windows: [],
-          detail: "Use Codex once, then refresh to capture its latest allowance.",
-        },
-        claudeSubscription,
-      ],
-      at: now,
-    };
-  }
-  return aggregate(cachedRecords.records, cachedRecords.sources, cachedRecords.subscriptions, range, rangeStart(range, now), now);
+  const cache = cachedRecords !== null && now - cachedRecords.at <= SNAPSHOT_TTL_MS
+    ? cachedRecords : await collect(now);
+  return aggregate(cache.records, cache.sources, cache.subscriptions, range, rangeStart(range, now), now);
+}
+
+/**
+ * Re-reads every source, ignoring the coalescing window. The background loop uses
+ * this instead of `scanStats` because it needs fresh records, not an aggregate:
+ * the ranges each window is showing are projected separately from the cache.
+ */
+export async function refreshStats(): Promise<void> {
+  await collect(Date.now());
 }
 
 export async function refreshSubscriptions(): Promise<SubscriptionUsage[]> {
   if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
   const [codex, claude] = await Promise.all([
-    scanCodex(join(homedir(), ".codex", "sessions"), true),
+    scanCodex(join(homedir(), ".codex", "sessions")),
     readClaudeStatusLineSubscription(join(homedir(), ".claude")),
   ]);
   if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
@@ -658,8 +843,13 @@ export async function refreshSubscriptions(): Promise<SubscriptionUsage[]> {
   return cachedRecords.subscriptions;
 }
 
-export function invalidateStatsCache(): void {
+/** Test seam: forgets every file, so the next scan re-reads from byte zero. */
+export function resetStatsCache(): void {
   cachedRecords = null;
+  codexFiles.clear();
+  claudeFiles.clear();
+  openCodeSignature = null;
+  subscriptionSignature = "";
 }
 
 /** Projection only: all disk reads are coordinated by the main-process service. */

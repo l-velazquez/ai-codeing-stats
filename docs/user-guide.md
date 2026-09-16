@@ -8,7 +8,7 @@ The app opens on Overview. Use the sidebar for Overview, Plans, Models, Projects
 
 The 7d, 30d, 90d, and All controls filter local usage. Timed ranges are rolling periods, not whole calendar weeks or months. Contributions has its own month selector. The dashboard currently starts at 30d on each launch; the settings schema's range field is not wired to restore the selection.
 
-Refresh updates local usage on the usage pages. On Contributions it refreshes the selected GitHub month. Background local scans run about once a minute, at local midnight, and after wake. Changing a range projects the cached records into that range.
+Refresh updates local usage on the usage pages. On Contributions it refreshes the selected GitHub month. Local usage updates about a second after a provider writes to disk: azul-code watches the transcript directories and rescans only what changed, so an idle machine does almost no work. A slower poll runs behind that, at local midnight, and after wake. Changing a range projects the cached records into that range.
 
 ## Overview
 
@@ -46,7 +46,7 @@ Daily AI cost is matched by date across your full local history. It is not attri
 
 The macOS companion defaults to today's USD API equivalent. Click for today's cost, tokens, provider breakdown, remaining allowances, reset times, Refresh, dashboard/Settings shortcuts, and Quit. Right-click opens a native quick-action menu.
 
-In **Settings → Menu bar**, enable or disable the companion and choose cost, allowance, both, or icon only. For allowance, choose Codex or Claude and the short or weekly window. `Cx` means Codex; `Cl` means Claude. Percentages mean **remaining** allowance.
+In **Settings → Menu bar**, enable or disable the companion and choose cost, allowance, both, or icon only. For allowance, choose Codex or Claude and the short or weekly window. The title names the provider in full, as in `Codex 5h · 80% left`. A period such as `5h` is the length of the allowance window, not the time left in it, and percentages mean **remaining** allowance.
 
 | Display | Meaning |
 | --- | --- |
@@ -62,6 +62,6 @@ Closing the dashboard leaves the macOS app running. Reopen it from the Dock or m
 
 ## Settings
 
-Appearance offers Dark, Light, or System mode, plus red, orange, green, blue, pink, or violet accents. These preferences apply to the dashboard and menu bar panel; the Dock icon remains blue.
+Appearance offers Dark, Light, or System mode, plus red, orange, green, blue, pink, or violet accents — or Custom, a picker that recolours the entire page from any colour you choose (saturation/value field, hue bar, and hex entry). The derived roles stay readable in both themes. These preferences apply to the dashboard and menu bar panel; the Dock icon remains blue.
 
 System check reports GitHub access and the availability of Git and supported agent CLIs. Its setup links open external documentation; the app does not install tools automatically. Data sources shows paths and scan status. A connected source means its location was discovered, not that every file was successfully parsed.

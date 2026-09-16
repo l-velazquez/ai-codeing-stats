@@ -48,6 +48,20 @@ export function allowanceIsStale(usage: SubscriptionUsage, window: SubscriptionW
   return window.resetsAt <= now || usage.updatedAt === null || now - usage.updatedAt > 15 * 60_000;
 }
 
+const PROVIDER_LABEL: Record<Settings["menuBarProvider"], string> = { codex: "Codex", claude: "Claude" };
+
+/**
+ * The window's length, not the time left in it — "5h" is a five-hour allowance
+ * window, never five hours remaining. Returns null when no live window is known,
+ * so the caller omits the qualifier instead of asserting a length we do not have.
+ */
+function windowToken(window: SubscriptionWindow | null, verbose: boolean): string | null {
+  if (!window) return null;
+  if (verbose && window.windowMinutes >= 10_080) return "weekly";
+  return window.windowMinutes >= 1_440
+    ? `${Math.round(window.windowMinutes / 1_440)}d` : `${Math.round(window.windowMinutes / 60)}h`;
+}
+
 export function menuBarTitle(state: MenuBarState, settings: Settings, now = Date.now()): string {
   if (settings.menuBarDisplay === "icon") return "";
   const summary = state.summary;
@@ -63,10 +77,16 @@ export function menuBarTitle(state: MenuBarState, settings: Settings, now = Date
     }).format(summary.cost)}${partial || stale ? "*" : ""}` : "—";
   const window = selectedAllowance(summary, settings);
   const usage = summary?.subscriptions.find((item) => item.provider === settings.menuBarProvider);
-  const period = window ? (window.windowMinutes >= 1_440 ? `${Math.round(window.windowMinutes / 1_440)}d` : `${Math.round(window.windowMinutes / 60)}h`)
-    : settings.menuBarWindow === "weekly" ? "7d" : "short";
-  const label = `${settings.menuBarProvider === "codex" ? "Cx" : "Cl"} ${period}`;
-  const allowance = `${label} ${window && usage && !allowanceIsStale(usage, window, now) && !stale ? `${remainingPercent(window)}%` : "—"}`;
+  // Only the allowance-only mode has room to spell the window out; "both" competes
+  // with the dollar figure, and its tooltip already says the percentage is remaining.
+  const verbose = settings.menuBarDisplay === "allowance";
+  const known = window && usage && !allowanceIsStale(usage, window, now) && !stale;
+  const percent = known ? `${remainingPercent(window)}%` : null;
+  const allowance = [
+    PROVIDER_LABEL[settings.menuBarProvider],
+    windowToken(window, verbose),
+    percent === null ? "—" : verbose ? `· ${percent} left` : percent,
+  ].filter(Boolean).join(" ");
   if (settings.menuBarDisplay === "allowance") return allowance;
   if (settings.menuBarDisplay === "both") return `${amount} · ${allowance}`;
   return amount;

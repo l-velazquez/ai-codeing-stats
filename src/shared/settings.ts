@@ -2,9 +2,84 @@ import type { RangeKey } from "./types";
 
 export type ThemePreference = "dark" | "light" | "system";
 export const ACCENT_COLORS = ["red", "orange", "green", "blue", "pink", "violet"] as const;
-export type AccentColor = typeof ACCENT_COLORS[number];
+export type PresetAccent = typeof ACCENT_COLORS[number];
+/** Every preset name plus "custom", which drives the theme from a picked hex. */
+export type AccentColor = PresetAccent | "custom";
 export function normalizeAccent(value: unknown): AccentColor {
-  return ACCENT_COLORS.includes(value as AccentColor) ? value as AccentColor : "blue";
+  if (value === "custom") return "custom";
+  return ACCENT_COLORS.includes(value as PresetAccent) ? value as PresetAccent : "blue";
+}
+
+/** The accent a fresh install starts on when Custom is first selected. */
+export const CUSTOM_ACCENT_DEFAULT = "#00c8ff";
+
+/**
+ * Accepts #rgb, #rrggbb, with or without the hash, and anything else falls
+ * back. Like normalizeSettings this never throws: a hand-edited settings file
+ * must not stop the app booting.
+ */
+export function normalizeHexColor(value: unknown, fallback: string = CUSTOM_ACCENT_DEFAULT): string {
+  if (typeof value !== "string") return fallback;
+  const match = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(value.trim());
+  if (!match) return fallback;
+  const hex = match[1];
+  return `#${(hex.length === 3 ? [...hex].map((c) => c + c).join("") : hex).toLowerCase()}`;
+}
+
+/** The CSS custom properties a custom accent must set to recolour the page. */
+export type CustomAccentVars =
+  & Record<"--accent" | "--accent-light" | "--accent-solid" | "--brand-start" | "--brand-end", string>;
+
+export function hexToHsv(hex: string): { h: number; s: number; v: number } {
+  const [r, g, b] = channels(hex).map((channel) => channel / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  let h = 0;
+  if (delta > 0) {
+    if (max === r) h = 60 * (((g - b) / delta + 6) % 6);
+    else if (max === g) h = 60 * ((b - r) / delta + 2);
+    else h = 60 * ((r - g) / delta + 4);
+  }
+  return { h, s: max === 0 ? 0 : delta / max, v: max };
+}
+
+export function hsvToHex(h: number, s: number, v: number): string {
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  const rgb = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return `#${rgb.map((channel) => Math.round((channel + m) * 255).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Derives the accent roles from any colour the user picks. Every preset keeps
+ * two readable values per theme: a light, saturated highlight for the dark
+ * theme and a darker one for text on white. The picker respects the picked
+ * hue and chroma but pulls each role into the same bands the presets occupy,
+ * so a near-black maroon or a pastel still produce a usable theme. Near-greys
+ * stay grey rather than being saturated into a colour the user never chose.
+ */
+export function customAccentVars(hex: unknown): CustomAccentVars {
+  const { h, s, v } = hexToHsv(normalizeHexColor(hex));
+  const chroma = s >= 0.1;
+  const sat = (floor: number) => (chroma ? Math.max(s, floor) : s);
+  return {
+    "--accent": hsvToHex(h, sat(0.6), clamp(v, 0.88, 1)),
+    "--accent-light": hsvToHex(h, sat(0.55), clamp(v, 0.42, 0.78)),
+    "--accent-solid": hsvToHex(h, sat(0.55), clamp(v, 0.78, 0.95)),
+    "--brand-start": hsvToHex(h, sat(0.75), 1),
+    "--brand-end": hsvToHex(h, sat(0.8), clamp(v * 0.72, 0.48, 0.72)),
+  };
+}
+
+/** The solid accent behind a theme ground, custom included. */
+export function accentSolidHex(accent: AccentColor, customAccent?: string): string {
+  return accent === "custom" ? normalizeHexColor(customAccent) : ACCENT_SOLID[accent];
 }
 
 export type ResolvedTheme = "dark" | "light";
@@ -23,6 +98,8 @@ export interface Settings {
   readonly version: 1;
   readonly theme: ThemePreference;
   readonly accent: AccentColor;
+  /** Only used when accent is "custom"; always a normalized #rrggbb string. */
+  readonly customAccent: string;
   readonly range: RangeKey;
   readonly subscriptionPollSeconds: number;
   readonly window: WindowBounds | null;
@@ -39,6 +116,7 @@ export const DEFAULT_SETTINGS: Settings = {
   version: 1,
   theme: "system",
   accent: "blue",
+  customAccent: CUSTOM_ACCENT_DEFAULT,
   range: "30d",
   subscriptionPollSeconds: 15,
   window: null,
@@ -59,8 +137,8 @@ export const THEME_BACKGROUND: Record<ResolvedTheme, string> = {
 };
 
 /** --accent-solid per accent, mirrored from tokens.css. */
-export const ACCENT_SOLID: Record<AccentColor, string> = {
-  red: "#d92c4c",
+export const ACCENT_SOLID: Record<PresetAccent, string> = {
+  red: "#e8103a",
   orange: "#c8550c",
   green: "#16864d",
   blue: "#2460ff",
@@ -89,9 +167,9 @@ function channels(hex: string): [number, number, number] {
  * a launch flashes the wrong colour: `color-mix(in srgb, ...)` interpolates in
  * gamma-encoded sRGB, so the same per-channel blend reproduces --bg exactly.
  */
-export function themeBackground(theme: ResolvedTheme, accent: AccentColor): string {
+export function themeBackground(theme: ResolvedTheme, accent: AccentColor, customAccent?: string): string {
   const base = channels(THEME_BACKGROUND[theme]);
-  const tint = channels(ACCENT_SOLID[accent]);
+  const tint = channels(accentSolidHex(accent, customAccent));
   return `#${base
     .map((value, index) => mixChannel(value, tint[index] ?? 0).toString(16).padStart(2, "0"))
     .join("")}`;
@@ -146,6 +224,7 @@ export function normalizeSettings(raw: unknown): Settings {
     version: 1,
     theme,
     accent: normalizeAccent(raw.accent),
+    customAccent: normalizeHexColor(raw.customAccent),
     range,
     subscriptionPollSeconds,
     window: normalizeWindow(raw.window),

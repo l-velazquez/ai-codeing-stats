@@ -225,6 +225,8 @@ export interface AzulCodeBridge {
     openDashboard: (settings?: boolean) => Promise<void>;
     hide: () => Promise<void>;
     quit: () => Promise<void>;
+    /** Natural content height in CSS pixels. Main clamps it to the room below the tray. */
+    setHeight: (height: number) => void;
   };
   onOpenSettings: (listener: () => void) => () => void;
   subscriptions: () => Promise<SubscriptionUsage[]>;
@@ -239,8 +241,16 @@ export interface AzulCodeBridge {
   };
   /**
    * Resolved synchronously from process.argv, so the theme and the sidebar
-   * state are both known before the first paint.
+   * state are both known before the first paint. With a custom accent the
+   * derived CSS variables come along so the first frame is already tinted.
    */
-  initial: { accent?: import("./settings").AccentColor; theme: ThemePreference; resolved: ResolvedTheme; sidebarCollapsed: boolean };
+  initial: {
+    accent?: import("./settings").AccentColor;
+    customAccent?: string;
+    roles?: import("./settings").CustomAccentVars | null;
+    theme: ThemePreference;
+    resolved: ResolvedTheme;
+    sidebarCollapsed: boolean;
+  };
   platform: string;
 }

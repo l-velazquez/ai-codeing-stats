@@ -7,8 +7,9 @@ import type { RangeKey } from "../shared/types";
 import { resolveTheme, themeBackground, type Settings } from "../shared/settings";
 import { fetchGithubMonth } from "./github";
 import { installClaudeStatusLine } from "./claudeStatusLine";
-import { cachedStats, invalidateStatsCache, scanStats } from "./scanner";
-import { StatsService } from "./statsService";
+import { cachedStats, refreshStats, statsRevision } from "./scanner";
+import { LIVE_INTERVAL_MS, StatsService, WATCHED_INTERVAL_MS } from "./statsService";
+import { SourceWatcher, transcriptWatchTargets } from "./sourceWatcher";
 import { MenuBar } from "./menuBar";
 import { checkSystem } from "./systemChecks";
 import { readSettings, usableBounds, writeSettings } from "./settingsStore";
@@ -17,9 +18,25 @@ let mainWindow: BrowserWindow | null = null;
 let saveBoundsTimer: NodeJS.Timeout | null = null;
 let menuBar: MenuBar | null = null;
 const stats = new StatsService({
-  refresh: () => { invalidateStatsCache(); return scanStats("7d"); },
+  refresh: refreshStats,
   read: cachedStats,
+  revision: statsRevision,
 });
+
+// Watching the transcript directories is what makes usage feel live; the poll
+// behind it only has to cover what a watcher can miss.
+const watcher = new SourceWatcher(transcriptWatchTargets(), () => stats.refresh({ silent: true }));
+
+function startScanning(): void {
+  const watched = watcher.start();
+  stats.setPollInterval(watched > 0 ? WATCHED_INTERVAL_MS : LIVE_INTERVAL_MS);
+  stats.start();
+}
+
+function stopScanning(): void {
+  stats.stop();
+  watcher.stop();
+}
 
 function broadcast(channel: string, value?: unknown): void {
   for (const window of BrowserWindow.getAllWindows()) {
@@ -71,7 +88,7 @@ function createWindow(openSettings = false): void {
     trafficLightPosition: { x: 18, y: 18 },
     // Painted before the renderer's first frame; must match the theme and the
     // accent, or a launch flashes the wrong ground colour.
-    backgroundColor: themeBackground(resolved, settings.accent),
+    backgroundColor: themeBackground(resolved, settings.accent, settings.customAccent),
     icon,
     webPreferences: {
       // Keep the sandboxed preload in CommonJS. Electron's sandboxed preload
@@ -86,6 +103,7 @@ function createWindow(openSettings = false): void {
       additionalArguments: [
         `--azul-code-theme=${settings.theme}`,
         `--azul-code-accent=${settings.accent}`,
+        `--azul-code-custom=${settings.customAccent}`,
         `--azul-code-resolved=${resolved}`,
         `--azul-code-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
       ],
@@ -142,7 +160,7 @@ app.whenReady().then(() => {
     const current = readSettings();
     menuBar?.updateTheme();
     if (current.theme !== "system" || mainWindow === null || mainWindow.isDestroyed()) return;
-    mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(current), current.accent));
+    mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(current), current.accent, current.customAccent));
   });
 
   ipcMain.handle("azul-code:scan", (_event, range: RangeKey, refresh?: boolean) => {
@@ -155,6 +173,11 @@ app.whenReady().then(() => {
   ipcMain.handle("azul-code:open-dashboard", (_event, settings?: boolean) => openDashboard(settings === true));
   ipcMain.handle("azul-code:menubar-hide", () => menuBar?.hide());
   ipcMain.handle("azul-code:quit", () => app.quit());
+  ipcMain.on("azul-code:menubar-height", (_event, height: unknown) => {
+    if (typeof height === "number" && Number.isFinite(height) && height >= 0 && height <= 4000) {
+      menuBar?.setContentHeight(height);
+    }
+  });
   ipcMain.handle("azul-code:setup-claude-statusline", async () => {
     const usage = await installClaudeStatusLine(join(homedir(), ".claude"));
     await stats.refresh();
@@ -178,8 +201,8 @@ app.whenReady().then(() => {
     menuBar?.configure(next);
     if (patch && "theme" in patch) nativeTheme.themeSource = next.theme;
     // The accent tints the page ground too, so it repaints the window as well.
-    if (patch && ("theme" in patch || "accent" in patch) && mainWindow !== null && !mainWindow.isDestroyed()) {
-      mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(next), next.accent));
+    if (patch && ("theme" in patch || "accent" in patch || "customAccent" in patch) && mainWindow !== null && !mainWindow.isDestroyed()) {
+      mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(next), next.accent, next.customAccent));
     }
     broadcast("azul-code:settings-changed", next);
     return next;
@@ -191,16 +214,17 @@ app.whenReady().then(() => {
     broadcast("azul-code:menubar-changed", state);
     if (updated) broadcast("azul-code:stats-changed");
   });
-  stats.start();
-  powerMonitor.on("suspend", () => { stats.stop(); menuBar?.hide(); });
-  powerMonitor.on("resume", () => stats.start());
+  startScanning();
+  // A directory that only appears after launch is picked up by re-watching here.
+  powerMonitor.on("suspend", () => { stopScanning(); menuBar?.hide(); });
+  powerMonitor.on("resume", () => startScanning());
 
   app.on("activate", () => {
     openDashboard();
   });
 });
 
-app.on("before-quit", () => { stats.stop(); menuBar?.destroy(); menuBar = null; });
+app.on("before-quit", () => { stopScanning(); menuBar?.destroy(); menuBar = null; });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
