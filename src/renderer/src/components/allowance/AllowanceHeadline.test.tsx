@@ -43,6 +43,13 @@ describe("AllowanceMeter", () => {
     render(<AllowanceMeter window={live.windows[0]!} />);
     expect(screen.getByText(/Comfortable/)).toBeInTheDocument();
   });
+
+  it("refills an expired window from its known reset time", () => {
+    const reset = Date.now();
+    render(<AllowanceMeter window={{ ...live.windows[0]!, usedPercent: 82, resetsAt: reset - 1 }} now={reset} />);
+    expect(screen.getByRole("progressbar", { name: /5-hour limit/ })).toHaveAttribute("aria-valuenow", "0");
+    expect(screen.getByText(/100\s*% left/)).toBeInTheDocument();
+  });
 });
 
 describe("AllowanceHeadline", () => {

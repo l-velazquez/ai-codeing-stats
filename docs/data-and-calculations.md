@@ -58,7 +58,7 @@ Monthly pace uses cost in the trailing 30-day window, divided by elapsed days si
 
 ## Subscription allowance
 
-Codex uses the newest local rate-limit event. Claude reads captured five-hour and seven-day windows, using the capture file's modification time as report time. No token-to-quota conversion is attempted. Expired Claude windows are discarded. The menu bar additionally hides reports older than 15 minutes; refresh cannot renew a provider report without agent activity.
+Codex uses the newest local rate-limit event. Claude reads captured five-hour and seven-day windows, using the capture file's modification time as report time. No token-to-quota conversion is attempted. A report stays visible after it becomes old; once its known reset timestamp passes, the UI resets that window to 0% used locally without waiting for another provider event. Refresh can read a newer report but cannot create one without agent activity.
 
 ## GitHub contributions
 

@@ -54,7 +54,7 @@ In **Settings → Menu bar**, enable or disable the companion and choose cost, a
 | `<$0.01` | Positive cost below one cent |
 | `*` after cost | Partial pricing, source error, refresh failure, or snapshot older than two minutes |
 | `—` for cost | No available connected source or no current-day summary |
-| `—` for allowance | Missing window, expired reset, report older than 15 minutes, or stale summary |
+| `—` for allowance | No provider window has been captured yet |
 
 Today's Codex and Claude totals include events after local midnight even if the session began yesterday. OpenCode supplies session totals and has less precise daily attribution; see the data reference.
 

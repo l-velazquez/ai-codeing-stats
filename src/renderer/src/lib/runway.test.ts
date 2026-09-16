@@ -100,7 +100,7 @@ describe("tightestWindow", () => {
     // exhaustion is a day and a half out; the five-hour bites in 80 minutes.
     const weekly = windowAt(70, 4 * DAY, 7 * 24 * 60, "Weekly limit");
     const short = windowAt(60, 2 * HOUR);
-    expect(worstWindow(usage([short, weekly]))?.label).toBe("Weekly limit");
+    expect(worstWindow(usage([short, weekly]), NOW)?.label).toBe("Weekly limit");
     expect(tightestWindow(usage([short, weekly]), NOW)?.label).toBe("5-hour limit");
   });
 

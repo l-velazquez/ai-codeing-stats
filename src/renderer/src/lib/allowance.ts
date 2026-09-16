@@ -1,9 +1,10 @@
 import type { SubscriptionUsage, SubscriptionWindow } from "@shared/types";
+import { windowAfterReset } from "@shared/allowance";
 import { runwayFor } from "@renderer/lib/runway";
 
 /** Human countdown to a window reset. */
-export function resetText(timestamp: number): string {
-  const remaining = timestamp - Date.now();
+export function resetText(timestamp: number, now = Date.now()): string {
+  const remaining = timestamp - now;
   if (remaining <= 0) return "Reset due";
   const totalMinutes = Math.ceil(remaining / 60_000);
   if (totalMinutes < 60) return `Resets in ${totalMinutes}m`;
@@ -23,16 +24,16 @@ export function isLive(usage: SubscriptionUsage): boolean {
  * The window closest to its limit, which is the one worth leading with: it is
  * the first thing that will stop you working.
  */
-export function worstWindow(usage: SubscriptionUsage): SubscriptionWindow | null {
+export function worstWindow(usage: SubscriptionUsage, now = Date.now()): SubscriptionWindow | null {
   if (!isLive(usage)) return null;
-  return usage.windows.reduce<SubscriptionWindow | null>(
+  return usage.windows.map((window) => windowAfterReset(window, now)).reduce<SubscriptionWindow | null>(
     (worst, window) => (worst === null || window.usedPercent > worst.usedPercent ? window : worst),
     null,
   );
 }
 
-export function headroom(window: SubscriptionWindow): number {
-  return Math.max(0, 100 - window.usedPercent);
+export function headroom(window: SubscriptionWindow, now = Date.now()): number {
+  return Math.max(0, 100 - windowAfterReset(window, now).usedPercent);
 }
 
 export type AllowancePressure = "comfortable" | "tight" | "critical";
@@ -65,8 +66,9 @@ const PRESSURE_RANK: Record<AllowancePressure, number> = { comfortable: 0, tight
  * reset is at least tight, and critical once the runway is under half an hour.
  */
 export function pressureFor(window: SubscriptionWindow, now = Date.now()): AllowancePressure {
-  const base = pressureOf(window.usedPercent);
-  const projection = runwayFor(window, now);
+  const current = windowAfterReset(window, now);
+  const base = pressureOf(current.usedPercent);
+  const projection = runwayFor(current, now);
   if (projection === null || projection.survivesWindow) return base;
   const paced: AllowancePressure = projection.runwayMs <= 30 * 60_000 ? "critical" : "tight";
   return PRESSURE_RANK[paced] > PRESSURE_RANK[base] ? paced : base;
@@ -105,7 +107,7 @@ export function tightestWindow(
   now = Date.now(),
 ): SubscriptionWindow | null {
   if (!isLive(usage)) return null;
-  return usage.windows.reduce<SubscriptionWindow | null>(
+  return usage.windows.map((window) => windowAfterReset(window, now)).reduce<SubscriptionWindow | null>(
     (tightest, window) =>
       tightest === null || moreUrgent(window, tightest, now) ? window : tightest,
     null,

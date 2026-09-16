@@ -1,5 +1,6 @@
 import type { Settings } from "./settings";
 import type { ProviderStat, SourceStatus, StatsSnapshot, SubscriptionUsage, SubscriptionWindow } from "./types";
+import { windowAfterReset } from "./allowance";
 
 export interface MenuBarSummary {
   readonly day: string;
@@ -40,10 +41,16 @@ export function selectedAllowance(summary: MenuBarSummary | null, settings: Sett
     ? window.windowMinutes >= 10_080 : window.windowMinutes > 0 && window.windowMinutes < 1_440) ?? null;
 }
 
-export function remainingPercent(window: SubscriptionWindow): number {
-  return Math.round(Math.max(0, Math.min(100, 100 - window.usedPercent)));
+export function remainingPercent(window: SubscriptionWindow, now = Date.now()): number {
+  const current = windowAfterReset(window, now);
+  return Math.round(Math.max(0, Math.min(100, 100 - current.usedPercent)));
 }
 
+/**
+ * A report can be old without being useless. Callers use this for context
+ * (and to disable pace projections), but should keep rendering the last
+ * percentage until the known reset time has passed.
+ */
 export function allowanceIsStale(usage: SubscriptionUsage, window: SubscriptionWindow, now = Date.now()): boolean {
   return window.resetsAt <= now || usage.updatedAt === null || now - usage.updatedAt > 15 * 60_000;
 }
@@ -80,8 +87,11 @@ export function menuBarTitle(state: MenuBarState, settings: Settings, now = Date
   // Only the allowance-only mode has room to spell the window out; "both" competes
   // with the dollar figure, and its tooltip already says the percentage is remaining.
   const verbose = settings.menuBarDisplay === "allowance";
-  const known = window && usage && !allowanceIsStale(usage, window, now) && !stale;
-  const percent = known ? `${remainingPercent(window)}%` : null;
+  // A last provider report remains the best available reading. The reset
+  // timestamp is enough to refill it locally, so age and a failed scan must
+  // not turn an otherwise known allowance into a dash.
+  const known = window && usage;
+  const percent = known ? `${remainingPercent(window, now)}%` : null;
   const allowance = [
     PROVIDER_LABEL[settings.menuBarProvider],
     windowToken(window, verbose),

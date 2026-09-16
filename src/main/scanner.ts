@@ -45,7 +45,7 @@ function codexWindow(value: CodexRateLimitWindow | null | undefined): Subscripti
   const usedPercent = Number(value.used_percent);
   const windowMinutes = Number(value.window_minutes);
   const resetsAt = Number(value.resets_at) * 1_000;
-  if (![usedPercent, windowMinutes, resetsAt].every(Number.isFinite)) return null;
+  if (![usedPercent, windowMinutes, resetsAt].every(Number.isFinite) || resetsAt <= 0) return null;
   return {
     label: windowMinutes >= 10_080 ? "Weekly limit" : windowMinutes >= 1_440 ? "Daily limit" : "Session limit",
     usedPercent: Math.min(100, Math.max(0, usedPercent)),
@@ -240,6 +240,19 @@ function newerSubscription(
   if (next === null) return best;
   if (best === null) return next;
   return (next.updatedAt ?? 0) > (best.updatedAt ?? -1) ? next : best;
+}
+
+function hasSubscriptionReading(usage: SubscriptionUsage | undefined): usage is SubscriptionUsage {
+  return usage?.state === "live" && usage.windows.length > 0;
+}
+
+/** Keep a known report through a transient empty read; the reset timestamp
+ * still lets the UI invalidate or refill the bar without another JSON read. */
+function keepLastSubscription(
+  previous: SubscriptionUsage | undefined,
+  next: SubscriptionUsage,
+): SubscriptionUsage {
+  return hasSubscriptionReading(next) || !hasSubscriptionReading(previous) ? next : previous;
 }
 
 const codexFiles = new Map<string, TranscriptFile<CodexContext>>();
@@ -780,6 +793,7 @@ export function statsRevision(): number {
 
 async function collect(now: number): Promise<RecordCache> {
   const home = homedir();
+  const previousSubscriptions = cachedRecords?.subscriptions ?? [];
   const [results, claudeSubscription] = await Promise.all([
     Promise.all([
       scanCodex(join(home, ".codex", "sessions")),
@@ -788,17 +802,18 @@ async function collect(now: number): Promise<RecordCache> {
     ]),
     readClaudeStatusLineSubscription(join(home, ".claude")),
   ]);
-  const subscriptions = [
-    results.find((result) => result.source.provider === "codex")?.subscription ?? {
+  const codex = results.find((result) => result.source.provider === "codex")?.subscription ?? {
       provider: "codex" as const,
       state: "unavailable" as const,
       plan: null,
       updatedAt: null,
       windows: [],
       detail: "Use Codex once, then refresh to capture its latest allowance.",
-    },
-    claudeSubscription,
-  ];
+    };
+  const subscriptions = [codex, claudeSubscription].map((next) => keepLastSubscription(
+    previousSubscriptions.find((usage) => usage.provider === next.provider),
+    next,
+  ));
   const cache: RecordCache = {
     records: results.flatMap((result) => result.records),
     sources: results.map((result) => result.source),
@@ -837,9 +852,10 @@ export async function refreshSubscriptions(): Promise<SubscriptionUsage[]> {
     readClaudeStatusLineSubscription(join(homedir(), ".claude")),
   ]);
   if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
-  cachedRecords.subscriptions = cachedRecords.subscriptions.map((usage) =>
-    usage.provider === "claude" ? claude : codex.subscription ?? usage,
-  );
+  cachedRecords.subscriptions = cachedRecords.subscriptions.map((usage) => {
+    const next = usage.provider === "claude" ? claude : codex.subscription ?? usage;
+    return keepLastSubscription(usage, next);
+  });
   return cachedRecords.subscriptions;
 }
 

@@ -1,4 +1,5 @@
 import type { SubscriptionWindow } from "@shared/types";
+import { windowAfterReset } from "@shared/allowance";
 import { headroom, PRESSURE_LABELS, pressureFor, resetText } from "@renderer/lib/allowance";
 
 /**
@@ -9,12 +10,15 @@ import { headroom, PRESSURE_LABELS, pressureFor, resetText } from "@renderer/lib
 export function AllowanceMeter({
   window: allowance,
   size = "regular",
+  now = Date.now(),
 }: {
   window: SubscriptionWindow;
   size?: "regular" | "large";
+  now?: number;
 }) {
-  const used = Math.round(allowance.usedPercent);
-  const pressure = pressureFor(allowance);
+  const current = windowAfterReset(allowance, now);
+  const used = Math.round(current.usedPercent);
+  const pressure = pressureFor(current, now);
 
   return (
     <div className={`allowance allowance--${size}`} data-pressure={pressure}>
@@ -29,13 +33,13 @@ export function AllowanceMeter({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={used}
-        aria-valuetext={`${used}% used, ${PRESSURE_LABELS[pressure].toLowerCase()}. ${resetText(allowance.resetsAt)}.`}
+        aria-valuetext={`${used}% used, ${PRESSURE_LABELS[pressure].toLowerCase()}. ${resetText(current.resetsAt, now)}.`}
       >
-        <i style={{ width: `${Math.min(100, Math.max(0, allowance.usedPercent))}%` }} />
+        <i style={{ width: `${Math.min(100, Math.max(0, current.usedPercent))}%` }} />
       </div>
       <div className="allowance-meta">
-        <span>{Math.round(headroom(allowance))}% left · {PRESSURE_LABELS[pressure]}</span>
-        <span>{resetText(allowance.resetsAt)}</span>
+        <span>{Math.round(headroom(current, now))}% left · {PRESSURE_LABELS[pressure]}</span>
+        <span>{resetText(current.resetsAt, now)}</span>
       </div>
     </div>
   );

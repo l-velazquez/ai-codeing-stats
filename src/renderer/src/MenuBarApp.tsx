@@ -2,6 +2,7 @@ import { BrandMark } from "@renderer/components/BrandMark";
 import { useThemePreference } from "@renderer/hooks/useThemePreference";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, RefreshCw, Settings2 } from "lucide-react";
+import { windowAfterReset } from "@shared/allowance";
 import { allowanceIsStale, localDayKey, remainingPercent, type MenuBarState } from "@shared/menuBar";
 import type { SubscriptionUsage } from "@shared/types";
 import { ProviderMark } from "@renderer/components/ProviderMark";
@@ -30,15 +31,22 @@ function Allowance({ usage, now }: { usage: SubscriptionUsage; now: number }) {
       {usage.updatedAt ? <span title={dateTime(usage.updatedAt)}>Reported {relative(usage.updatedAt)}{relative(usage.updatedAt) === "now" ? "" : " ago"}</span> : null}</div>
     {usage.state === "live" && usage.windows.length ? <div className="menubar-windows">{usage.windows.map((window, index) => {
       const stale = allowanceIsStale(usage, window, now);
-      const remaining = remainingPercent(window);
-      return <div className="menubar-meter" data-pressure={pressureOf(window.usedPercent)} data-stale={stale} key={`${window.windowMinutes}-${index}`}>
-        <div><span>{window.label}</span><strong>{stale ? "—" : `${remaining}% left`}</strong></div>
+      const reset = window.resetsAt <= now;
+      const current = windowAfterReset(window, now);
+      const remaining = remainingPercent(window, now);
+      const status = reset
+        ? "Reset due · bar reset automatically"
+        : stale
+          ? `Last report · ${resetText(window.resetsAt, now)}`
+          : resetText(window.resetsAt, now);
+      return <div className="menubar-meter" data-pressure={pressureOf(current.usedPercent)} data-stale={stale} key={`${window.windowMinutes}-${index}`}>
+        <div><span>{window.label}</span><strong>{remaining}% left</strong></div>
         <div className="menubar-track" role="progressbar" aria-label={`${PROVIDERS[usage.provider].label} ${window.label} remaining`}
-          aria-valuemin={0} aria-valuemax={100} aria-valuenow={stale ? undefined : remaining}
-          aria-valuetext={stale ? "Awaiting a fresh provider report" : `${remaining}% remaining. ${resetText(window.resetsAt)}`}>
-          <i style={{ width: stale ? "0%" : `${remaining}%` }} />
+          aria-valuemin={0} aria-valuemax={100} aria-valuenow={remaining}
+          aria-valuetext={`${remaining}% remaining. ${reset ? "The allowance reset at the known reset time." : stale ? "Showing the last provider report." : resetText(window.resetsAt, now)}`}>
+          <i style={{ width: `${remaining}%` }} />
         </div>
-        <small>{stale ? window.resetsAt <= now ? "Reset due · awaiting provider report" : "Stale · use the agent for a fresh report" : resetText(window.resetsAt)}</small>
+        <small>{status}</small>
       </div>;
     })}</div> : <p className="menubar-unavailable">{usage.capture?.state === "waiting" ? "Waiting for the next Claude Code response." : "Allowance unavailable. Open azul-code to connect."}</p>}
   </div>;

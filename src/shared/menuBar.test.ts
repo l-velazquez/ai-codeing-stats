@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./settings";
-import { allowanceIsStale, localDayKey, menuBarTitle, type MenuBarState } from "./menuBar";
+import { allowanceIsStale, localDayKey, menuBarTitle, remainingPercent, type MenuBarState } from "./menuBar";
 import { PANEL_WIDTH, panelBounds, panelHeight } from "./panelBounds";
 
 const now = new Date(2026, 8, 5, 12).getTime();
@@ -30,12 +30,13 @@ it("does not label yesterday's cost as today or unavailable sources as zero", ()
   expect(menuBarTitle({ summary: null, error: null, refreshing: true }, DEFAULT_SETTINGS, now)).toBe("—");
 });
 
-it("marks partial and failed estimates, and suppresses stale allowance percentages", () => {
+it("marks partial estimates while retaining the last allowance percentage", () => {
   const good = state();
   expect(menuBarTitle({ ...good, summary: { ...good.summary!, pricedPercent: .5 } }, DEFAULT_SETTINGS, now)).toBe("$12.40*");
-  expect(menuBarTitle({ ...good, error: "failed" }, { ...DEFAULT_SETTINGS, menuBarDisplay: "both" }, now)).toBe("$12.40* · Codex 5h —");
-  // A known window with an unusable reading keeps the period but drops the percentage.
-  expect(menuBarTitle({ ...good, error: "failed" }, { ...DEFAULT_SETTINGS, menuBarDisplay: "allowance" }, now)).toBe("Codex 5h —");
+  expect(menuBarTitle({ ...good, error: "failed" }, { ...DEFAULT_SETTINGS, menuBarDisplay: "both" }, now)).toBe("$12.40* · Codex 5h 80%");
+  // A report older than the freshness hint keeps its last known percentage.
+  expect(menuBarTitle({ ...good, error: "failed" }, { ...DEFAULT_SETTINGS, menuBarDisplay: "allowance" }, now + 16 * 60_000)).toBe("Codex 5h · 80% left");
+  expect(remainingPercent({ ...good.summary!.subscriptions[0]!.windows[0]!, resetsAt: now - 1 }, now)).toBe(100);
   const usage = good.summary!.subscriptions[0];
   expect(allowanceIsStale(usage, usage.windows[0], now + 16 * 60_000)).toBe(true);
   expect(allowanceIsStale(usage, { ...usage.windows[0], resetsAt: now }, now)).toBe(true);
