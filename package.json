@@ -1,6 +1,6 @@
 {
   "name": "azul-code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A local-first macOS dashboard for AI coding usage, subscription allowances, and GitHub contributions.",
   "type": "module",

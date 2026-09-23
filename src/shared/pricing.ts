@@ -14,14 +14,17 @@ export interface ModelRate {
 // the tokens past it: 2x on every input rate, 1.5x on output.
 const LONG_CONTEXT_INPUT_FACTOR = 2;
 const LONG_CONTEXT_OUTPUT_FACTOR = 1.5;
-// Documented for gpt-6-astra; the rest of the GPT line publishes the same tier
-// shape, so they are assumed to share the threshold until confirmed otherwise.
+// Documented for GPT-6 Astra, Sol, and Luna; older GPT models are assumed to
+// share the threshold until confirmed otherwise.
 const GPT_LONG_CONTEXT_FROM = 272_000;
 
 // USD per million tokens. Existing rates were last verified against official provider pricing
 // on 2026-09-05; Claude Fable rates were verified against Anthropic pricing on 2026-09-14.
+// GPT-6 Sol and Luna rates and long-context tiers were verified on 2026-09-23.
 const RATES: Record<string, ModelRate> = {
   "gpt-6-astra": { input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 12.5, output: 50, longContextFrom: GPT_LONG_CONTEXT_FROM },
+  "gpt-6-sol": { input: 2, cached: 0.2, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 10, longContextFrom: GPT_LONG_CONTEXT_FROM },
+  "gpt-6-luna": { input: 0.1, cached: 0.01, cacheWrite5m: 0.125, cacheWrite1h: 0.125, output: 0.5, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.6-sol": { input: 4, cached: 0.4, cacheWrite5m: 5, cacheWrite1h: 5, output: 20, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.6": { input: 4, cached: 0.4, cacheWrite5m: 5, cacheWrite1h: 5, output: 20, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.6-terra": { input: 2, cached: 0.2, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 12, longContextFrom: GPT_LONG_CONTEXT_FROM },
