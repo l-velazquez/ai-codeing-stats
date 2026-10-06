@@ -80,7 +80,7 @@ function claudeWindow(
   if (value === null || value === undefined) return null;
   const usedPercent = Number(value.used_percentage);
   const resetsAt = Number(value.resets_at) * 1_000;
-  if (![usedPercent, resetsAt].every(Number.isFinite) || resetsAt <= now) return null;
+  if (![usedPercent, resetsAt].every(Number.isFinite) || resetsAt <= 0) return null;
   return {
     label,
     usedPercent: Math.min(100, Math.max(0, usedPercent)),
@@ -126,7 +126,7 @@ export function parseClaudeStatusLineSubscription(
       plan: null,
       updatedAt,
       windows: [],
-      detail: "The last captured allowance has expired. Send a Claude Code message to refresh it.",
+      detail: "The last capture did not include an active allowance window. Send a Claude Code message to refresh it.",
       capture: { kind: "claude-statusline", state: configured ? "waiting" : "not-configured" },
     };
   } catch {

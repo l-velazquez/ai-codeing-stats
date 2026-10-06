@@ -45,7 +45,11 @@ flowchart LR
 
 `StatsService` is the refresh owner for all windows. Startup invalidates the scanner cache and scans sources. Concurrent refresh requests share a promise. The service builds the menu bar summary from records since local midnight and publishes change notifications. Dashboard range reads reuse cached normalized records and aggregate them on demand.
 
-The service schedules its next scan after completion, within one minute or at the next local midnight. Suspend stops the timer; resume starts it again. Closing the dashboard does not stop the service on macOS. The scanner also has a 15-second cache for direct callers, but service refresh explicitly invalidates it.
+A `SourceWatcher` watches the directories every source writes to -- both transcript trees recursively, plus the Claude status-line capture directory and the OpenCode database directory, where the `-wal` file is the signal. Events are throttled, not debounced on a resetting timer: the first event after a quiet spell schedules a scan about a second out, events until then ride along with it, anything arriving mid-scan earns exactly one more, and two scans are never closer than two seconds. A provider with no directory is skipped, and the watcher reports how many targets it took.
+
+The service schedules its next scan after completion, within its poll interval or at the next local midnight. That interval is five seconds when nothing is watched and fifteen when the watcher is running, because the poll is then only a safety net: a missed event, a provider installed after launch, and the midnight rollover. Suspend stops the timer; resume starts it again. Closing the dashboard does not stop the service on macOS. The scanner also has a two-second cache for direct callers, but service refresh explicitly invalidates it.
+
+Scans are incremental. The scanner keeps per-file parse results keyed by size and mtime; an unchanged transcript is reused, and a transcript that only grew is read from the byte offset of its last complete line, so a half-written line is deferred rather than lost. A pass that finds nothing new costs one `stat` per transcript instead of a re-parse of every byte, which is what allows the short interval. `statsRevision()` moves only when a pass finds different usage, and background ticks are silent: they publish a fresh scan time to the menu bar but raise no spinner and notify renderers to re-aggregate only on a real change. `resetStatsCache()` forgets every file and exists for tests.
 
 On failure, the service retains its previous menu bar summary and exposes an error. Renderer snapshot loading retains an existing dashboard on refresh failure and uses a retry state when the first load fails. Request IDs prevent older responses replacing a newer range/month selection.
 
@@ -62,7 +66,7 @@ GitHub uses a separate ten-minute in-memory month cache and renderer month curso
 | GitHub/system | `github(month, refresh?)`, `systemChecks()` |
 | Preferences | `settings.get()`, `settings.set(patch)`, `onSettingsChanged()` |
 | Native actions | `openPath()`, `openUrl()`, `onOpenSettings()` |
-| Menu bar | `get`, `refresh`, `onChange`, `openDashboard`, `hide`, `quit` |
+| Menu bar | `get`, `refresh`, `onChange`, `openDashboard`, `hide`, `quit`, `setHeight(height)` |
 | Startup state | `initial` theme/accent/sidebar values, `platform` |
 
 The preload exposes specific methods, not arbitrary IPC channels or Electron event objects. Subscriptions return cleanup functions. Main handlers validate usage ranges and month input; external URLs are restricted to HTTP(S). Native path opening delegates to Electron's shell.
@@ -75,7 +79,7 @@ Settings normalize unknown/corrupt values into defaults. Main reads them synchro
 
 The app requests a single-instance lock. A second launch opens the dashboard. The macOS Dock activation event also reopens it. Quit stops the service and destroys the tray. The display name, app-data directory, bridge, IPC namespace, and packaging identity all use azul-code.
 
-The settings schema still contains `range` and `subscriptionPollSeconds`; the current dashboard starts at 30d and the refresh service uses a fixed one-minute schedule. Do not assume every persisted field is a live user control.
+The settings schema still contains `range` and `subscriptionPollSeconds`; the current dashboard starts at 30d and the refresh service uses a fixed five-second schedule. Do not assume every persisted field is a live user control.
 
 ## Settings reference
 
@@ -84,7 +88,8 @@ The version-1 schema in [`settings.ts`](../src/shared/settings.ts) normalizes ea
 | Field | Default | Accepted values / behavior |
 | --- | --- | --- |
 | `theme` | `system` | `dark`, `light`, `system` |
-| `accent` | `blue` | `red`, `orange`, `green`, `blue`, `pink`, `violet` |
+| `accent` | `blue` | `red`, `orange`, `green`, `blue`, `pink`, `violet`, or `custom` |
+| `customAccent` | `#00c8ff` | Hex colour (`#rgb` or `#rrggbb`); used when `accent` is `custom` and re-derived into readable roles per theme |
 | `range` | `30d` | `7d`, `30d`, `90d`, `all`; currently not restored by App |
 | `subscriptionPollSeconds` | `15` | Positive values rounded and clamped to 5–300; not used by the current service schedule |
 | `window` | `null` | Positive width/height, optional finite x/y coordinates |

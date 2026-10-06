@@ -107,6 +107,36 @@ describe("Claude transcript parsing", () => {
 });
 
 describe("pricing", () => {
+  it.each([
+    ["gpt-6.1-sol", 2, 0.1, 2.5, 10],
+    ["gpt-6-sol", 2, 0.2, 2.5, 10],
+    ["gpt-6-luna", 0.1, 0.01, 0.125, 0.5],
+  ])("prices %s at its published Standard rates", (model, input, cached, cacheWrite, output) => {
+    expect(getRate(`openai/${model}`)).toEqual({
+      input,
+      cached,
+      cacheWrite5m: cacheWrite,
+      cacheWrite1h: cacheWrite,
+      output,
+      longContextFrom: 272_000,
+    });
+
+    const tokens = {
+      uncachedInput: 152_000,
+      cachedInput: 100_000,
+      cacheWrite5m: 10_000,
+      cacheWrite1h: 10_000,
+      output: 10_000,
+      reasoning: 0,
+    };
+    expect(priceTokens(model, tokens, null).cost).toBeCloseTo(
+      (152_000 * input + 100_000 * cached + 20_000 * cacheWrite + 10_000 * output) / 1_000_000,
+    );
+    expect(priceTokens(model, { ...tokens, uncachedInput: 152_001 }, null).cost).toBeCloseTo(
+      (152_001 * input * 2 + 100_000 * cached * 2 + 20_000 * cacheWrite * 2 + 10_000 * output * 1.5) / 1_000_000,
+    );
+  });
+
   it("uses Anthropic's cache rates for Claude Fable 5 and 5.1", () => {
     expect(getRate("claude-fable-5")).toEqual({
       input: 10,
@@ -122,6 +152,36 @@ describe("pricing", () => {
       cacheWrite1h: 20,
       output: 50,
     });
+  });
+
+  it.each([
+    ["gpt-5.4-mini", 0.75, 0.075, 4.5],
+    ["gpt-5.2", 1.75, 0.175, 14],
+    ["gpt-5", 1.25, 0.125, 10],
+    ["gpt-5-mini", 0.25, 0.025, 2],
+  ])("prices short-context %s without a long-context tier", (model, input, cached, output) => {
+    expect(getRate(model)).toEqual({ input, cached, cacheWrite5m: input, cacheWrite1h: input, output });
+  });
+
+  it("prices Claude Opus 5.5 with its published cache rates", () => {
+    expect(getRate("anthropic/claude-opus-5-5")).toEqual({
+      input: 4,
+      cached: 0.2,
+      cacheWrite5m: 5,
+      cacheWrite1h: 8,
+      output: 20,
+    });
+    const priced = priceTokens("claude-opus-5-5", {
+      uncachedInput: 100_000,
+      cachedInput: 100_000,
+      cacheWrite5m: 10_000,
+      cacheWrite1h: 10_000,
+      output: 10_000,
+      reasoning: 0,
+    }, null);
+    expect(priced.cost).toBeCloseTo(0.75);
+    expect(priced.savings).toBeCloseTo(0.33);
+    expect(priced.priced).toBe(true);
   });
 
   it("uses discounted cache reads and reports savings", () => {

@@ -1,5 +1,6 @@
 import type { Settings } from "./settings";
 import type { ProviderStat, SourceStatus, StatsSnapshot, SubscriptionUsage, SubscriptionWindow } from "./types";
+import { windowAfterReset } from "./allowance";
 
 export interface MenuBarSummary {
   readonly day: string;
@@ -40,12 +41,32 @@ export function selectedAllowance(summary: MenuBarSummary | null, settings: Sett
     ? window.windowMinutes >= 10_080 : window.windowMinutes > 0 && window.windowMinutes < 1_440) ?? null;
 }
 
-export function remainingPercent(window: SubscriptionWindow): number {
-  return Math.round(Math.max(0, Math.min(100, 100 - window.usedPercent)));
+export function remainingPercent(window: SubscriptionWindow, now = Date.now()): number {
+  const current = windowAfterReset(window, now);
+  return Math.round(Math.max(0, Math.min(100, 100 - current.usedPercent)));
 }
 
+/**
+ * A report can be old without being useless. Callers use this for context
+ * (and to disable pace projections), but should keep rendering the last
+ * percentage until the known reset time has passed.
+ */
 export function allowanceIsStale(usage: SubscriptionUsage, window: SubscriptionWindow, now = Date.now()): boolean {
   return window.resetsAt <= now || usage.updatedAt === null || now - usage.updatedAt > 15 * 60_000;
+}
+
+const PROVIDER_LABEL: Record<Settings["menuBarProvider"], string> = { codex: "Codex", claude: "Claude" };
+
+/**
+ * The window's length, not the time left in it — "5h" is a five-hour allowance
+ * window, never five hours remaining. Returns null when no live window is known,
+ * so the caller omits the qualifier instead of asserting a length we do not have.
+ */
+function windowToken(window: SubscriptionWindow | null, verbose: boolean): string | null {
+  if (!window) return null;
+  if (verbose && window.windowMinutes >= 10_080) return "weekly";
+  return window.windowMinutes >= 1_440
+    ? `${Math.round(window.windowMinutes / 1_440)}d` : `${Math.round(window.windowMinutes / 60)}h`;
 }
 
 export function menuBarTitle(state: MenuBarState, settings: Settings, now = Date.now()): string {
@@ -63,10 +84,19 @@ export function menuBarTitle(state: MenuBarState, settings: Settings, now = Date
     }).format(summary.cost)}${partial || stale ? "*" : ""}` : "—";
   const window = selectedAllowance(summary, settings);
   const usage = summary?.subscriptions.find((item) => item.provider === settings.menuBarProvider);
-  const period = window ? (window.windowMinutes >= 1_440 ? `${Math.round(window.windowMinutes / 1_440)}d` : `${Math.round(window.windowMinutes / 60)}h`)
-    : settings.menuBarWindow === "weekly" ? "7d" : "short";
-  const label = `${settings.menuBarProvider === "codex" ? "Cx" : "Cl"} ${period}`;
-  const allowance = `${label} ${window && usage && !allowanceIsStale(usage, window, now) && !stale ? `${remainingPercent(window)}%` : "—"}`;
+  // Only the allowance-only mode has room to spell the window out; "both" competes
+  // with the dollar figure, and its tooltip already says the percentage is remaining.
+  const verbose = settings.menuBarDisplay === "allowance";
+  // A last provider report remains the best available reading. The reset
+  // timestamp is enough to refill it locally, so age and a failed scan must
+  // not turn an otherwise known allowance into a dash.
+  const known = window && usage;
+  const percent = known ? `${remainingPercent(window, now)}%` : null;
+  const allowance = [
+    PROVIDER_LABEL[settings.menuBarProvider],
+    windowToken(window, verbose),
+    percent === null ? "—" : verbose ? `· ${percent} left` : percent,
+  ].filter(Boolean).join(" ");
   if (settings.menuBarDisplay === "allowance") return allowance;
   if (settings.menuBarDisplay === "both") return `${amount} · ${allowance}`;
   return amount;

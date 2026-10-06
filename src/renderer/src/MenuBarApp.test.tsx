@@ -14,6 +14,13 @@ const state: MenuBarState = { refreshing: false, error: null, summary: {
 } };
 const actions = () => ({ onRefresh: vi.fn(), onOpen: vi.fn(), onSettings: vi.fn(), onQuit: vi.fn() });
 
+it("keeps the padded wrapper main measures the window from", () => {
+  const { container } = render(<MenuBarView state={state} now={now} {...actions()} />);
+  // Moving this padding back onto the scroller would silently under-report the
+  // window height by the padding. See usePanelHeight and menubar.css.
+  expect(container.querySelector(".menubar-content > .menubar-measure")).toBeTruthy();
+});
+
 it("shows API-equivalent dollars and remaining allowance with working actions", () => {
   const handlers = actions();
   render(<MenuBarView state={state} now={now} {...handlers} />);
@@ -27,12 +34,20 @@ it("shows API-equivalent dollars and remaining allowance with working actions", 
   for (const action of Object.values(handlers)) expect(action).toHaveBeenCalledOnce();
 });
 
-it("retains a previous cost after a failed refresh and explains stale provider reports", () => {
+it("retains the last allowance reading after a failed refresh and explains its age", () => {
   render(<MenuBarView state={{ ...state, error: "Read failed" }} now={now + 16 * 60_000} {...actions()} />);
   expect(screen.getByText("$4.20")).toBeInTheDocument();
   expect(screen.getByRole("alert")).toHaveTextContent("Showing the last available scan");
-  expect(screen.getByRole("progressbar")).not.toHaveAttribute("aria-valuenow");
-  expect(screen.queryByText("75% left")).not.toBeInTheDocument();
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "75");
+  expect(screen.getByText("75% left")).toBeInTheDocument();
+  expect(screen.getByText("Last report · Resets in 44m")).toBeInTheDocument();
+});
+
+it("refills a bar when its known reset time passes without another report", () => {
+  render(<MenuBarView state={state} now={now + 3_600_000} {...actions()} />);
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+  expect(screen.getByText("100% left")).toBeInTheDocument();
+  expect(screen.getByText("Reset due · bar reset automatically")).toBeInTheDocument();
 });
 
 it("retries a first-load failure without showing invented zero-dollar totals", () => {

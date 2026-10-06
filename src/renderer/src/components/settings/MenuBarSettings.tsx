@@ -43,7 +43,7 @@ export function MenuBarSettings() {
           onChange={(event) => void update({ menuBarWindow: event.target.value as Settings["menuBarWindow"] })}>
           <option value="session">Short window</option><option value="weekly">Weekly</option>
         </select></label>
-        <p className="settings-intro">Cx = Codex · Cl = Claude Code. Percentages show allowance remaining. Stale or unavailable readings appear as —.</p>
+        <p className="settings-intro">Percentages show allowance remaining. The period is the length of the window, not the time left in it. The last reading stays visible until its known reset time; unavailable readings appear as —.</p>
       </> : null}
     </div>
     {error ? <p role="alert">{error}</p> : null}

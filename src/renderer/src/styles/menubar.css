@@ -6,7 +6,18 @@
 .menubar-app button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; background: transparent; padding: 7px; border-radius: 6px; cursor: pointer; color: var(--text-2); }
 .menubar-app button:hover { background: var(--panel-hover); color: var(--text); }
 .menubar-app button:disabled { opacity: .5; cursor: wait; }
-.menubar-app .menubar-content { min-height: 0; overflow-y: auto; display: block; flex: 1; padding: 18px; }
+.menubar-app .menubar-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: block; flex: 1; padding: 0; }
+/* The measured box. Padding belongs here, not on the scroller, so this element's
+   height is exactly the height the window should be. The padding also stops the
+   child margins below from collapsing out of that height, so do not drop it to
+   zero without adding display: flow-root. */
+.menubar-measure { padding: 18px; }
+/* The window fits its content, so this only ever shows on a display too short to
+   hold it — where an invisible overlay scrollbar would read as truncation.
+   scrollbar-gutter is not needed: a classic bar narrows the text, which can only
+   make it taller, so the height pins to the available room and settles there. */
+.menubar-content::-webkit-scrollbar { width: 7px; }
+.menubar-content::-webkit-scrollbar-thumb { background: var(--wash-6); border: 2px solid transparent; background-clip: content-box; border-radius: 99px; }
 .menubar-eyebrow { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
 .menubar-eyebrow > span:first-child { color: var(--text-2); text-transform: uppercase; letter-spacing: .09em; font-weight: 600; }
 .menubar-cost { margin: 8px 0 1px; font-family: var(--font-figure); font-size: 37px; font-weight: 500; letter-spacing: -.065em; overflow-wrap: anywhere; }

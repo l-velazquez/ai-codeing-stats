@@ -34,7 +34,7 @@ Claude input is already exclusive of cache buckets. Codex and OpenCode subtract 
 
 ## Pricing
 
-The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its verification comment records existing rates as of 2026-09-05 and Claude Fable rates as of 2026-09-14; these dates are repository metadata, not a fresh independent verification of provider prices. See [Anthropic's current pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for the Fable model rates.
+The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its verification comment records existing rates as of 2026-09-05, Claude Fable rates as of 2026-09-14, GPT-6 Sol and Luna rates as of 2026-09-23, Claude Opus 5.5 rates as of 2026-09-24, and GPT-6.1 Sol plus the short-context GPT-5 family (GPT-5, 5-mini, 5-nano, 5.1, 5.2, 5.4-mini, 5.4-nano) as of 2026-10-05. See [OpenAI's model pricing](https://developers.openai.com/api/docs/pricing) for GPT models, [Anthropic's pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for Fable, and [Anthropic's Opus 5.5 model page](https://platform.claude.com/docs/en/models/opus-5-5/overview) for Opus 5.5.
 
 A finite nonnegative provider-reported cost takes precedence over the rate table, including zero. This applies to OpenCode costs and Claude `costUSD`. Such records count as priced and contribute zero calculated cache savings.
 
@@ -42,7 +42,7 @@ Otherwise, each token bucket is multiplied by its model rate and divided by one 
 
 Unknown models contribute tokens and sessions but zero estimated cost, with partial-pricing warnings. `pricedPercent` measures priced **records**, not the share of tokens or dollars covered.
 
-For configured long-context models, input above the threshold applies the higher rates to the entire record: 2× input/cache rates and 1.5× output. The current GPT threshold is 272,000 input tokens. The implementation explicitly assumes this tier shape for some GPT models; treat it as an estimate and verify assumptions before changing the table.
+For configured long-context models, input above the threshold applies the higher rates to the entire record: 2× input/cache rates and 1.5× output. The current GPT threshold is 272,000 input tokens. OpenAI documents this tier for GPT-6 Astra, Sol, and Luna; the implementation assumes it for some older GPT models.
 
 Cache savings compares cache-read/write cost with charging those same tokens at the uncached input rate. Negative savings are clamped to zero per record, so this is not a complete measure of net cache economics across requests.
 
@@ -58,7 +58,7 @@ Monthly pace uses cost in the trailing 30-day window, divided by elapsed days si
 
 ## Subscription allowance
 
-Codex uses the newest local rate-limit event. Claude reads captured five-hour and seven-day windows, using the capture file's modification time as report time. No token-to-quota conversion is attempted. Expired Claude windows are discarded. The menu bar additionally hides reports older than 15 minutes; refresh cannot renew a provider report without agent activity.
+Codex uses the newest local rate-limit event. Claude reads captured five-hour and seven-day windows, using the capture file's modification time as report time. No token-to-quota conversion is attempted. A report stays visible after it becomes old; once its known reset timestamp passes, the UI resets that window to 0% used locally without waiting for another provider event. Refresh can read a newer report but cannot create one without agent activity.
 
 ## GitHub contributions
 

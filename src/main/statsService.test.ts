@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { StatsService } from "./statsService";
+import { LIVE_INTERVAL_MS, StatsService } from "./statsService";
 import type { StatsSnapshot } from "../shared/types";
 
 const snapshot = () => ({ generatedAt: Date.now(), summary: { cost: 12, totalTokens: 1000, pricedPercent: 1 },
@@ -44,24 +44,62 @@ it("retains previous values on failure and recovers on the next refresh", async 
 
 it("refreshes without a renderer, at local midnight, and stops cleanly", async () => {
   vi.useFakeTimers();
-  vi.setSystemTime(new Date(2026, 8, 5, 23, 59, 40));
+  // Two seconds short of midnight, so the rollover lands before a whole interval.
+  vi.setSystemTime(new Date(2026, 8, 5, 23, 59, 58));
   const refresh = vi.fn(async () => {});
   const service = new StatsService({ refresh, read: snapshot });
   service.start();
   await vi.advanceTimersByTimeAsync(0);
   expect(refresh).toHaveBeenCalledTimes(1);
-  await vi.advanceTimersByTimeAsync(20_000);
+  expect(service.getState().summary?.day).toBe("2026-09-05");
+  await vi.advanceTimersByTimeAsync(2_000);
   expect(refresh).toHaveBeenCalledTimes(2);
   expect(service.getState().summary?.day).toBe("2026-09-06");
-  await vi.advanceTimersByTimeAsync(60_000);
+  await vi.advanceTimersByTimeAsync(LIVE_INTERVAL_MS);
   expect(refresh).toHaveBeenCalledTimes(3);
   service.stop();
-  await vi.advanceTimersByTimeAsync(120_000);
+  await vi.advanceTimersByTimeAsync(LIVE_INTERVAL_MS * 20);
   expect(refresh).toHaveBeenCalledTimes(3);
   service.start();
   await vi.advanceTimersByTimeAsync(0);
   expect(refresh).toHaveBeenCalledTimes(4);
   service.stop();
+});
+
+it("keeps a background tick quiet until the underlying usage actually changes", async () => {
+  let revision = 7;
+  let foundUsage = false;
+  // A real scan moves the revision while it runs, not before it is asked to.
+  const service = new StatsService({
+    refresh: async () => { if (foundUsage) revision += 1; },
+    read: snapshot,
+    revision: () => revision,
+  });
+  const events = vi.fn();
+  service.subscribe(events);
+
+  await service.refresh({ silent: true });
+  // The state still goes out -- the menu bar reads its scan time from it -- but
+  // nothing tells the renderers to re-aggregate, and no spinner is raised.
+  expect(events).toHaveBeenCalledTimes(1);
+  expect(events.mock.calls.map((call) => call[1])).toEqual([false]);
+  expect(events.mock.calls.every((call) => call[0].refreshing === false)).toBe(true);
+
+  foundUsage = true;
+  await service.refresh({ silent: true });
+  expect(events.mock.calls.at(-1)?.[1]).toBe(true);
+});
+
+it("shows the spinner for a refresh the user asked for", async () => {
+  const service = new StatsService({ refresh: async () => {}, read: snapshot, revision: () => 1 });
+  const events = vi.fn();
+  service.subscribe(events);
+  const pending = service.refresh();
+  expect(events.mock.calls.at(-1)?.[0].refreshing).toBe(true);
+  await pending;
+  expect(events.mock.calls.at(-1)?.[0].refreshing).toBe(false);
+  // An unchanged revision must not stop a manual refresh from reporting back.
+  expect(events.mock.calls.at(-1)?.[1]).toBe(false);
 });
 
 it("does not restart a timer when stopped during an in-flight scan", async () => {

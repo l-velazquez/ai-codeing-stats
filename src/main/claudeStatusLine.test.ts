@@ -33,7 +33,7 @@ describe("Claude Code status-line allowance", () => {
     });
   });
 
-  it("does not present an expired capture as current usage", () => {
+  it("keeps an expired capture so the UI can reset it from the known timestamp", () => {
     const now = 1_800_000_000_000;
     const usage = parseClaudeStatusLineSubscription(JSON.stringify({
       rate_limits: {
@@ -43,11 +43,13 @@ describe("Claude Code status-line allowance", () => {
     }), now - 60_000, true, now);
 
     expect(usage).toMatchObject({
-      state: "unavailable",
-      windows: [],
-      capture: { state: "waiting" },
+      state: "live",
+      windows: [
+        { label: "5-hour limit", usedPercent: 92, resetsAt: now - 1_000 },
+        { label: "Weekly limit", usedPercent: 67, resetsAt: now - 1_000 },
+      ],
+      capture: { state: "active" },
     });
-    expect(usage.detail).toContain("expired");
   });
 
   it("installs atomically and preserves an existing status-line command", async () => {

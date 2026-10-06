@@ -30,8 +30,19 @@
           // Private mode or a blocked accessor: the dark default is fine.
         }
         try {
-          var accent = initial ? initial.accent : JSON.parse(localStorage.getItem("azul-code:settings") || "{}").accent;
-          document.documentElement.dataset.accent = ["red", "orange", "green", "blue", "pink", "violet"].includes(accent) ? accent : "blue";
+          // A custom accent needs its derived variables on the first frame too.
+          // In Electron the preload derives them; the browser demo falls back
+          // to the localStorage mirror written by the renderer.
+          var stored = {};
+          try { stored = JSON.parse(localStorage.getItem("azul-code:settings") || "{}") || {}; } catch (_) { stored = {}; }
+          var hint = initial || stored;
+          var accent = hint.accent;
+          var valid = ["custom", "red", "orange", "green", "blue", "pink", "violet"].includes(accent) ? accent : "blue";
+          document.documentElement.dataset.accent = valid;
+          var roles = valid === "custom" && hint.roles ? hint.roles : null;
+          if (roles) {
+            for (var name in roles) document.documentElement.style.setProperty(name, roles[name]);
+          }
         } catch (_) { document.documentElement.dataset.accent = "blue"; }
         document.documentElement.dataset.theme = resolved;
         document.documentElement.style.colorScheme = resolved;

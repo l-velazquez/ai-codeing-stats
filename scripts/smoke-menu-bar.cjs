@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, ipcMain, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, ipcMain, nativeImage, screen } = require('electron');
 const { mkdirSync, mkdtempSync, writeFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -44,6 +44,17 @@ const call = (channel, ...args) => handlers.get(channel)({}, ...args);
   assert.equal(await panel.webContents.executeJavaScript('document.querySelectorAll(".menubar-provider-row").length'), 3);
   assert.equal(await panel.webContents.executeJavaScript('document.documentElement.scrollWidth <= innerWidth'), true);
   assert.equal(await panel.webContents.executeJavaScript('document.querySelector(".menubar-footer").getBoundingClientRect().bottom <= innerHeight'), true);
+  // The window is sized to its content: wide enough, no scrollbar, and not the old fixed 620.
+  assert.equal(panel.getBounds().width, 400);
+  assert.equal(await panel.webContents.executeJavaScript('const e=document.querySelector(".menubar-content");e.scrollHeight <= e.clientHeight + 1'), true);
+  const fitted = panel.getBounds().height;
+  assert.notEqual(fitted, 300);  // a real measurement arrived, not the unmeasured floor
+  const area = screen.getDisplayMatching(tray.getBounds()).workArea;
+  const box = panel.getBounds();
+  assert.ok(box.y + box.height <= area.y + area.height, 'panel must stay inside the work area');
+  assert.equal(panel.isResizable(), false);  // the resize toggle must not leave a drag edge
+  await pause(600);
+  assert.equal(panel.getBounds().height, fitted);  // no oscillation
   await call('azul-code:settings-set', { theme: 'dark' });
   await pause(200);
   writeFileSync(join(artifacts, 'panel-dark.png'), (await panel.webContents.capturePage()).toPNG());
@@ -56,7 +67,7 @@ const call = (channel, ...args) => handlers.get(channel)({}, ...args);
   await call('azul-code:settings-set', { menuBarDisplay: 'icon' });
   assert.equal(tray.getTitle(), '');
   await call('azul-code:settings-set', { menuBarDisplay: 'both' });
-  assert.match(tray.getTitle(), /Cx/);
+  assert.match(tray.getTitle(), /Codex/);
   await call('azul-code:menubar-hide');
   assert.equal(panel.isVisible(), false);
   dashboard.close();

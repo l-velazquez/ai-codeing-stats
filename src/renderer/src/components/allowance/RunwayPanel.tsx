@@ -7,6 +7,7 @@ import { AllowanceMeter } from "@renderer/components/allowance/AllowanceMeter";
 import { RunwayChart } from "@renderer/components/allowance/RunwayChart";
 import { headroom, isLive, leadAllowance, pressureFor } from "@renderer/lib/allowance";
 import { runwayFor } from "@renderer/lib/runway";
+import { windowAfterReset } from "@shared/allowance";
 
 interface Reading {
   readonly usage: SubscriptionUsage;
@@ -16,11 +17,17 @@ interface Reading {
 /** The headline figure and the sentence under it, for one reading. */
 function copyFor(reading: Reading, now: number): { figure: string; sentence: string } {
   const { usage, window: allowance } = reading;
-  const left = Math.round(headroom(allowance));
+  const left = Math.round(headroom(allowance, now));
   const resets = clockTime(allowance.resetsAt, now);
   const projection = runwayFor(allowance, now);
   const stale = allowanceIsStale(usage, allowance, now);
 
+  if (allowance.resetsAt <= now) {
+    return {
+      figure: "Allowance reset",
+      sentence: `This window reset at ${resets}. The bar was reset automatically from that known time.`,
+    };
+  }
   if (left <= 0) {
     return { figure: "Allowance spent", sentence: `Nothing left in this window. Resets at ${resets}.` };
   }
@@ -78,8 +85,11 @@ export function RunwayPanel({
 
   const others = subscriptions
     .filter(isLive)
-    .flatMap((usage) => usage.windows.map((window) => ({ usage, window })))
-    .filter(({ window }) => window !== lead.window);
+    .flatMap((usage) => usage.windows.map((window) => ({ usage, window: windowAfterReset(window, now) })))
+    .filter(({ usage, window }) =>
+      `${usage.provider}:${window.label}:${window.windowMinutes}` !==
+      `${lead.usage.provider}:${lead.window.label}:${lead.window.windowMinutes}`,
+    );
 
   return (
     <section className="panel panel--raised runway" data-pressure={pressure}>
@@ -120,7 +130,7 @@ export function RunwayPanel({
               <ProviderMark provider={usage.provider} small />
               <span>{PROVIDERS[usage.provider].label}</span>
               <small>{allowance.label}</small>
-              <strong>{Math.round(headroom(allowance))}% left</strong>
+              <strong>{Math.round(headroom(allowance, now))}% left</strong>
             </button>
           ))}
         </div>

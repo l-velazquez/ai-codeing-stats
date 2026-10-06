@@ -32,7 +32,7 @@ function AppInner() {
   const [range, setRange] = useState<RangeKey>("30d");
   const [connectingClaude, setConnectingClaude] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(() => new URLSearchParams(window.location.search).get("settings") === "open");
-  const { theme, setTheme, accent, setAccent } = useThemePreference();
+  const { theme, setTheme, accent, setAccent, customAccent, setCustomAccent } = useThemePreference();
   const { collapsed: sidebarCollapsed, toggle: toggleSidebar } = useSidebar();
   // Hoisted for the same reason as githubMonth: page-local state would re-read
   // from disk and flash the default on every visit to Contributions.
@@ -165,6 +165,8 @@ function AppInner() {
           setTheme={setTheme}
           accent={accent}
           setAccent={setAccent}
+          customAccent={customAccent}
+          setCustomAccent={setCustomAccent}
           onClose={closeSettings}
         />
       ) : null}

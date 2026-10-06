@@ -12,7 +12,7 @@
 | Project does not open | Its recorded workspace may have moved or been deleted; Unassigned has no known path |
 | Claude says waiting | Start/resume Claude Code, accept trust if prompted, send a message, then refresh after a response |
 | Claude cannot connect | Check that `~/.claude/settings.json` is valid JSON and writable; the installer refuses malformed settings |
-| Allowance is stale or `—` | Use the relevant agent to generate a new report; expired windows and old reports cannot be renewed by dashboard refresh alone |
+| Allowance is missing | Use the relevant agent to generate a new report; a dashboard refresh cannot create the first report or recover a missing capture |
 | Menu bar is absent | Enable it in Settings on macOS; it is not a native browser-preview feature |
 | App keeps running after closing window | Expected macOS behavior; use Quit azul-code to exit |
 | Preferences reset on relaunch | Check access to the azul-code settings directory; corrupt/unreadable preferences fall back to defaults |
@@ -27,7 +27,7 @@
 
 The app preserves a previous successful snapshot when a later refresh fails. Read warning banners and the menu bar's `*`; visible totals are not proof that the last read succeeded. A first-load failure presents a retry state instead of a populated dashboard.
 
-The native menu bar considers its summary stale after two minutes, while allowance reports also have a 15-minute freshness limit and provider reset times. These are separate from the ten-minute GitHub cache.
+The native menu bar considers its usage summary stale after two minutes. Allowance percentages remain visible from the last provider report, are marked as old when that report is more than 15 minutes old, and reset automatically when their known provider reset time passes. These are separate from the ten-minute GitHub cache.
 
 ## Useful diagnostics
 
