@@ -21,8 +21,11 @@ const GPT_LONG_CONTEXT_FROM = 272_000;
 // USD per million tokens. Existing rates were last verified against official provider pricing
 // on 2026-09-05; Claude Fable rates were verified against Anthropic pricing on 2026-09-14.
 // GPT-6 Sol and Luna rates and long-context tiers were verified on 2026-09-23.
+// Claude Opus 5.5 rates were verified against Anthropic pricing on 2026-09-24.
+// GPT-6.1 Sol and the short-context GPT-5 family rates were verified on 2026-10-05.
 const RATES: Record<string, ModelRate> = {
   "gpt-6-astra": { input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 12.5, output: 50, longContextFrom: GPT_LONG_CONTEXT_FROM },
+  "gpt-6.1-sol": { input: 2, cached: 0.1, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 10, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-6-sol": { input: 2, cached: 0.2, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 10, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-6-luna": { input: 0.1, cached: 0.01, cacheWrite5m: 0.125, cacheWrite1h: 0.125, output: 0.5, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.6-sol": { input: 4, cached: 0.4, cacheWrite5m: 5, cacheWrite1h: 5, output: 20, longContextFrom: GPT_LONG_CONTEXT_FROM },
@@ -34,10 +37,18 @@ const RATES: Record<string, ModelRate> = {
   "gpt-5.5-pro": { input: 30, cached: 30, cacheWrite5m: 30, cacheWrite1h: 30, output: 180, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.4": { input: 2.5, cached: 0.25, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 15, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-5.4-pro": { input: 30, cached: 30, cacheWrite5m: 30, cacheWrite1h: 30, output: 180, longContextFrom: GPT_LONG_CONTEXT_FROM },
+  "gpt-5.4-mini": { input: 0.75, cached: 0.075, cacheWrite5m: 0.75, cacheWrite1h: 0.75, output: 4.5 },
+  "gpt-5.4-nano": { input: 0.2, cached: 0.02, cacheWrite5m: 0.2, cacheWrite1h: 0.2, output: 1.25 },
   "gpt-5.3-codex": { input: 1.75, cached: 0.175, cacheWrite5m: 1.75, cacheWrite1h: 1.75, output: 14 },
   "gpt-5.2-codex": { input: 1.75, cached: 0.175, cacheWrite5m: 1.75, cacheWrite1h: 1.75, output: 14 },
+  "gpt-5.2": { input: 1.75, cached: 0.175, cacheWrite5m: 1.75, cacheWrite1h: 1.75, output: 14 },
+  "gpt-5.1": { input: 1.25, cached: 0.125, cacheWrite5m: 1.25, cacheWrite1h: 1.25, output: 10 },
+  "gpt-5": { input: 1.25, cached: 0.125, cacheWrite5m: 1.25, cacheWrite1h: 1.25, output: 10 },
+  "gpt-5-mini": { input: 0.25, cached: 0.025, cacheWrite5m: 0.25, cacheWrite1h: 0.25, output: 2 },
+  "gpt-5-nano": { input: 0.05, cached: 0.005, cacheWrite5m: 0.05, cacheWrite1h: 0.05, output: 0.4 },
   "claude-fable-5": { input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 20, output: 50 },
   "claude-fable-5-1": { input: 10, cached: 0.25, cacheWrite5m: 12.5, cacheWrite1h: 20, output: 50 },
+  "claude-opus-5-5": { input: 4, cached: 0.2, cacheWrite5m: 5, cacheWrite1h: 8, output: 20 },
   "claude-opus-5": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
   "claude-opus-4-8": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
   "claude-opus-4-7": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
