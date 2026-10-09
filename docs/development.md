@@ -83,7 +83,7 @@ The blue six-arm identity uses `resources/icon.svg` and simplified `resources/ic
 
 The script needs `rsvg-convert` from librsvg plus macOS icon tools. It generates the iconset, `build/icon.icns`, app PNG, and tray templates. Keep required standard/Retina PNGs available to packaging and review small-size legibility.
 
-`package.json` holds version, product name, app ID, packaging targets, and included files. `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` are bundled. Distribution currently has DMG and ZIP targets; signing, notarization, publishing, and automatic updates are not configured as a complete release workflow in this repository. Validate the actual packaged app before sharing a release; follow [the release checklist](releasing.md).
+`package.json` holds version, product name, app ID, packaging targets, and included files. `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` are bundled. Distribution currently has DMG and ZIP targets; signing, notarization, publishing, and automatic updates are not configured as a complete release workflow in this repository. Validate the actual packaged app before sharing a release; follow [the release checklist](releasing.md).
 
 ## Keep the docs accurate
 

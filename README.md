@@ -6,7 +6,7 @@
 <p align="center"><strong>AI usage, clearly.</strong></p>
 <p align="center">A local-first macOS dashboard for AI coding usage, subscription allowances, and GitHub contributions.</p>
 <p align="center">
-  <a href="LICENSE">Apache-2.0</a> ·
+  <a href="LICENSE">MIT</a> ·
   <a href="docs/getting-started.md">Getting started</a> ·
   <a href="docs/index.md">Documentation</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -120,6 +120,6 @@ Bug reports and focused pull requests are welcome. Start with [CONTRIBUTING.md](
 
 ## License and credits
 
-Copyright 2026 Luis Velazquez and azul-code contributors. Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE) and [third-party notices](THIRD_PARTY_NOTICES.md) for included material and its separate terms.
+Copyright 2026 Luis Velazquez and azul-code contributors. Released under the [MIT License](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for included material and its separate terms.
 
 Inspired by the information density and local-first approach of [T3 Code](https://github.com/pingdotgg/t3code). azul-code is an independent project; provider names and logos identify supported tools and do not imply endorsement.

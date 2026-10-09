@@ -33,4 +33,4 @@ For security issues, follow [SECURITY.md](SECURITY.md) instead of filing a publi
 
 ## Contribution terms
 
-Unless explicitly stated otherwise, contributions intentionally submitted for inclusion are under the project's Apache-2.0 license. Preserve third-party attribution and license notices. Be respectful and keep discussions focused on the work.
+Unless explicitly stated otherwise, contributions intentionally submitted for inclusion are under the project's MIT license. Preserve third-party attribution and license notices. Be respectful and keep discussions focused on the work.
