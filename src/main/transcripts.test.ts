@@ -112,13 +112,13 @@ describe("pricing", () => {
     ["gpt-6-sol", 2, 0.2, 2.5, 10],
     ["gpt-6-luna", 0.1, 0.01, 0.125, 0.5],
   ])("prices %s at its published Standard rates", (model, input, cached, cacheWrite, output) => {
-    expect(getRate(`openai/${model}`)).toEqual({
+    expect(getRate(`openai/${model}`)).toMatchObject({
       input,
       cached,
       cacheWrite5m: cacheWrite,
       cacheWrite1h: cacheWrite,
       output,
-      longContextFrom: 272_000,
+      longContext: { from: 272_000 },
     });
 
     const tokens = {
@@ -205,6 +205,31 @@ describe("pricing", () => {
     expect(priced.priced).toBe(true);
   });
 
+  it.each([
+    ["claude-sonnet-5", 2, 0.2, 2.5, 4, 10],
+    ["claude-sonnet-4-5", 3, 0.3, 3.75, 6, 15],
+    ["claude-opus-4-5", 5, 0.5, 6.25, 10, 25],
+    ["claude-haiku-4-5", 1, 0.1, 1.25, 2, 5],
+  ])("prices %s at its published rates", (model, input, cached, cacheWrite5m, cacheWrite1h, output) => {
+    expect(getRate(`anthropic/${model}`)).toEqual({ input, cached, cacheWrite5m, cacheWrite1h, output });
+  });
+
+  it("bills Claude Haiku 5.5 at 5x once a prompt passes 100,000 tokens", () => {
+    const tokens = {
+      uncachedInput: 50_000,
+      cachedInput: 40_000,
+      cacheWrite5m: 5_000,
+      cacheWrite1h: 5_000,
+      output: 10_000,
+      reasoning: 0,
+    };
+    const short = (50_000 * 0.1 + 40_000 * 0.01 + 5_000 * 0.125 + 5_000 * 0.2 + 10_000 * 0.5) / 1_000_000;
+    expect(priceTokens("claude-haiku-5-5", tokens, null).cost).toBeCloseTo(short);
+    // Cache reads and writes count toward the threshold, and the whole request moves tier.
+    const long = priceTokens("claude-haiku-5-5", { ...tokens, cachedInput: 40_001 }, null).cost;
+    expect(long).toBeCloseTo(short * 5 + (0.01 * 5) / 1_000_000);
+  });
+
   it("uses discounted cache reads and reports savings", () => {
     const priced = priceTokens(
       "gpt-5.6-sol",
@@ -246,3 +271,4 @@ describe("pricing", () => {
     expect(priced.cost).toBeCloseTo(200_000 * 10e-6 + 50_000 * 1e-6 + 10_000 * 50e-6);
   });
 });
+

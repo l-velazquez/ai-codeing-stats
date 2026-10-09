@@ -34,7 +34,7 @@ Claude input is already exclusive of cache buckets. Codex and OpenCode subtract 
 
 ## Pricing
 
-The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its verification comment records existing rates as of 2026-09-05, Claude Fable rates as of 2026-09-14, GPT-6 Sol and Luna rates as of 2026-09-23, Claude Opus 5.5 rates as of 2026-09-24, GPT-6.1 Sol plus the short-context GPT-5 family (GPT-5, 5-mini, 5-nano, 5.1, 5.2, 5.4-mini, 5.4-nano) as of 2026-10-05, and Claude Sonnet 5.5 as of 2026-10-09. See [OpenAI's model pricing](https://developers.openai.com/api/docs/pricing) for GPT models, [Anthropic's pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for Fable and Sonnet 5.5, and [Anthropic's Opus 5.5 model page](https://platform.claude.com/docs/en/models/opus-5-5/overview) for Opus 5.5.
+The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its verification comment records existing rates as of 2026-09-05, Claude Fable rates as of 2026-09-14, GPT-6 Sol and Luna rates as of 2026-09-23, Claude Opus 5.5 rates as of 2026-09-24, GPT-6.1 Sol plus the short-context GPT-5 family (GPT-5, 5-mini, 5-nano, 5.1, 5.2, 5.4-mini, 5.4-nano) as of 2026-10-05, and Claude Sonnet 5.5 as of 2026-10-09. On 2026-10-09 every Claude rate was re-verified and Claude Sonnet 5, Opus 4.5, Sonnet 4.5, Haiku 4.5, and Haiku 5.5 were added. See [OpenAI's model pricing](https://developers.openai.com/api/docs/pricing) for GPT models, [Anthropic's pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for the other Claude models, and [Anthropic's Opus 5.5 model page](https://platform.claude.com/docs/en/models/opus-5-5/overview) for Opus 5.5.
 
 A finite nonnegative provider-reported cost takes precedence over the rate table, including zero. This applies to OpenCode costs and Claude `costUSD`. Such records count as priced and contribute zero calculated cache savings.
 
@@ -42,7 +42,7 @@ Otherwise, each token bucket is multiplied by its model rate and divided by one 
 
 Unknown models contribute tokens and sessions but zero estimated cost, with partial-pricing warnings. `pricedPercent` measures priced **records**, not the share of tokens or dollars covered.
 
-For configured long-context models, input above the threshold applies the higher rates to the entire record: 2× input/cache rates and 1.5× output. The current GPT threshold is 272,000 input tokens. OpenAI documents this tier for GPT-6 Astra, Sol, and Luna; the implementation assumes it for some older GPT models.
+Each model can carry its own long-context tier. When a record's input (uncached, cache reads, and cache writes together) is above the tier's threshold, the higher rates apply to the entire record. GPT models with a tier use 272,000 input tokens, 2× input/cache rates, and 1.5× output. OpenAI documents this tier for GPT-6 Astra, Sol, and Luna; the implementation assumes it for some older GPT models. Claude Haiku 5.5 uses 100,000 input tokens and 5× on every rate. Other Claude models bill their full 1M context at standard rates.
 
 Cache savings compares cache-read/write cost with charging those same tokens at the uncached input rate. Negative savings are clamped to zero per record, so this is not a complete measure of net cache economics across requests.
 
