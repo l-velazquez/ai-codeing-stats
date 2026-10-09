@@ -4,6 +4,9 @@
 
 | Symptom | What to check |
 | --- | --- |
+| "azul-code is damaged and can't be opened" or "Apple could not verify azul-code" | The app was downloaded or copied from another Mac. It is not signed yet, so build it on this Mac instead ([install steps](getting-started.md#install-on-your-mac)) |
+| `npm ci` warns `EBADENGINE`, or the build fails on an unusual Node version | Use the tested Node 22 (22.12 or newer): run `node --version`, then `nvm install` in the repository or install Node 22 another way |
+| `npm run dist:mac` prints "0 valid identities found" | Expected: there is no signing identity yet, and the package gets an ad-hoc signature that is fine on the Mac that built it |
 | No usage appears | Open Settings → Data sources, run an agent session under the same macOS user, refresh, and try All |
 | CLI is installed but source is missing | CLI discovery and history discovery are separate; verify the fixed source paths in the data reference |
 | Connected source has no records | Empty/unsupported transcripts can still be connected; agent schema changes or a date filter can exclude records |

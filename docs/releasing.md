@@ -50,7 +50,7 @@ For local testing only:
 npm run dist:mac
 ```
 
-This creates DMG/ZIP artifacts for the current machine's architecture in `release/`. An unsigned build is not a notarized release. The repository has no automated signing/notarization or release-upload workflow and no automatic updater.
+This creates DMG/ZIP artifacts for the current machine's architecture in `release/`. An unsigned build is not a notarized release. Until Developer ID signing and notarization are in place, the README tells people to build and install azul-code on their own Mac rather than download an installer; do not publish unsigned DMGs as release downloads. The repository has no automated signing/notarization or release-upload workflow and no automatic updater.
 
 For public installer distribution:
 

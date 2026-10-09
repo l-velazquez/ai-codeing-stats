@@ -37,6 +37,16 @@ The browser bridge supplies generated data when Electron's bridge is absent. Use
 
 Browser previews cannot verify native tray behavior, real filesystem ingestion, or the Electron preload. Use desktop checks for those boundaries.
 
+### README screenshots
+
+The images in `docs/images/` are captured from the populated demo, so they contain no real usage, paths, or repositories. With `npm run dev:web` running, retake them with:
+
+```bash
+env -u ELECTRON_RUN_AS_NODE npx electron scripts/capture-readme-screenshots.cjs
+```
+
+The script opens each page in a framed window and captures it, shadow included, with macOS `screencapture`, which needs Screen Recording permission for your terminal. Review the results before committing.
+
 ## Verification
 
 For application changes, run:
