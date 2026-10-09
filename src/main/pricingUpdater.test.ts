@@ -137,3 +137,49 @@ describe("PricingUpdater", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("PricingUpdater offline", () => {
+  it("reports a missing connection as offline and retries in 15 minutes, not 6 hours", async () => {
+    vi.useFakeTimers();
+    let online = false;
+    const fetch = vi.fn(async () => {
+      if (!online) throw new TypeError("fetch failed");
+      return response(catalog(0.1));
+    });
+    updater = new PricingUpdater({ path: freshPath(), fetch, onChange: vi.fn() });
+    updater.setEnabled(true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(updater.status()).toMatchObject({ source: "bundled", offline: true, error: "No internet connection." });
+
+    online = true;
+    await vi.advanceTimersByTimeAsync(15 * 60 * 1000);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(updater.status()).toMatchObject({ source: "models.dev", offline: false, error: null });
+    // Back on the normal cadence once a check succeeds.
+    await vi.advanceTimersByTimeAsync(15 * 60 * 1000);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("loads saved prices at launch with no connection", async () => {
+    const path = freshPath();
+    updater = new PricingUpdater({ path, fetch: async () => response(catalog(0.1)), onChange: vi.fn() });
+    updater.setEnabled(true);
+    await updater.update();
+    updater.stop();
+    setRemoteRates({});
+
+    updater = new PricingUpdater({ path, fetch: async () => { throw new TypeError("fetch failed"); }, onChange: vi.fn() });
+    updater.setEnabled(true);
+    expect(getRate("gpt-4.1")?.output).toBe(8);
+    await updater.update();
+    expect(getRate("gpt-4.1")?.output).toBe(8);
+    expect(updater.status()).toMatchObject({ source: "models.dev", offline: true });
+  });
+
+  it("does not call a bad response offline", async () => {
+    updater = new PricingUpdater({ path: freshPath(), fetch: async () => response({}, { status: 503 }), onChange: vi.fn() });
+    updater.setEnabled(true);
+    await updater.update();
+    expect(updater.status()).toMatchObject({ offline: false, error: "models.dev returned HTTP 503." });
+  });
+});

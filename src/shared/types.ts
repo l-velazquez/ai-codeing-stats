@@ -268,4 +268,6 @@ export interface PricingStatus {
   readonly models: number;
   /** The last check failed for this reason; the previous prices stay in use. */
   readonly error: string | null;
+  /** The last check failed because models.dev could not be reached at all. */
+  readonly offline: boolean;
 }

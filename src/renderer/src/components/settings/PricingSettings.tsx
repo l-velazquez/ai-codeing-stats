@@ -6,13 +6,22 @@ import { openUrl, readPricingStatus, readSettings, writeSettings } from "@render
 import { CardTitle } from "@renderer/components/primitives/CardTitle";
 import { relative } from "@renderer/format";
 
-function statusLine(status: PricingStatus | null): string {
+function ago(timestamp: number, now: number): string {
+  const elapsed = relative(timestamp, now);
+  if (elapsed === "now") return "just now";
+  return /^\d+[mhd]$/.test(elapsed) ? `${elapsed} ago` : `on ${elapsed}`;
+}
+
+export function pricingStatusLine(status: PricingStatus | null, now = Date.now()): string {
   if (status === null) return "Checking price source…";
   if (!status.enabled) return "Using the prices bundled with this version.";
   if (status.source === "bundled") {
+    if (status.offline) return "You're offline, so azul-code is using the prices bundled with this version until it can reach models.dev.";
     return status.error ? `Using bundled prices: ${status.error}` : "Using bundled prices until the first check finishes.";
   }
-  const checked = status.checkedAt === null ? "" : ` Checked ${relative(status.checkedAt) === "now" ? "just now" : `${relative(status.checkedAt)} ago`}.`;
+  const saved = status.checkedAt === null ? "" : ` ${ago(status.checkedAt, now)}`;
+  if (status.offline) return `You're offline, so azul-code is using the prices it saved${saved} for ${status.models} models. It tries again every 15 minutes.`;
+  const checked = status.checkedAt === null ? "" : ` Checked ${ago(status.checkedAt, now)}.`;
   const failed = status.error ? ` The last check failed (${status.error}); the prices from before stay in use.` : "";
   return `${status.models} models priced from models.dev.${checked}${failed}`;
 }
@@ -32,7 +41,10 @@ export function PricingSettings() {
     const offSettings = window.azulCode?.onSettingsChanged((value) => { if (alive) { setSettings(value); loadStatus(); } });
     // New prices re-aggregate usage, which is announced as a stats change.
     const offStats = window.azulCode?.onStatsChanged(loadStatus);
-    return () => { alive = false; offSettings?.(); offStats?.(); };
+    // A retry that succeeds without changing a price announces nothing, so the
+    // line is re-read while the card is open rather than staying "offline".
+    const poll = setInterval(loadStatus, 30_000);
+    return () => { alive = false; offSettings?.(); offStats?.(); clearInterval(poll); };
   }, []);
   async function update(patch: Partial<Settings>) {
     setSaving(true);
@@ -47,7 +59,7 @@ export function PricingSettings() {
     <div className="menubar-settings">
       <label><span>Keep model prices up to date</span><input type="checkbox" checked={settings.livePricing} disabled={!ready || saving}
         onChange={(event) => void update({ livePricing: event.target.checked })} /></label>
-      <p className="settings-intro">{statusLine(status)}</p>
+      <p className="settings-intro">{pricingStatusLine(status)}</p>
     </div>
     {error ? <p role="alert">{error}</p> : null}
   </section>;

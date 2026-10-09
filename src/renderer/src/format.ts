@@ -57,8 +57,8 @@ export function clockTime(timestamp: number, now = Date.now()): string {
   ).format(timestamp);
 }
 
-export function relative(timestamp: number): string {
-  const elapsed = Date.now() - timestamp;
+export function relative(timestamp: number, now = Date.now()): string {
+  const elapsed = now - timestamp;
   const minutes = Math.floor(elapsed / 60_000);
   if (minutes < 1) return "now";
   if (minutes < 60) return `${minutes}m`;

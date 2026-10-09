@@ -6,6 +6,8 @@ import type { PricingStatus } from "../shared/types";
 
 /** Prices move a few times a year; checking a few times a day is plenty. */
 export const PRICING_INTERVAL_MS = 6 * 60 * 60 * 1000;
+/** After a failed check, try again soon: arriving on a network should not wait hours. */
+export const PRICING_RETRY_MS = 15 * 60 * 1000;
 const TIMEOUT_MS = 20_000;
 // The catalog is about 5 MB today. Anything far larger is not the file we expect.
 const MAX_BYTES = 50 * 1024 * 1024;
@@ -56,6 +58,16 @@ function readCache(path: string): CacheFile | null {
   }
 }
 
+/**
+ * fetch rejects with a TypeError when no request could be made at all (no network,
+ * DNS failure, refused connection) and with a TimeoutError when ours expires.
+ * Anything else, such as a bad status or an unreadable body, did reach models.dev.
+ */
+function isConnectionError(error: unknown): boolean {
+  if (error instanceof TypeError) return true;
+  return error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+}
+
 function writeCache(path: string, cache: CacheFile): void {
   try {
     mkdirSync(dirname(path), { recursive: true });
@@ -78,6 +90,7 @@ export class PricingUpdater {
   private pending: Promise<void> | null = null;
   private enabled = false;
   private error: string | null = null;
+  private offline = false;
   private readonly fetch: typeof fetch;
   private readonly now: () => number;
 
@@ -118,6 +131,7 @@ export class PricingUpdater {
       checkedAt: this.cache?.checkedAt ?? null,
       models,
       error: this.enabled ? this.error : null,
+      offline: this.enabled && this.offline,
     };
   }
 
@@ -136,7 +150,9 @@ export class PricingUpdater {
     this.stopTimer();
     this.timer = setTimeout(() => {
       this.timer = null;
-      void this.update().finally(() => { if (this.enabled) this.schedule(PRICING_INTERVAL_MS); });
+      void this.update().finally(() => {
+        if (this.enabled) this.schedule(this.error === null ? PRICING_INTERVAL_MS : PRICING_RETRY_MS);
+      });
     }, delay);
   }
 
@@ -168,9 +184,11 @@ export class PricingUpdater {
         }
       }
       this.error = null;
+      this.offline = false;
       writeCache(this.options.path, this.cache);
     } catch (error) {
-      this.error = error instanceof Error ? error.message : "Prices could not be updated.";
+      this.offline = isConnectionError(error);
+      this.error = this.offline ? "No internet connection." : error instanceof Error ? error.message : "Prices could not be updated.";
     }
   }
 }

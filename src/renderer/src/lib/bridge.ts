@@ -79,7 +79,7 @@ export function writeSettings(patch: Partial<Settings>): Promise<Settings> {
 export function readPricingStatus(): Promise<PricingStatus> {
   if (window.azulCode) return window.azulCode.pricingStatus();
   const enabled = readDemoSettings().livePricing;
-  return Promise.resolve({ source: enabled ? "models.dev" : "bundled", enabled, checkedAt: enabled ? Date.now() - 2 * 3_600_000 : null, models: enabled ? 66 : 0, error: null });
+  return Promise.resolve({ source: enabled ? "models.dev" : "bundled", enabled, checkedAt: enabled ? Date.now() - 2 * 3_600_000 : null, models: enabled ? 66 : 0, error: null, offline: false });
 }
 
 export function openPath(path: string): void {
