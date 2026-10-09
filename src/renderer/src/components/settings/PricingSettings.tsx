@@ -4,13 +4,7 @@ import type { PricingStatus } from "@shared/types";
 import { MODELS_DEV_URL } from "@shared/modelsDev";
 import { openUrl, readPricingStatus, readSettings, writeSettings } from "@renderer/lib/bridge";
 import { CardTitle } from "@renderer/components/primitives/CardTitle";
-import { relative } from "@renderer/format";
-
-function ago(timestamp: number, now: number): string {
-  const elapsed = relative(timestamp, now);
-  if (elapsed === "now") return "just now";
-  return /^\d+[mhd]$/.test(elapsed) ? `${elapsed} ago` : `on ${elapsed}`;
-}
+import { ago } from "@renderer/format";
 
 export function pricingStatusLine(status: PricingStatus | null, now = Date.now()): string {
   if (status === null) return "Checking price source…";

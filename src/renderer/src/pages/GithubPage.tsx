@@ -28,7 +28,7 @@ import { useInvoiceExclusions } from "@renderer/hooks/useInvoiceExclusions";
 import type { GithubMonthState } from "@renderer/hooks/useGithubMonth";
 import { openUrl } from "@renderer/lib/bridge";
 import { useRegisterRefresh } from "@renderer/providers/RefreshProvider";
-import { localDayKey, money, relative } from "@renderer/format";
+import { ago, localDayKey, money } from "@renderer/format";
 
 function plural(count: number, word: string): string {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -134,7 +134,7 @@ export function GithubPage({
             {allExpanded ? <ChevronsDownUp size={13} /> : <ChevronsUpDown size={13} />}
             {allExpanded ? "Collapse all" : "Expand all"}
           </button>
-          {data && data.state === "ok" ? <span className="muted-label">fetched {relative(data.fetchedAt)} ago · @{data.login}</span> : null}
+          {data && data.state === "ok" ? <span className="muted-label">fetched {ago(data.fetchedAt)} · @{data.login}</span> : null}
           {data && data.state === "ok" ? (
             <InvoiceCopyPanel data={data} excluded={excluded} onExcludedChange={setExcluded} copyState={monthCopyState} onCopy={copyMonth} />
           ) : null}

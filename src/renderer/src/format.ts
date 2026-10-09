@@ -69,6 +69,13 @@ export function relative(timestamp: number, now = Date.now()): string {
   return shortDate(timestamp);
 }
 
+/** "just now", "5m ago", or "on Oct 3" once relative() falls back to a date. */
+export function ago(timestamp: number, now = Date.now()): string {
+  const elapsed = relative(timestamp, now);
+  if (elapsed === "now") return "just now";
+  return /^\d+[mhd]$/.test(elapsed) ? `${elapsed} ago` : `on ${elapsed}`;
+}
+
 export function duration(start: number, end: number): string {
   const totalMinutes = Math.max(1, Math.round((end - start) / 60_000));
   if (totalMinutes < 60) return `${totalMinutes}m`;
