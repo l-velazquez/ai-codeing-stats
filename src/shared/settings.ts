@@ -115,6 +115,8 @@ export interface Settings {
    * exclusions so a newly active project is included until it is unticked.
    */
   readonly invoiceExcludedRepos: readonly string[];
+  /** Keeps model prices current from models.dev; off means the bundled table only. */
+  readonly livePricing: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -132,6 +134,7 @@ export const DEFAULT_SETTINGS: Settings = {
   menuBarWindow: "session",
   contributionsOrder: "oldest",
   invoiceExcludedRepos: [],
+  livePricing: true,
 };
 
 /**
@@ -243,6 +246,7 @@ export function normalizeSettings(raw: unknown): Settings {
     invoiceExcludedRepos: Array.isArray(raw.invoiceExcludedRepos)
       ? [...new Set(raw.invoiceExcludedRepos.filter((repo): repo is string => typeof repo === "string" && repo.length > 0 && repo.length <= 200))].slice(0, 500)
       : DEFAULT_SETTINGS.invoiceExcludedRepos,
+    livePricing: typeof raw.livePricing === "boolean" ? raw.livePricing : DEFAULT_SETTINGS.livePricing,
     sidebarCollapsed:
       typeof raw.sidebarCollapsed === "boolean"
         ? raw.sidebarCollapsed

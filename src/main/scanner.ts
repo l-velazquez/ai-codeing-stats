@@ -566,7 +566,7 @@ function aggregate(
 
   for (const record of filtered) {
     const sessionKey = `${record.provider}:${record.sessionId || record.timestamp}`;
-    const priced = priceTokens(record.model, record.tokens, record.reportedCost);
+    const priced = priceTokens(record.model, record.tokens, record.reportedCost, record.timestamp);
     allTokens = addTokens(allTokens, record.tokens);
     totalCost += priced.cost;
     totalSavings += priced.savings;
@@ -730,7 +730,7 @@ function aggregate(
   for (const record of records) {
     if (record.timestamp < paceSince) continue;
     if (paceFirst === null || record.timestamp < paceFirst) paceFirst = record.timestamp;
-    paceCost += priceTokens(record.model, record.tokens, record.reportedCost).cost;
+    paceCost += priceTokens(record.model, record.tokens, record.reportedCost, record.timestamp).cost;
   }
   const warnings = unpricedModels.size
     ? [`${unpricedModels.size} model${unpricedModels.size === 1 ? "" : "s"} have no verified local price: ${[...unpricedModels].slice(0, 3).join(", ")}`]
@@ -789,6 +789,11 @@ let subscriptionSignature = "";
  */
 export function statsRevision(): number {
   return revision;
+}
+
+/** New prices change every cost without any file changing, so they count as new usage. */
+export function markPricingChanged(): void {
+  revision += 1;
 }
 
 async function collect(now: number): Promise<RecordCache> {

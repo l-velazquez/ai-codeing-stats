@@ -81,7 +81,7 @@ For **Contributions**, install [GitHub CLI](https://cli.github.com/) and run `gh
 
 ### About the dollar amounts
 
-**API-equivalent cost is an estimate, not your subscription bill.** It represents recorded token usage at the app's bundled API rates. Unknown models stay visible and are marked as partially priced. Cache handling and provider reporting can affect totals; see [data and calculations](docs/data-and-calculations.md).
+**API-equivalent cost is an estimate, not your subscription bill.** It represents recorded token usage at public API list prices, kept current from [models.dev](https://models.dev) (you can turn this off in Settings to use only the bundled prices). Unknown models stay visible and are marked as partially priced. Cache handling and provider reporting can affect totals; see [data and calculations](docs/data-and-calculations.md).
 
 The scanner reads local transcript files to extract metadata. Prompt text and tool output are not included in the dashboard data model. [Privacy and local storage](docs/privacy.md) explains the underlying reads, temporary files, and optional network access.
 

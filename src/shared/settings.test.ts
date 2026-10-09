@@ -35,6 +35,12 @@ describe("normalizeSettings", () => {
     expect(result.range).toBe("90d");
   });
 
+  it("keeps live pricing on unless it was explicitly turned off", () => {
+    expect(normalizeSettings({}).livePricing).toBe(true);
+    expect(normalizeSettings({ livePricing: "no" }).livePricing).toBe(true);
+    expect(normalizeSettings({ livePricing: false }).livePricing).toBe(false);
+  });
+
   it("clamps the poll interval into a sane band", () => {
     expect(normalizeSettings({ subscriptionPollSeconds: 0 }).subscriptionPollSeconds).toBe(15);
     expect(normalizeSettings({ subscriptionPollSeconds: 1 }).subscriptionPollSeconds).toBe(5);

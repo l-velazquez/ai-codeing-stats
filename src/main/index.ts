@@ -8,12 +8,13 @@ import { resolveTheme, themeBackground, type Settings } from "../shared/settings
 import { fetchGithubMonth } from "./github";
 import { githubRemotes } from "./gitRemotes";
 import { installClaudeStatusLine } from "./claudeStatusLine";
-import { cachedStats, refreshStats, statsRevision } from "./scanner";
+import { cachedStats, markPricingChanged, refreshStats, statsRevision } from "./scanner";
 import { LIVE_INTERVAL_MS, StatsService, WATCHED_INTERVAL_MS } from "./statsService";
 import { SourceWatcher, transcriptWatchTargets } from "./sourceWatcher";
 import { MenuBar } from "./menuBar";
 import { checkSystem } from "./systemChecks";
 import { readSettings, usableBounds, writeSettings } from "./settingsStore";
+import { PricingUpdater } from "./pricingUpdater";
 
 let mainWindow: BrowserWindow | null = null;
 let saveBoundsTimer: NodeJS.Timeout | null = null;
@@ -23,6 +24,10 @@ const stats = new StatsService({
   read: cachedStats,
   revision: statsRevision,
 });
+
+// Live prices only take effect once something re-aggregates, so a change is
+// treated like new usage on disk.
+let pricing: PricingUpdater | null = null;
 
 // Watching the transcript directories is what makes usage feel live; the poll
 // behind it only has to cover what a watcher can miss.
@@ -197,11 +202,13 @@ app.whenReady().then(() => {
   ipcMain.handle("azul-code:open-url", (_event, url: string) => {
     if (typeof url === "string" && /^https?:\/\//.test(url)) shell.openExternal(url);
   });
+  ipcMain.handle("azul-code:pricing-status", () => pricing?.status());
   ipcMain.handle("azul-code:settings-get", () => readSettings());
   ipcMain.handle("azul-code:settings-set", (_event, patch: Partial<Settings>) => {
     const next = writeSettings(patch ?? {});
     menuBar?.configure(next);
     if (patch && "theme" in patch) nativeTheme.themeSource = next.theme;
+    if (patch && "livePricing" in patch) pricing?.setEnabled(next.livePricing);
     // The accent tints the page ground too, so it repaints the window as well.
     if (patch && ("theme" in patch || "accent" in patch || "customAccent" in patch) && mainWindow !== null && !mainWindow.isDestroyed()) {
       mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(next), next.accent, next.customAccent));
@@ -209,6 +216,16 @@ app.whenReady().then(() => {
     broadcast("azul-code:settings-changed", next);
     return next;
   });
+
+  pricing = new PricingUpdater({
+    path: join(app.getPath("userData"), "pricing.json"),
+    onChange: () => {
+      markPricingChanged();
+      // Before the first scan there is nothing to reprice; that scan uses the new prices.
+      if (stats.getState().summary !== null) void stats.refresh({ silent: true });
+    },
+  });
+  pricing.setEnabled(settings.livePricing);
 
   createWindow();
   menuBar = new MenuBar(stats, settings, openDashboard);
@@ -226,7 +243,7 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("before-quit", () => { stopScanning(); menuBar?.destroy(); menuBar = null; });
+app.on("before-quit", () => { stopScanning(); pricing?.stop(); menuBar?.destroy(); menuBar = null; });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

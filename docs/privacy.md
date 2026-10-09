@@ -13,6 +13,7 @@ azul-code opens local agent transcript files and the OpenCode database to extrac
 | Location | Purpose |
 | --- | --- |
 | `~/Library/Application Support/azul-code/settings.json` | Desktop preferences and window bounds |
+| `~/Library/Application Support/azul-code/pricing.json` | Model prices from models.dev and when each was first seen; absent while live pricing is off |
 | `~/.claude/settings.json` | Updated only when connecting Claude allowance capture |
 | `~/.claude/azul-code/azul-code-statusline.sh` | Installed allowance wrapper |
 | `~/.claude/azul-code/previous-statusline-command` | Previous status-line command, when one exists |
@@ -34,6 +35,8 @@ The wrapper temporarily writes the **full status-line input** to a restricted lo
 Local agent analytics require no azul-code account, API key, or usage-upload service. The app has no configured analytics endpoint or cloud usage database.
 
 GitHub integration makes authenticated outbound reads to `api.github.com`, including at dashboard startup when credentials are available. The app resolves a token from `GITHUB_TOKEN`, then `GH_TOKEN` when the former is unset, or an existing `gh auth token` result. It does not save that token in azul-code settings. Repository names, commit subjects, and PR titles returned by GitHub are displayed locally. To match projects to repositories, azul-code runs `git remote get-url origin` in each workspace folder it has already seen in local transcripts; this reads only the remote URL, makes no network request, and the result stays in memory.
+
+Live pricing, on by default, downloads the public catalog at `https://models.dev/api.json` at launch and then every six hours, revalidating with its ETag so an unchanged catalog is not downloaded again. The request is an unauthenticated GET that carries no usage, account, or device data beyond what any HTTP request reveals, such as your IP address. Turn off **Settings → Model prices → Keep model prices up to date** to make no request and use only the bundled prices; the cached `pricing.json` is then ignored.
 
 Opening setup guides or GitHub links uses your external browser. Copying a contribution summary puts repository/activity details on the system clipboard. Projects you untick in the copy panel are stored by name in azul-code settings so they stay excluded. Installed tools and any existing Claude status-line command have their own network and storage behavior.
 

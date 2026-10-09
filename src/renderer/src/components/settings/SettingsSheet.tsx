@@ -12,6 +12,7 @@ import { SystemCheckIcon } from "@renderer/components/settings/SystemCheckIcon";
 import { useSystemChecks } from "@renderer/hooks/useSystemChecks";
 import { openPath, openUrl } from "@renderer/lib/bridge";
 import { MenuBarSettings } from "./MenuBarSettings";
+import { PricingSettings } from "./PricingSettings";
 
 type AppearanceProps = { theme: ThemePreference; setTheme: (theme: ThemePreference) => void; accent: AccentColor; setAccent: (accent: AccentColor) => void; customAccent: string; setCustomAccent: (hex: string) => void };
 
@@ -76,11 +77,12 @@ function SettingsBody({ snapshot, theme, setTheme, accent, setAccent, customAcce
         <CardTitle>Estimate method</CardTitle>
         <div className="method-grid">
           <div><div className="method-icon"><Database size={17} /></div><strong>Usage metadata</strong><p>Input, cache read/write, output, and reasoning counts come from local provider transcripts.</p></div>
-          <div><div className="method-icon"><CircleDollarSign size={17} /></div><strong>List prices</strong><p>Known models use standard public API token prices. Provider-reported cost wins when present.</p></div>
+          <div><div className="method-icon"><CircleDollarSign size={17} /></div><strong>List prices</strong><p>Known models use standard public API token prices, kept current from models.dev unless you turn that off. Provider-reported cost wins when present.</p></div>
           <div><div className="method-icon"><HardDrive size={17} /></div><strong>On-device</strong><p>No account link, API key, analytics endpoint, or cloud database is required.</p></div>
         </div>
         <div className="estimate-callout"><Info size={16} /><span>These are “what this would cost through the API” estimates. They are not your ChatGPT, Claude, or Cursor subscription bill.</span></div>
       </section>
+      <PricingSettings />
 
     </div>
   );

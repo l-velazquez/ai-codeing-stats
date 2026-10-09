@@ -45,7 +45,8 @@ const gpt = (rates: TokenRates): ModelRate => withLongContext(rates, 272_000, 2,
 // Claude Sonnet 5.5 rates were verified against Anthropic pricing on 2026-10-09.
 // Claude Sonnet 5, Opus 4.5, Sonnet 4.5, and Haiku 4.5 and 5.5 were added, and every
 // Claude rate re-verified, against Anthropic pricing on 2026-10-09.
-const RATES: Record<string, ModelRate> = {
+// Used when live pricing is off, has not yet succeeded, or does not list a model.
+const BUNDLED_RATES: Record<string, ModelRate> = {
   "gpt-6-astra": gpt({ input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 12.5, output: 50 }),
   "gpt-6.1-sol": gpt({ input: 2, cached: 0.1, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 10 }),
   "gpt-6-sol": gpt({ input: 2, cached: 0.2, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 10 }),
@@ -85,14 +86,73 @@ const RATES: Record<string, ModelRate> = {
   "claude-haiku-4-5": { input: 1, cached: 0.1, cacheWrite5m: 1.25, cacheWrite1h: 2, output: 5 },
 };
 
-function normalizeModel(model: string): string {
+/** One price list a model was billed at, starting at `since` (epoch ms; null means always). */
+export interface RatePeriod {
+  readonly since: number | null;
+  readonly rate: ModelRate;
+}
+
+/** Each model's price lists, oldest first. */
+export type RateHistory = Readonly<Record<string, readonly RatePeriod[]>>;
+
+let remoteRates: RateHistory = {};
+
+/**
+ * Prices fetched at runtime take precedence over the bundled table. Models the
+ * history does not cover keep their bundled rate.
+ */
+export function setRemoteRates(history: RateHistory): void {
+  remoteRates = history;
+}
+
+export function normalizeModel(model: string): string {
   const trimmed = model.trim().toLowerCase();
   const slash = trimmed.lastIndexOf("/");
   return slash >= 0 ? trimmed.slice(slash + 1) : trimmed;
 }
 
-export function getRate(model: string): ModelRate | null {
-  return RATES[normalizeModel(model)] ?? null;
+/** The rate a model billed at on `at`; a time before every known change uses the oldest one. */
+export function getRate(model: string, at: number = Date.now()): ModelRate | null {
+  const key = normalizeModel(model);
+  const periods = remoteRates[key];
+  if (periods === undefined || periods.length === 0) return BUNDLED_RATES[key] ?? null;
+  let current = periods[0];
+  for (const period of periods) {
+    if (period.since === null || period.since <= at) current = period;
+  }
+  return current.rate;
+}
+
+// A tier derived by multiplying (1.2 * 1.5) and one published as 1.8 are the same price.
+function samePrice(a: number, b: number): boolean {
+  return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
+}
+
+function sameRates(a: TokenRates, b: TokenRates): boolean {
+  return samePrice(a.input, b.input) && samePrice(a.cached, b.cached) && samePrice(a.cacheWrite5m, b.cacheWrite5m)
+    && samePrice(a.cacheWrite1h, b.cacheWrite1h) && samePrice(a.output, b.output);
+}
+
+export function sameRate(a: ModelRate, b: ModelRate): boolean {
+  if (!sameRates(a, b)) return false;
+  if (a.longContext === undefined || b.longContext === undefined) return a.longContext === b.longContext;
+  return a.longContext.from === b.longContext.from && sameRates(a.longContext.rates, b.longContext.rates);
+}
+
+/**
+ * Folds a newly observed price list into the history. The first observation of a
+ * model applies to all of its usage, since it corrects or fills in the bundled
+ * table. A later change applies only from `at` onward, so a price cut does not
+ * reprice usage that was billed before it.
+ */
+export function recordRates(history: RateHistory, observed: Readonly<Record<string, ModelRate>>, at: number): RateHistory {
+  const next: Record<string, readonly RatePeriod[]> = { ...history };
+  for (const [model, rate] of Object.entries(observed)) {
+    const periods = history[model];
+    if (periods === undefined || periods.length === 0) next[model] = [{ since: null, rate }];
+    else if (!sameRate(periods[periods.length - 1].rate, rate)) next[model] = [...periods, { since: at, rate }];
+  }
+  return next;
 }
 
 function inputTokensOf(tokens: TokenTotals): number {
@@ -110,12 +170,13 @@ export function priceTokens(
   model: string,
   tokens: TokenTotals,
   reportedCost: number | null,
+  at?: number,
 ): { cost: number; savings: number; priced: boolean } {
   if (reportedCost !== null && Number.isFinite(reportedCost) && reportedCost >= 0) {
     return { cost: reportedCost, savings: 0, priced: true };
   }
 
-  const base = getRate(model);
+  const base = getRate(model, at);
   if (base === null) return { cost: 0, savings: 0, priced: false };
   const rate = effectiveRate(base, tokens);
 
