@@ -6,6 +6,7 @@ import icon from "../../resources/icon.png?asset";
 import type { RangeKey } from "../shared/types";
 import { resolveTheme, themeBackground, type Settings } from "../shared/settings";
 import { fetchGithubMonth } from "./github";
+import { githubRemotes } from "./gitRemotes";
 import { installClaudeStatusLine } from "./claudeStatusLine";
 import { cachedStats, refreshStats, statsRevision } from "./scanner";
 import { LIVE_INTERVAL_MS, StatsService, WATCHED_INTERVAL_MS } from "./statsService";
@@ -189,6 +190,7 @@ app.whenReady().then(() => {
     if (typeof month !== "string") throw new Error("A YYYY-MM month is required.");
     return fetchGithubMonth(month, Boolean(refresh));
   });
+  ipcMain.handle("azul-code:github-remotes", (_event, paths: unknown) => githubRemotes(paths));
   ipcMain.handle("azul-code:open-path", async (_event, path: string) => {
     if (path) await shell.openPath(path);
   });

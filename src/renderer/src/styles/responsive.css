@@ -9,12 +9,14 @@
   .calendar-card { overflow: hidden; }
   .model-row { grid-template-columns: minmax(180px,1.3fr) .8fr .62fr .62fr; }
   .model-row > :last-child { display: none; }
-  .gh-heat-cell { height: 18px; }
+  .ship-headline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ship-legend-hint { margin-left: 0; width: 100%; }
   .model-feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .subscription-grid { grid-template-columns: 1fr; }
   .gh-toolbar { flex-wrap: wrap; }
   .stat-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat-rail > div:nth-child(odd) { border-left: 0; }
   .stat-rail > div:nth-child(n+3) { border-top: 1px solid var(--border); }
-  .todays-work-figures { grid-template-columns: 1fr 1fr; }
+  .todays-work-figures.recent-work-figures { grid-template-columns: 1fr 1fr; row-gap: var(--space-4); }
+  .recent-work-figures > div:nth-child(3) { padding-left: 0; border-left: 0; }
 }

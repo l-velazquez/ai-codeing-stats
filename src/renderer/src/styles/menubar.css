@@ -23,6 +23,8 @@
 .menubar-cost { margin: 8px 0 1px; font-family: var(--font-figure); font-size: 37px; font-weight: 500; letter-spacing: -.065em; overflow-wrap: anywhere; }
 .menubar-cost-label { font-size: 12px; color: var(--text-2); }
 .menubar-cost-label span { color: var(--muted); margin-left: 4px; font-size: 11px; }
+.menubar-today-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0 9px; }
+.menubar-today-stats > .menubar-token-total { margin: 0; }
 .menubar-token-total { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 9px; padding: 10px 12px; border: 1px solid var(--border); background: var(--panel); border-radius: 8px; color: var(--text-2); font-size: 12px; }
 .menubar-token-total strong { color: var(--text); font-family: var(--font-figure); font-weight: 500; }
 .menubar-today p { margin: 0; font-size: 11px; color: var(--muted); }

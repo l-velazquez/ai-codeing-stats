@@ -110,6 +110,11 @@ export interface Settings {
   readonly menuBarProvider: "codex" | "claude";
   readonly menuBarWindow: "session" | "weekly";
   readonly contributionsOrder: DayOrder;
+  /**
+   * Repositories left out of copied invoice summaries, as owner/name. Stored as
+   * exclusions so a newly active project is included until it is unticked.
+   */
+  readonly invoiceExcludedRepos: readonly string[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -126,6 +131,7 @@ export const DEFAULT_SETTINGS: Settings = {
   menuBarProvider: "codex",
   menuBarWindow: "session",
   contributionsOrder: "oldest",
+  invoiceExcludedRepos: [],
 };
 
 /**
@@ -234,6 +240,9 @@ export function normalizeSettings(raw: unknown): Settings {
     menuBarProvider: raw.menuBarProvider === "claude" ? "claude" : "codex",
     menuBarWindow: raw.menuBarWindow === "weekly" ? "weekly" : "session",
     contributionsOrder: raw.contributionsOrder === "newest" ? "newest" : "oldest",
+    invoiceExcludedRepos: Array.isArray(raw.invoiceExcludedRepos)
+      ? [...new Set(raw.invoiceExcludedRepos.filter((repo): repo is string => typeof repo === "string" && repo.length > 0 && repo.length <= 200))].slice(0, 500)
+      : DEFAULT_SETTINGS.invoiceExcludedRepos,
     sidebarCollapsed:
       typeof raw.sidebarCollapsed === "boolean"
         ? raw.sidebarCollapsed

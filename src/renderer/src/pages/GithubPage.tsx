@@ -1,38 +1,49 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,
   ArrowUpRight,
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  ClipboardCopy,
-  FolderGit2,
+  ChevronsDownUp,
+  ChevronsUpDown,
   GitBranch,
-  GitCommitHorizontal,
-  GitPullRequest,
   Info,
   RefreshCw,
 } from "lucide-react";
 import type { DayOrder } from "@shared/settings";
 import type { GitHubDay, StatsSnapshot } from "@shared/types";
-import { activeDaysInOrder, buildDaySummary, buildInvoiceSummary, monthLabel } from "@shared/invoice";
+import { activeDaysInOrder, buildDaySummary, isDayActive, monthLabel } from "@shared/invoice";
+import { buildContributionInsights, type ContributionInsights } from "@shared/contributionInsights";
 import { EmptyState } from "@renderer/components/primitives/EmptyState";
-import { Kpi } from "@renderer/components/primitives/Kpi";
+import { StatRail, type Stat } from "@renderer/components/primitives/StatRail";
 import { DayCard } from "@renderer/components/github/DayCard";
-import { MonthHeatGrid } from "@renderer/components/github/MonthHeatGrid";
+import { InvoiceCopyPanel } from "@renderer/components/github/InvoiceCopyPanel";
 import { RepoTotals } from "@renderer/components/github/RepoTotals";
+import { ShipClock } from "@renderer/components/github/ShipClock";
+import { ShipRibbon } from "@renderer/components/github/ShipRibbon";
 import { useCopyToClipboard } from "@renderer/hooks/useCopyToClipboard";
 import { useDailyCostIndex } from "@renderer/hooks/useDailyCostIndex";
+import { useInvoiceExclusions } from "@renderer/hooks/useInvoiceExclusions";
 import type { GithubMonthState } from "@renderer/hooks/useGithubMonth";
 import { openUrl } from "@renderer/lib/bridge";
 import { useRegisterRefresh } from "@renderer/providers/RefreshProvider";
-import { relative } from "@renderer/format";
+import { localDayKey, money, relative } from "@renderer/format";
 
-function copyLabel(state: "idle" | "copied" | "failed"): string {
-  if (state === "copied") return "Copied — paste it into your invoice";
-  if (state === "failed") return "Copy failed — try again";
-  return "Copy invoice summary";
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
+function insightStats(insights: ContributionInsights, isCurrentMonth: boolean, activeDays: number, commits: number): Stat[] {
+  const { streak, costPerCommit, spendOnlyDays } = insights;
+  return [
+    isCurrentMonth
+      ? { label: "Current streak", value: plural(streak.current, "day"), detail: `Longest this month: ${plural(streak.longest, "day")}` }
+      : { label: "Longest streak", value: plural(streak.longest, "day"), detail: "Consecutive active days" },
+    { label: "AI cost per commit", value: costPerCommit === null ? "—" : money(costPerCommit), detail: "Spend ÷ commits on days with both" },
+    { label: "Commits per active day", value: activeDays > 0 ? (commits / activeDays).toFixed(1) : "—", detail: `Over ${plural(activeDays, "active day")}` },
+    { label: "Spend-only days", value: String(spendOnlyDays), detail: spendOnlyDays > 0 ? "AI sessions ran, nothing was pushed" : "Every AI day reached GitHub" },
+  ];
 }
 
 export function GithubPage({
@@ -59,14 +70,43 @@ export function GithubPage({
     (day: GitHubDay) => void copy(buildDaySummary(day), day.date),
     [copy],
   );
-  const copyMonth = useCallback(() => {
-    if (data && data.state === "ok") void copy(buildInvoiceSummary(data), "month");
-  }, [copy, data]);
+  const copyMonth = useCallback((text: string) => void copy(text, "month"), [copy]);
+  const { excluded, setExcluded } = useInvoiceExclusions();
+
+  // Only the most recent active day starts open; the rest collapse to their
+  // header line so a busy month is scannable. Reset whenever the month changes.
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+  const loadedMonth = data?.month ?? null;
+  useEffect(() => {
+    const latest = data?.days.filter(isDayActive).at(-1);
+    setExpanded(new Set(latest ? [latest.date] : []));
+    // Keyed on the month, not the snapshot: a background refresh of the same
+    // month must not fold away days the user opened.
+  }, [loadedMonth]);
+  const toggleDay = useCallback((date: string) => {
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+  }, []);
+  const jumpToDay = useCallback((date: string) => {
+    setExpanded((current) => (current.has(date) ? current : new Set([...current, date])));
+    // After the expanded card has rendered, so it centres on its full height.
+    requestAnimationFrame(() => document.getElementById(`gh-day-${date}`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+  }, []);
 
   const activeDays = activeDaysInOrder(data?.days ?? [], order);
   const newestFirst = order === "newest";
   const hasActivity = data ? data.totals.commits > 0 || data.totals.pullRequests > 0 : false;
   const monthCopyState = stateFor("month");
+  const allExpanded = activeDays.length > 0 && activeDays.every((day) => expanded.has(day.date));
+  const todayKey = localDayKey();
+  const insights = useMemo(
+    () => (data && data.state === "ok" ? buildContributionInsights(data, ai, todayKey) : null),
+    [data, ai, todayKey],
+  );
 
   return (
     <div className="page-stack">
@@ -86,10 +126,18 @@ export function GithubPage({
             {newestFirst ? <ArrowDownWideNarrow size={13} /> : <ArrowUpNarrowWide size={13} />}
             {newestFirst ? "Newest first" : "Oldest first"}
           </button>
-          {data && data.state === "ok" ? <span className="muted-label">fetched {relative(data.fetchedAt)} ago · @{data.login}</span> : null}
-          <button className="copy-summary" onClick={copyMonth} disabled={!hasActivity} data-state={monthCopyState}>
-            <ClipboardCopy size={13} />{copyLabel(monthCopyState)}
+          <button
+            className="order-toggle"
+            onClick={() => setExpanded(allExpanded ? new Set() : new Set(activeDays.map((day) => day.date)))}
+            disabled={activeDays.length === 0}
+          >
+            {allExpanded ? <ChevronsDownUp size={13} /> : <ChevronsUpDown size={13} />}
+            {allExpanded ? "Collapse all" : "Expand all"}
           </button>
+          {data && data.state === "ok" ? <span className="muted-label">fetched {relative(data.fetchedAt)} ago · @{data.login}</span> : null}
+          {data && data.state === "ok" ? (
+            <InvoiceCopyPanel data={data} excluded={excluded} onExcludedChange={setExcluded} copyState={monthCopyState} onCopy={copyMonth} />
+          ) : null}
           <span className="visually-hidden" role="status">{monthCopyState === "copied" ? "Invoice summary copied" : monthCopyState === "failed" ? "Copy failed" : ""}</span>
         </div>
       </section>
@@ -122,24 +170,20 @@ export function GithubPage({
 
       {/* Kept mounted while the next month loads. Blanking this out on every
           arrow click unmounted the whole page and jumped the layout. */}
-      {data && data.state === "ok" ? (
+      {data && data.state === "ok" && insights ? (
         <div className={stale ? "gh-content is-stale" : "gh-content"} aria-busy={stale}>
-          <section className="kpi-grid">
-            <Kpi icon={GitCommitHorizontal} label="Commits" value={String(data.totals.commits)} detail={`${monthLabel(data.month)} · @${data.login}`} />
-            <Kpi icon={CalendarDays} label="Active days" value={String(data.totals.activeDays)} detail="Days with commits or pull requests" accent />
-            <Kpi icon={GitPullRequest} label="Pull requests" value={String(data.totals.pullRequests)} detail="Opened during this month" />
-            <Kpi icon={FolderGit2} label="Projects" value={String(data.totals.repos)} detail="Repositories with your commits" />
-          </section>
+          <ShipRibbon data={data} spend={ai} insights={insights} todayKey={todayKey} onJump={jumpToDay} />
+          {hasActivity ? <StatRail stats={insightStats(insights, month === currentMonth, data.totals.activeDays, data.totals.commits)} /> : null}
           <section className="split-panels">
             <div className="gh-days">
               {activeDays.map((day) => (
-                <DayCard key={day.date} day={day} ai={ai} copyState={stateFor(day.date)} onCopy={copyDay} />
+                <DayCard key={day.date} day={day} ai={ai} copyState={stateFor(day.date)} onCopy={copyDay} expanded={expanded.has(day.date)} onToggle={toggleDay} />
               ))}
               {activeDays.length === 0 ? <div className="panel"><EmptyState label="No GitHub activity recorded this month" /></div> : null}
             </div>
             <div className="gh-side">
-              <MonthHeatGrid data={data} />
-              <RepoTotals data={data} />
+              <ShipClock insights={insights} />
+              <RepoTotals data={data} insights={insights} />
             </div>
           </section>
         </div>

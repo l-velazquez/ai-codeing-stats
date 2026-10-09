@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import type { GitHubDay } from "@shared/types";
 import { DayCard } from "./DayCard";
 
@@ -38,5 +38,15 @@ describe("DayCard", () => {
     expect(screen.getByText(/2 commits · 2 projects/)).toBeInTheDocument();
     expect(screen.getByText("2 commits · 1 pull request")).toBeInTheDocument();
     expect(screen.getByText("1 pull request")).toBeInTheDocument();
+  });
+
+  it("collapses to a summary line naming its projects and toggles on click", () => {
+    const onToggle = vi.fn();
+    const { container } = render(<DayCard day={day} ai={new Map()} copyState="idle" onCopy={() => {}} expanded={false} onToggle={onToggle} />);
+    expect(container.querySelector(".gh-repo-group")).toBeNull();
+    expect(screen.getByText(/webapp, infra/)).toBeInTheDocument();
+    const header = screen.getByRole("button", { expanded: false });
+    fireEvent.click(header);
+    expect(onToggle).toHaveBeenCalledWith("2026-09-05");
   });
 });

@@ -49,6 +49,8 @@ const bridge: AzulCodeBridge = {
   systemChecks: () => ipcRenderer.invoke("azul-code:system-checks") as Promise<SystemCheckSnapshot>,
   github: (month: string, refresh?: boolean) =>
     ipcRenderer.invoke("azul-code:github", month, refresh) as Promise<GitHubMonthSnapshot>,
+  githubRemotes: (paths: string[]) =>
+    ipcRenderer.invoke("azul-code:github-remotes", paths) as Promise<Record<string, string | null>>,
   openPath: (path: string) => ipcRenderer.invoke("azul-code:open-path", path) as Promise<void>,
   openUrl: (url: string) => ipcRenderer.invoke("azul-code:open-url", url) as Promise<void>,
   settings: {

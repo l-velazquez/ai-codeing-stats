@@ -33,9 +33,9 @@ The wrapper temporarily writes the **full status-line input** to a restricted lo
 
 Local agent analytics require no azul-code account, API key, or usage-upload service. The app has no configured analytics endpoint or cloud usage database.
 
-GitHub integration makes authenticated outbound reads to `api.github.com`, including at dashboard startup when credentials are available. The app resolves a token from `GITHUB_TOKEN`, then `GH_TOKEN` when the former is unset, or an existing `gh auth token` result. It does not save that token in azul-code settings. Repository names, commit subjects, and PR titles returned by GitHub are displayed locally.
+GitHub integration makes authenticated outbound reads to `api.github.com`, including at dashboard startup when credentials are available. The app resolves a token from `GITHUB_TOKEN`, then `GH_TOKEN` when the former is unset, or an existing `gh auth token` result. It does not save that token in azul-code settings. Repository names, commit subjects, and PR titles returned by GitHub are displayed locally. To match projects to repositories, azul-code runs `git remote get-url origin` in each workspace folder it has already seen in local transcripts; this reads only the remote URL, makes no network request, and the result stays in memory.
 
-Opening setup guides or GitHub links uses your external browser. Copying a contribution summary puts repository/activity details on the system clipboard. Installed tools and any existing Claude status-line command have their own network and storage behavior.
+Opening setup guides or GitHub links uses your external browser. Copying a contribution summary puts repository/activity details on the system clipboard. Projects you untick in the copy panel are stored by name in azul-code settings so they stay excluded. Installed tools and any existing Claude status-line command have their own network and storage behavior.
 
 ## Reset or remove app-owned data
 

@@ -12,7 +12,7 @@ Refresh updates local usage on the usage pages. On Contributions it refreshes th
 
 ## Overview
 
-Start with remaining subscription allowance, then inspect API-equivalent usage, monthly pace, processed tokens, cache hit rate, cache savings, and average session cost. The usage chart, activity calendar, provider breakdown, model highlights, project highlights, and today's work provide different views of the same local records.
+Start with remaining subscription allowance, then inspect API-equivalent usage, monthly pace, processed tokens, cache hit rate, cache savings, and average session cost. The usage chart, activity calendar, provider breakdown, model highlights, and project highlights provide different views of the same local records. **Last 14 days** puts AI spend and GitHub commits on the same day axis, with today's figures on top; click a day to open Contributions.
 
 Dollar amounts are estimates of API-equivalent activity, not your subscription bill. Monthly pace uses a trailing 30-day window independently of the selected range. See [calculation definitions](data-and-calculations.md).
 
@@ -26,7 +26,7 @@ The featured models and complete ledger show cost, token volume, cache efficienc
 
 ## Projects
 
-The project ledger groups usage by workspace path. Click a project row to open its path with macOS. Missing workspace metadata appears as **Unassigned**. Projects are sorted by cost, then tokens, so the “Most active” headline refers to that ordering, not elapsed work time. Identical folder names at different paths remain separate projects.
+The project ledger groups usage by workspace path. Click a project row to open its path with macOS. Missing workspace metadata appears as **Unassigned**. Projects are sorted by cost, then tokens, so the “Most active” headline refers to that ordering, not elapsed work time. Identical folder names at different paths remain separate projects. When GitHub is connected, each row also shows commits for the matching repository over the same range and the AI cost per commit; matching uses the workspace's git remote first and its folder name second.
 
 ## Sessions
 
@@ -34,17 +34,17 @@ Search the session ledger by project, displayed model label, or provider. Search
 
 ## Contributions
 
-Use the arrows to browse months through the current month. The ledger shows commit subjects and pull requests grouped by local day, alongside a month heat grid and repository totals. Links open GitHub in your browser. A previous month's data stays visible but dimmed while the next month loads.
+Use the arrows to browse months through the current month. The month ribbon at the top shows commits and AI spend for every day of the month; hover a day for its figures and click it to jump to that day. Below it are your streak, AI cost per commit, commits per active day, and spend-only days. The ledger shows commit subjects and pull requests grouped by local day, collapsed to a summary line except for the latest day; click a header to expand it, or use **Expand all**. The side panels show when in the week you commit and per-project totals with a day-by-day strip. Links open GitHub in your browser. A previous month's data stays visible but dimmed while the next month loads.
 
-**Oldest first / Newest first** reverses the day ledger, and the choice survives relaunch. It affects the day cards only: the heat grid stays a calendar, and the copy summary stays chronological.
+**Oldest first / Newest first** reverses the day ledger, and the choice survives relaunch. It affects the day cards only: the ribbon stays a calendar, and the copy summary stays chronological.
 
-**Copy invoice summary** copies the month's activity as plain text; day cards also support copying a single day. The summary includes commit subjects, pull request titles, repository names, and totals. It does not calculate billable hours or invoice amounts. Review the text before sharing, especially for private repositories.
+**Copy invoice summary** opens a panel listing the month's projects. Untick personal projects to leave them out (the choice is remembered), choose **By project** — each project with a one-line description and its commits — or **By day**, then copy. Day cards also support copying a single day. The summary includes commit subjects, pull request titles, repository names, and totals. It does not calculate billable hours or invoice amounts. Review the text before sharing, especially for private repositories.
 
 Daily AI cost is matched by date across your full local history. It is not attributed to a particular GitHub repository or proof that AI produced a commit. GitHub activity is fetched at app startup as well as through Contributions when credentials are available.
 
 ## Menu bar
 
-The macOS companion defaults to today's USD API equivalent. Click for today's cost, tokens, provider breakdown, remaining allowances, reset times, Refresh, dashboard/Settings shortcuts, and Quit. Right-click opens a native quick-action menu.
+The macOS companion defaults to today's USD API equivalent. Click for today's cost, tokens, commits pushed today, provider breakdown, remaining allowances, reset times, Refresh, dashboard/Settings shortcuts, and Quit. Right-click opens a native quick-action menu.
 
 In **Settings → Menu bar**, enable or disable the companion and choose cost, allowance, both, or icon only. For allowance, choose Codex or Claude and the short or weekly window. The title names the provider in full, as in `Codex 5h · 80% left`. A period such as `5h` is the length of the allowance window, not the time left in it, and percentages mean **remaining** allowance.
 

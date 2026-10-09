@@ -8,7 +8,8 @@ import type { SubscriptionUsage } from "@shared/types";
 import { ProviderMark } from "@renderer/components/ProviderMark";
 import { compact, dateTime, money, PROVIDERS, relative } from "@renderer/format";
 import { pressureOf, resetText } from "@renderer/lib/allowance";
-import { IS_ELECTRON, missingBridgeError } from "@renderer/lib/bridge";
+import { fetchGithubMonth, IS_ELECTRON, missingBridgeError } from "@renderer/lib/bridge";
+import { currentMonthKey } from "@shared/invoice";
 import { demoSnapshot } from "@renderer/demo";
 import { demoState } from "@renderer/lib/demoState";
 import { usePanelHeight } from "@renderer/hooks/usePanelHeight";
@@ -52,8 +53,49 @@ function Allowance({ usage, now }: { usage: SubscriptionUsage; now: number }) {
   </div>;
 }
 
-export function MenuBarView({ state, now, onRefresh, onOpen, onSettings, onQuit }: {
-  state: MenuBarState; now: number; onRefresh: () => void; onOpen: () => void; onSettings: () => void; onQuit: () => void;
+/** Today's GitHub output, or why it is missing. */
+export type MenuBarCommits =
+  | { readonly state: "ok"; readonly commits: number; readonly pullRequests: number }
+  | { readonly state: "loading" | "setup" | "error" };
+
+function commitsValue(github: MenuBarCommits): string {
+  if (github.state === "ok") return github.pullRequests > 0 ? `${github.commits} · ${github.pullRequests} PR` : String(github.commits);
+  return "—";
+}
+
+function commitsTitle(github: MenuBarCommits): string {
+  if (github.state === "setup") return "Connect GitHub in azul-code to count commits";
+  if (github.state === "error") return "GitHub activity could not be loaded";
+  return "Commits and pull requests you pushed to GitHub today";
+}
+
+/**
+ * Reads the current month once per scan. Main caches each month for ten
+ * minutes, so following every usage update costs nothing extra on the network.
+ */
+function useCommitsToday(refreshKey: unknown): MenuBarCommits {
+  const [github, setGithub] = useState<MenuBarCommits>({ state: "loading" });
+  useEffect(() => {
+    let cancelled = false;
+    void fetchGithubMonth(currentMonthKey())
+      .then((month) => {
+        if (cancelled) return;
+        if (month.state === "setup") return setGithub({ state: "setup" });
+        const today = month.days.find((day) => day.date === localDayKey());
+        setGithub({ state: "ok", commits: today?.commits ?? 0, pullRequests: today?.pullRequests.length ?? 0 });
+      })
+      .catch(() => {
+        if (!cancelled) setGithub({ state: "error" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+  return github;
+}
+
+export function MenuBarView({ state, now, github = { state: "loading" }, onRefresh, onOpen, onSettings, onQuit }: {
+  state: MenuBarState; now: number; github?: MenuBarCommits; onRefresh: () => void; onOpen: () => void; onSettings: () => void; onQuit: () => void;
 }) {
   const summary = state.summary;
   const today = summary?.day === localDayKey(now);
@@ -73,7 +115,10 @@ export function MenuBarView({ state, now, onRefresh, onOpen, onSettings, onQuit 
         <div className="menubar-eyebrow"><span>Today</span><span>{new Date(now).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span></div>
         <div className="menubar-cost">{summary && today && available ? money(summary.cost) : "—"}</div>
         <div className="menubar-cost-label">API equivalent <span>USD{partial ? " · partially priced" : ""}</span></div>
-        <div className="menubar-token-total"><span>Tokens</span><strong>{summary && today && available ? compact(summary.tokens) : "—"}</strong></div>
+        <div className="menubar-today-stats">
+          <div className="menubar-token-total"><span>Tokens</span><strong>{summary && today && available ? compact(summary.tokens) : "—"}</strong></div>
+          <div className="menubar-token-total" title={commitsTitle(github)}><span>Commits</span><strong>{commitsValue(github)}</strong></div>
+        </div>
         <p>Estimated API value · not your subscription bill</p>
       </section>
       {state.error ? <p className="menubar-notice" role="alert">{state.error} {summary ? "Showing the last available scan." : "Use Refresh to try again."}</p> : null}
@@ -120,11 +165,12 @@ export default function MenuBarApp() {
     return () => { active = false; unsubscribe?.(); window.clearInterval(timer); };
   }, []);
   useThemePreference();
+  const github = useCommitsToday(state.summary?.updatedAt ?? null);
   const refresh = () => {
     if (!window.azulCode) { if (!IS_ELECTRON) setState(demoMenuBar()); return; }
     void window.azulCode.menuBar.refresh().catch(() => setState((previous) => ({ ...previous, refreshing: false, error: "Refresh failed. Please try again." })));
   };
-  return <MenuBarView state={state} now={now} onRefresh={refresh}
+  return <MenuBarView state={state} now={now} github={github} onRefresh={refresh}
     onOpen={() => { void window.azulCode?.menuBar.openDashboard(); }}
     onSettings={() => { void window.azulCode?.menuBar.openDashboard(true); }}
     onQuit={() => { void window.azulCode?.menuBar.quit(); }} />;

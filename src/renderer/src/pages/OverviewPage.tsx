@@ -10,23 +10,24 @@ import { EmptyState } from "@renderer/components/primitives/EmptyState";
 import { StatRail } from "@renderer/components/primitives/StatRail";
 import { RANGE_LABELS } from "@renderer/components/shell/RangeControl";
 import { AllowanceHeadline } from "@renderer/components/allowance/AllowanceHeadline";
-import { TodaysWork } from "@renderer/components/data/TodaysWork";
+import { RecentWork } from "@renderer/components/data/RecentWork";
+import type { RecentGithubDays } from "@renderer/hooks/useRecentGithubDays";
 import type { DayCost } from "@renderer/hooks/useDailyCostIndex";
 import { compact, money, percent } from "@renderer/format";
-import type { GitHubMonthSnapshot, StatsSnapshot } from "@shared/types";
+import type { StatsSnapshot } from "@shared/types";
 
 export function OverviewPage({
   snapshot,
   navigate,
   github,
-  spendToday,
+  dailyCost,
   connectingClaude,
   onConnectClaude,
 }: {
   snapshot: StatsSnapshot;
   navigate: (page: PageId) => void;
-  github: GitHubMonthSnapshot | null;
-  spendToday: DayCost | null;
+  github: RecentGithubDays;
+  dailyCost: ReadonlyMap<string, DayCost>;
   connectingClaude: boolean;
   onConnectClaude: () => void;
 }) {
@@ -90,9 +91,9 @@ export function OverviewPage({
         ]}
       />
 
-      <TodaysWork
+      <RecentWork
         github={github}
-        spendToday={spendToday}
+        spend={dailyCost}
         onOpenContributions={() => navigate("github")}
       />
 

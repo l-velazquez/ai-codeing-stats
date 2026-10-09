@@ -233,6 +233,8 @@ export interface AzulCodeBridge {
   setupClaudeStatusLine: () => Promise<SubscriptionUsage>;
   systemChecks: () => Promise<SystemCheckSnapshot>;
   github: (month: string, refresh?: boolean) => Promise<GitHubMonthSnapshot>;
+  /** GitHub owner/name of each workspace's git origin, or null. */
+  githubRemotes: (paths: string[]) => Promise<Record<string, string | null>>;
   openPath: (path: string) => Promise<void>;
   openUrl: (url: string) => Promise<void>;
   settings: {

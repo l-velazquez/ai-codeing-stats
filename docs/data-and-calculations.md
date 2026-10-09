@@ -62,7 +62,7 @@ Codex uses the newest local rate-limit event. Claude reads captured five-hour an
 
 ## GitHub contributions
 
-The implementation in [`github.ts`](../src/main/github.ts) reads the authenticated user, accessible repositories, authored commits, and authored pull requests from `api.github.com`. It does not scan local Git repositories.
+The implementation in [`github.ts`](../src/main/github.ts) reads the authenticated user, accessible repositories, authored commits, and authored pull requests from `api.github.com`. It does not scan local Git history; the only local Git read is each workspace's `origin` URL, used to match projects (below).
 
 - Repository discovery considers up to 500 accessible owner/collaborator/organization repositories, sorted by last push, and filters out those not pushed since the selected month began.
 - Commit requests filter by authenticated author and month. They do not specify a branch, so this is not an all-branch history scan.
@@ -73,3 +73,14 @@ The implementation in [`github.ts`](../src/main/github.ts) reads the authenticat
 - Failed repository reads or PR reads produce a partial result with a warning. Pagination caps do not currently produce a truncation warning.
 
 These rules can differ from GitHub's profile graph, include incomplete results for very large accounts, and depend on the credential's access. Month results are cached in memory for ten minutes; Refresh bypasses that cache. The cache is keyed by month, so refresh or restart after changing accounts.
+
+### Contributions insights
+
+- **Streak** counts consecutive active days inside the month on screen. An empty today does not end the current streak, because the day is not over; days after today are ignored.
+- **AI cost per commit** divides AI spend by commits over days that had both. Days with spend and no commits are reported separately as **spend-only days** rather than averaged in.
+- **When you ship** buckets commit author times by local weekday and hour.
+- The month ribbon draws commits and AI spend on the same day axis but each on its own scale, labelled with its peak. They are not comparable in height.
+
+### Projects matched to repositories
+
+The Projects page matches each AI workspace to a GitHub repository. It first runs `git -C <workspace> remote get-url origin` locally and accepts a GitHub `owner/name` from it. Without a GitHub origin it compares the workspace folder name with active repository names, ignoring case and punctuation, and accepts only a single unambiguous match. Commits are counted over the selected range (All time is capped at six months) and divided into that project's AI cost for **per commit**. Workspaces with no match show **No repo matched**.
