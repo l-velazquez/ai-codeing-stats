@@ -34,7 +34,13 @@ Claude input is already exclusive of cache buckets. Codex and OpenCode subtract 
 
 ## Pricing
 
-The source of truth is [`src/shared/pricing.ts`](../src/shared/pricing.ts). Rates are USD per million tokens and are bundled with the app, not downloaded at runtime. Its verification comment records existing rates as of 2026-09-05, Claude Fable rates as of 2026-09-14, GPT-6 Sol and Luna rates as of 2026-09-23, Claude Opus 5.5 rates as of 2026-09-24, and GPT-6.1 Sol plus the short-context GPT-5 family (GPT-5, 5-mini, 5-nano, 5.1, 5.2, 5.4-mini, 5.4-nano) as of 2026-10-05. See [OpenAI's model pricing](https://developers.openai.com/api/docs/pricing) for GPT models, [Anthropic's pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for Fable, and [Anthropic's Opus 5.5 model page](https://platform.claude.com/docs/en/models/opus-5-5/overview) for Opus 5.5.
+Rates are USD per million tokens and come from two places: live prices from [models.dev](https://models.dev), and the bundled table in [`src/shared/pricing.ts`](../src/shared/pricing.ts). Live prices win for every model models.dev lists; the bundled table prices the rest, and every model when live pricing is off or has never succeeded.
+
+[`modelsDev.ts`](../src/shared/modelsDev.ts) reads only the `anthropic` and `openai` providers, so reseller markups never apply. A model missing a cache-read or cache-write price bills those tokens as input. models.dev lists only the 5-minute cache write; for Anthropic models the 1-hour write is derived as 2× input, Anthropic's published multiplier. A context tier is kept with its own published rates. A model with a negative price, a price above $1,000 per million tokens, or a tier type the parser does not recognise is skipped and keeps its bundled price.
+
+models.dev has no price history, so [`pricingUpdater.ts`](../src/main/pricingUpdater.ts) keeps one in `pricing.json`. The first time a model is seen, its price applies to all usage, because it corrects or fills in the bundled table. A later change applies from the time the app first saw it, so earlier records keep the price they were billed at. That time can trail the real change by up to the six-hour check interval, or longer if the app was not running. A failed check keeps the previous prices.
+
+The bundled table's verification comment records existing rates as of 2026-09-05, Claude Fable rates as of 2026-09-14, GPT-6 Sol and Luna rates as of 2026-09-23, Claude Opus 5.5 rates as of 2026-09-24, GPT-6.1 Sol plus the short-context GPT-5 family (GPT-5, 5-mini, 5-nano, 5.1, 5.2, 5.4-mini, 5.4-nano) as of 2026-10-05, and Claude Sonnet 5.5 as of 2026-10-09. On 2026-10-09 every Claude rate was re-verified and Claude Sonnet 5, Opus 4.5, Sonnet 4.5, Haiku 4.5, and Haiku 5.5 were added. See [OpenAI's model pricing](https://developers.openai.com/api/docs/pricing) for GPT models, [Anthropic's pricing table](https://platform.claude.com/docs/en/about-claude/pricing) for the other Claude models, and [Anthropic's Opus 5.5 model page](https://platform.claude.com/docs/en/models/opus-5-5/overview) for Opus 5.5.
 
 A finite nonnegative provider-reported cost takes precedence over the rate table, including zero. This applies to OpenCode costs and Claude `costUSD`. Such records count as priced and contribute zero calculated cache savings.
 
@@ -42,7 +48,7 @@ Otherwise, each token bucket is multiplied by its model rate and divided by one 
 
 Unknown models contribute tokens and sessions but zero estimated cost, with partial-pricing warnings. `pricedPercent` measures priced **records**, not the share of tokens or dollars covered.
 
-For configured long-context models, input above the threshold applies the higher rates to the entire record: 2× input/cache rates and 1.5× output. The current GPT threshold is 272,000 input tokens. OpenAI documents this tier for GPT-6 Astra, Sol, and Luna; the implementation assumes it for some older GPT models.
+Each model can carry its own long-context tier. When a record's input (uncached, cache reads, and cache writes together) is above the tier's threshold, the higher rates apply to the entire record. GPT models with a tier use 272,000 input tokens, 2× input/cache rates, and 1.5× output. OpenAI documents this tier for GPT-6 Astra, Sol, and Luna; the implementation assumes it for some older GPT models. Claude Haiku 5.5 uses 100,000 input tokens and 5× on every rate. Other Claude models bill their full 1M context at standard rates.
 
 Cache savings compares cache-read/write cost with charging those same tokens at the uncached input rate. Negative savings are clamped to zero per record, so this is not a complete measure of net cache economics across requests.
 
@@ -62,7 +68,7 @@ Codex uses the newest local rate-limit event. Claude reads captured five-hour an
 
 ## GitHub contributions
 
-The implementation in [`github.ts`](../src/main/github.ts) reads the authenticated user, accessible repositories, authored commits, and authored pull requests from `api.github.com`. It does not scan local Git repositories.
+The implementation in [`github.ts`](../src/main/github.ts) reads the authenticated user, accessible repositories, authored commits, and authored pull requests from `api.github.com`. It does not scan local Git history; the only local Git read is each workspace's `origin` URL, used to match projects (below).
 
 - Repository discovery considers up to 500 accessible owner/collaborator/organization repositories, sorted by last push, and filters out those not pushed since the selected month began.
 - Commit requests filter by authenticated author and month. They do not specify a branch, so this is not an all-branch history scan.
@@ -73,3 +79,14 @@ The implementation in [`github.ts`](../src/main/github.ts) reads the authenticat
 - Failed repository reads or PR reads produce a partial result with a warning. Pagination caps do not currently produce a truncation warning.
 
 These rules can differ from GitHub's profile graph, include incomplete results for very large accounts, and depend on the credential's access. Month results are cached in memory for ten minutes; Refresh bypasses that cache. The cache is keyed by month, so refresh or restart after changing accounts.
+
+### Contributions insights
+
+- **Streak** counts consecutive active days inside the month on screen. An empty today does not end the current streak, because the day is not over; days after today are ignored.
+- **AI cost per commit** divides AI spend by commits over days that had both. Days with spend and no commits are reported separately as **spend-only days** rather than averaged in.
+- **When you ship** buckets commit author times by local weekday and hour.
+- The month ribbon draws commits and AI spend on the same day axis but each on its own scale, labelled with its peak. They are not comparable in height.
+
+### Projects matched to repositories
+
+The Projects page matches each AI workspace to a GitHub repository. It first runs `git -C <workspace> remote get-url origin` locally and accepts a GitHub `owner/name` from it. Without a GitHub origin it compares the workspace folder name with active repository names, ignoring case and punctuation, and accepts only a single unambiguous match. Commits are counted over the selected range (All time is capped at six months) and divided into that project's AI cost for **per commit**. Workspaces with no match show **No repo matched**.

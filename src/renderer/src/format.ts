@@ -57,8 +57,8 @@ export function clockTime(timestamp: number, now = Date.now()): string {
   ).format(timestamp);
 }
 
-export function relative(timestamp: number): string {
-  const elapsed = Date.now() - timestamp;
+export function relative(timestamp: number, now = Date.now()): string {
+  const elapsed = now - timestamp;
   const minutes = Math.floor(elapsed / 60_000);
   if (minutes < 1) return "now";
   if (minutes < 60) return `${minutes}m`;
@@ -67,6 +67,13 @@ export function relative(timestamp: number): string {
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d`;
   return shortDate(timestamp);
+}
+
+/** "just now", "5m ago", or "on Oct 3" once relative() falls back to a date. */
+export function ago(timestamp: number, now = Date.now()): string {
+  const elapsed = relative(timestamp, now);
+  if (elapsed === "now") return "just now";
+  return /^\d+[mhd]$/.test(elapsed) ? `${elapsed} ago` : `on ${elapsed}`;
 }
 
 export function duration(start: number, end: number): string {

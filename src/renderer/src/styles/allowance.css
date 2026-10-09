@@ -17,8 +17,9 @@
 .allowance-invite-copy p { margin: 0; color: var(--muted); font-size: var(--text-md); line-height: 1.5; max-width: 62ch; }
 .allowance-invite .connect-button { flex: 0 0 auto; font-size: var(--text-md); min-height: 32px; }
 
-.todays-work { padding: var(--pad-panel); display: grid; gap: 14px; }
-.todays-work-empty { margin: 0; color: var(--muted); font-size: var(--text-md); }
+.recent-work { padding: var(--pad-panel); display: grid; gap: var(--space-4); }
+.todays-work-figures.recent-work-figures { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.recent-work-note { margin: 0; color: var(--faint); font-size: var(--text-2xs); }
 .todays-work-figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap-card); }
 .todays-work-figures > div { display: grid; gap: 3px; padding-left: 13px; border-left: 1px solid var(--border); }
 .todays-work-figures > div:first-child { padding-left: 0; border-left: 0; }

@@ -233,8 +233,11 @@ export interface AzulCodeBridge {
   setupClaudeStatusLine: () => Promise<SubscriptionUsage>;
   systemChecks: () => Promise<SystemCheckSnapshot>;
   github: (month: string, refresh?: boolean) => Promise<GitHubMonthSnapshot>;
+  /** GitHub owner/name of each workspace's git origin, or null. */
+  githubRemotes: (paths: string[]) => Promise<Record<string, string | null>>;
   openPath: (path: string) => Promise<void>;
   openUrl: (url: string) => Promise<void>;
+  pricingStatus: () => Promise<PricingStatus>;
   settings: {
     get: () => Promise<Settings>;
     set: (patch: Partial<Settings>) => Promise<Settings>;
@@ -253,4 +256,18 @@ export interface AzulCodeBridge {
     sidebarCollapsed: boolean;
   };
   platform: string;
+}
+
+/** Where model prices currently come from, for the settings sheet. */
+export interface PricingStatus {
+  readonly source: "models.dev" | "bundled";
+  readonly enabled: boolean;
+  /** Last successful check against models.dev, epoch ms. */
+  readonly checkedAt: number | null;
+  /** Models priced from models.dev rather than the bundled table. */
+  readonly models: number;
+  /** The last check failed for this reason; the previous prices stay in use. */
+  readonly error: string | null;
+  /** The last check failed because models.dev could not be reached at all. */
+  readonly offline: boolean;
 }

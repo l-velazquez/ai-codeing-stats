@@ -6,6 +6,10 @@ button.project-row:not(:disabled):hover { background: color-mix(in srgb, var(--t
 .project-name { min-width: 0; display: grid; gap: 3px; }
 .project-name strong { font-size: var(--text-sm); font-weight: 500; }
 .project-name span { font-size: var(--text-2xs); color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.project-row--github { grid-template-columns: 25px minmax(180px, 1.3fr) minmax(80px, .7fr) 50px 105px 118px 16px; }
+.project-commits strong { white-space: nowrap; }
+.project-commits span { white-space: nowrap; }
+.project-commits.is-unmatched strong, .project-commits.is-unmatched span { color: var(--faint); }
 .project-spend-bar { height: 3px; border-radius: 99px; background: var(--wash-4); overflow: hidden; }
 .project-spend-bar i { height: 100%; display: block; border-radius: inherit; background: color-mix(in srgb, var(--accent) 75%, var(--text)); }
 .provider-dots { display: flex; align-items: center; }

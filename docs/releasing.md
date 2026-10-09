@@ -11,7 +11,7 @@ Publishing the source and distributing a signed macOS installer are separate ste
 - [ ] Scan all branches and tags with [Gitleaks](https://github.com/gitleaks/gitleaks): `gitleaks git . --log-opts="--all" --redact`. CI scans fetched history too. Inspect uncommitted files before committing; history scans do not cover them.
 - [ ] Review commit author/committer emails, old file contents, branches, tags, issues, pull requests, and existing Actions logs/artifacts for information that should remain private. A clean secret scan does not establish that these contain no personal information.
 - [ ] Review screenshot contents. The README intentionally includes Overview, Models, and the menu bar companion; do not add real project/session/contribution screenshots without reviewing paths and activity details.
-- [ ] Preserve `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, and `licenses/`. Check attribution when adding copied code, fonts, or artwork.
+- [ ] Preserve `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/`. Check attribution when adding copied code, fonts, or artwork.
 
 Useful local history checks:
 
@@ -50,7 +50,7 @@ For local testing only:
 npm run dist:mac
 ```
 
-This creates DMG/ZIP artifacts for the current machine's architecture in `release/`. An unsigned build is not a notarized release. The repository has no automated signing/notarization or release-upload workflow and no automatic updater.
+This creates DMG/ZIP artifacts for the current machine's architecture in `release/`. An unsigned build is not a notarized release. Until Developer ID signing and notarization are in place, the README tells people to build and install azul-code on their own Mac rather than download an installer; do not publish unsigned DMGs as release downloads. The repository has no automated signing/notarization or release-upload workflow and no automatic updater.
 
 For public installer distribution:
 

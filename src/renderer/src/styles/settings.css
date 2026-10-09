@@ -3,6 +3,7 @@
 .settings-section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .settings-section-head .settings-intro { margin-bottom: 17px; }
 .settings-intro { color: var(--muted); font-size: var(--text-sm); line-height: 1.55; max-width: 670px; margin: 8px 0 17px; }
+.settings-intro .text-action { display: inline; font-size: inherit; color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
 .system-check-list { border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
 .system-check-row { min-height: 62px; display: grid; grid-template-columns: 27px minmax(145px, .65fr) minmax(260px, 1.35fr) 52px; gap: 11px; align-items: center; padding: 7px 12px; border-bottom: 1px solid var(--border); }
 .system-check-row:last-child { border-bottom: 0; }

@@ -1,4 +1,4 @@
-import { ClipboardCopy, Copy, GitBranch, GitPullRequest, Sparkles } from "lucide-react";
+import { ChevronRight, ClipboardCopy, Copy, GitBranch, GitPullRequest, Sparkles } from "lucide-react";
 import { CommitLine } from "@renderer/components/github/CommitLine";
 import { PullRequestLine } from "@renderer/components/github/PullRequestLine";
 import { money } from "@renderer/format";
@@ -36,21 +36,41 @@ function groupSummary(group: DayProjectGroup): string {
   return parts.join(" · ");
 }
 
-export function DayCard({ day, ai, copyState, onCopy }: {
+/**
+ * A busy month is a long scroll, so each day collapses to its header: the date,
+ * the counts, and which projects it touched. Expanding shows the commit lines.
+ */
+export function DayCard({ day, ai, copyState, onCopy, expanded = true, onToggle }: {
   day: GitHubDay;
-  ai: Map<string, { sessions: number; cost: number }>;
+  ai: ReadonlyMap<string, { sessions: number; cost: number }>;
   copyState: CopyState;
   onCopy: (day: GitHubDay) => void;
+  expanded?: boolean;
+  onToggle?: (date: string) => void;
 }) {
   const aiPoint = ai.get(day.date);
   const groups = groupByProject(day);
+  const bodyId = `gh-day-body-${day.date}`;
   return (
-    <div className="panel gh-day" id={`gh-day-${day.date}`}>
+    <div className={expanded ? "panel gh-day" : "panel gh-day is-collapsed"} id={`gh-day-${day.date}`}>
       <div className="gh-day-head">
-        <div className="gh-day-title"><strong>{dayLabel(day.date)}</strong><span>{day.commits} commits · {groups.length} {groups.length === 1 ? "project" : "projects"}</span></div>
+        <button
+          className="gh-day-title"
+          onClick={() => onToggle?.(day.date)}
+          disabled={!onToggle}
+          aria-expanded={expanded}
+          aria-controls={bodyId}
+        >
+          {onToggle ? <ChevronRight size={13} className="gh-day-chevron" aria-hidden="true" /> : null}
+          <strong>{dayLabel(day.date)}</strong>
+          <span>
+            {day.commits} {day.commits === 1 ? "commit" : "commits"} · {groups.length} {groups.length === 1 ? "project" : "projects"}
+            {expanded ? null : <em> · {groups.map((group) => group.repo.split("/").at(-1)).join(", ")}</em>}
+          </span>
+        </button>
         {aiPoint ? (
           <span className="gh-ai-chip" title="Local AI coding activity measured on this Mac">
-            <Sparkles size={11} />{aiPoint.sessions} AI sessions · {money(aiPoint.cost)}
+            <Sparkles size={11} />{aiPoint.sessions} AI {aiPoint.sessions === 1 ? "session" : "sessions"} · {money(aiPoint.cost)}
           </span>
         ) : null}
         <button className="text-action gh-copy" onClick={() => onCopy(day)} data-state={copyState}>
@@ -59,7 +79,7 @@ export function DayCard({ day, ai, copyState, onCopy }: {
             : <><ClipboardCopy size={12} /> Copy</>}
         </button>
       </div>
-      <div className="gh-day-body">
+      {expanded ? <div className="gh-day-body" id={bodyId}>
         {groups.map((group) => (
           <div className="gh-repo-group" key={group.repo}>
             <div className="gh-repo-name">
@@ -71,7 +91,7 @@ export function DayCard({ day, ai, copyState, onCopy }: {
             {group.pullRequests.map((pullRequest) => <PullRequestLine key={`${group.repo}#${pullRequest.number}`} pullRequest={pullRequest} />)}
           </div>
         ))}
-      </div>
+      </div> : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeDaysInOrder, buildDaySummary, buildInvoiceSummary, currentMonthKey, dayLabel, monthLabel, shiftMonthKey } from "./invoice";
+import { activeDaysInOrder, buildDaySummary, buildInvoiceSummary, buildProjectInvoice, currentMonthKey, dayLabel, filterSnapshotRepos, monthLabel, shiftMonthKey } from "./invoice";
 import type { GitHubDay, GitHubMonthSnapshot } from "./types";
 
 function sampleDay(date: string): GitHubDay {
@@ -104,5 +104,54 @@ describe("activeDaysInOrder", () => {
 
   it("handles an empty month", () => {
     expect(activeDaysInOrder([], "newest")).toEqual([]);
+  });
+});
+
+function mixedDay(date: string): GitHubDay {
+  return {
+    date,
+    commits: 3,
+    repos: [
+      { repo: "acme/webapp", commits: [{ sha: "a1", message: "Fix checkout race", at: 0, url: "u" }, { sha: "a2", message: "Add retry queue", at: 0, url: "u" }] },
+      { repo: "me/dotfiles", commits: [{ sha: "d1", message: "Tweak zsh prompt", at: 0, url: "u" }] },
+    ],
+    pullRequests: [
+      { repo: "acme/webapp", number: 412, title: "Retry queue", at: 0, url: "u", merged: true },
+      { repo: "me/dotfiles", number: 3, title: "Prompt", at: 0, url: "u", merged: false },
+    ],
+  };
+}
+
+function mixedSnapshot(): GitHubMonthSnapshot {
+  return {
+    ...sampleSnapshot([mixedDay("2026-09-02"), { date: "2026-09-03", commits: 1, repos: [{ repo: "me/dotfiles", commits: [{ sha: "d2", message: "Alias git", at: 0, url: "u" }] }], pullRequests: [] }]),
+    repos: [
+      { repo: "acme/webapp", commits: 2, activeDays: 1, lastAt: 0 },
+      { repo: "me/dotfiles", commits: 2, activeDays: 2, lastAt: 0 },
+    ],
+    totals: { commits: 4, activeDays: 2, repos: 2, pullRequests: 2 },
+  };
+}
+
+describe("filterSnapshotRepos", () => {
+  it("drops excluded projects from days and every total", () => {
+    const filtered = filterSnapshotRepos(mixedSnapshot(), (repo) => repo !== "me/dotfiles");
+    expect(filtered.totals).toEqual({ commits: 2, activeDays: 1, repos: 1, pullRequests: 1 });
+    expect(filtered.days[1]).toMatchObject({ commits: 0, repos: [], pullRequests: [] });
+    expect(buildInvoiceSummary(filtered)).not.toContain("dotfiles");
+  });
+});
+
+describe("buildProjectInvoice", () => {
+  it("groups the month by project with a description line", () => {
+    const text = buildProjectInvoice(mixedSnapshot());
+    expect(text).toContain("acme/webapp\n2 commits across 1 day (Sep 2) · 1 pull request, 1 merged\n  - Sep 2: Fix checkout race");
+    expect(text).toContain("me/dotfiles\n2 commits across 2 days (Sep 2 – Sep 3)");
+    expect(text).toContain("  - Opened #3: Prompt");
+    expect(text.endsWith("Total: 4 commits · 2 pull requests · 2 projects · 2 active days")).toBe(true);
+  });
+
+  it("handles a month with nothing selected", () => {
+    expect(buildProjectInvoice(filterSnapshotRepos(mixedSnapshot(), () => false))).toContain("No GitHub activity recorded.");
   });
 });

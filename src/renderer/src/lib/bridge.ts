@@ -1,4 +1,4 @@
-import type { GitHubMonthSnapshot, RangeKey, StatsSnapshot, Settings, SystemCheckSnapshot } from "@shared/types";
+import type { GitHubMonthSnapshot, PricingStatus, RangeKey, StatsSnapshot, Settings, SystemCheckSnapshot } from "@shared/types";
 import { demoSnapshot } from "@renderer/demo";
 import { demoGithub } from "@renderer/githubDemo";
 import { demoState } from "@renderer/lib/demoState";
@@ -40,6 +40,18 @@ export async function fetchGithubMonth(month: string, refresh = false): Promise<
   return demoGithub(month);
 }
 
+/** Demo workspaces: one matched by its remote, the rest left to folder names. */
+const DEMO_REMOTES: Record<string, string> = {
+  "/Users/example/Projects/azul-code": "azul-code",
+  "/Users/example/Projects/typeset": "typeset/engine",
+};
+
+export async function fetchGithubRemotes(paths: string[]): Promise<Record<string, string | null>> {
+  requireBridge();
+  if (window.azulCode) return window.azulCode.githubRemotes(paths);
+  return Object.fromEntries(paths.map((path) => [path, DEMO_REMOTES[path] ?? null]));
+}
+
 export async function fetchSystemChecks(): Promise<SystemCheckSnapshot> {
   if (window.azulCode) return window.azulCode.systemChecks();
   return {
@@ -62,6 +74,12 @@ export function writeSettings(patch: Partial<Settings>): Promise<Settings> {
   return window.azulCode
     ? window.azulCode.settings.set(patch)
     : Promise.resolve(writeDemoSettings(patch));
+}
+
+export function readPricingStatus(): Promise<PricingStatus> {
+  if (window.azulCode) return window.azulCode.pricingStatus();
+  const enabled = readDemoSettings().livePricing;
+  return Promise.resolve({ source: enabled ? "models.dev" : "bundled", enabled, checkedAt: enabled ? Date.now() - 2 * 3_600_000 : null, models: enabled ? 66 : 0, error: null, offline: false });
 }
 
 export function openPath(path: string): void {

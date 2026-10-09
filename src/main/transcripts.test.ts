@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { getRate, priceTokens } from "../shared/pricing";
+import { afterEach, describe, expect, it } from "vitest";
+import { getRate, priceTokens, recordRates, sameRate, setRemoteRates } from "../shared/pricing";
 import { parseCodexSubscription } from "./scanner";
 import { createCodexState, parseClaudeLine, parseCodexLine } from "./transcripts";
 
@@ -112,13 +112,13 @@ describe("pricing", () => {
     ["gpt-6-sol", 2, 0.2, 2.5, 10],
     ["gpt-6-luna", 0.1, 0.01, 0.125, 0.5],
   ])("prices %s at its published Standard rates", (model, input, cached, cacheWrite, output) => {
-    expect(getRate(`openai/${model}`)).toEqual({
+    expect(getRate(`openai/${model}`)).toMatchObject({
       input,
       cached,
       cacheWrite5m: cacheWrite,
       cacheWrite1h: cacheWrite,
       output,
-      longContextFrom: 272_000,
+      longContext: { from: 272_000 },
     });
 
     const tokens = {
@@ -184,6 +184,52 @@ describe("pricing", () => {
     expect(priced.priced).toBe(true);
   });
 
+  it("prices Claude Sonnet 5.5 with its published cache rates", () => {
+    expect(getRate("anthropic/claude-sonnet-5-5")).toEqual({
+      input: 2,
+      cached: 0.1,
+      cacheWrite5m: 2.5,
+      cacheWrite1h: 4,
+      output: 10,
+    });
+    const priced = priceTokens("claude-sonnet-5-5", {
+      uncachedInput: 100_000,
+      cachedInput: 100_000,
+      cacheWrite5m: 10_000,
+      cacheWrite1h: 10_000,
+      output: 10_000,
+      reasoning: 0,
+    }, null);
+    expect(priced.cost).toBeCloseTo(0.375);
+    expect(priced.savings).toBeCloseTo(0.165);
+    expect(priced.priced).toBe(true);
+  });
+
+  it.each([
+    ["claude-sonnet-5", 2, 0.2, 2.5, 4, 10],
+    ["claude-sonnet-4-5", 3, 0.3, 3.75, 6, 15],
+    ["claude-opus-4-5", 5, 0.5, 6.25, 10, 25],
+    ["claude-haiku-4-5", 1, 0.1, 1.25, 2, 5],
+  ])("prices %s at its published rates", (model, input, cached, cacheWrite5m, cacheWrite1h, output) => {
+    expect(getRate(`anthropic/${model}`)).toEqual({ input, cached, cacheWrite5m, cacheWrite1h, output });
+  });
+
+  it("bills Claude Haiku 5.5 at 5x once a prompt passes 100,000 tokens", () => {
+    const tokens = {
+      uncachedInput: 50_000,
+      cachedInput: 40_000,
+      cacheWrite5m: 5_000,
+      cacheWrite1h: 5_000,
+      output: 10_000,
+      reasoning: 0,
+    };
+    const short = (50_000 * 0.1 + 40_000 * 0.01 + 5_000 * 0.125 + 5_000 * 0.2 + 10_000 * 0.5) / 1_000_000;
+    expect(priceTokens("claude-haiku-5-5", tokens, null).cost).toBeCloseTo(short);
+    // Cache reads and writes count toward the threshold, and the whole request moves tier.
+    const long = priceTokens("claude-haiku-5-5", { ...tokens, cachedInput: 40_001 }, null).cost;
+    expect(long).toBeCloseTo(short * 5 + (0.01 * 5) / 1_000_000);
+  });
+
   it("uses discounted cache reads and reports savings", () => {
     const priced = priceTokens(
       "gpt-5.6-sol",
@@ -223,5 +269,39 @@ describe("pricing", () => {
       null,
     );
     expect(priced.cost).toBeCloseTo(200_000 * 10e-6 + 50_000 * 1e-6 + 10_000 * 50e-6);
+  });
+});
+
+describe("live prices", () => {
+  const tokens = { uncachedInput: 1_000_000, cachedInput: 1_000_000, cacheWrite5m: 0, cacheWrite1h: 0, output: 0, reasoning: 0 };
+  const sonnet = { input: 2, cached: 0.1, cacheWrite5m: 2.5, cacheWrite1h: 4, output: 10 };
+  afterEach(() => setRemoteRates({}));
+
+  it("applies a first observation to all usage and a later change only from when it was seen", () => {
+    const launch = Date.UTC(2026, 9, 1);
+    const cut = Date.UTC(2026, 9, 5);
+    let history = recordRates({}, { "claude-sonnet-5-5": sonnet }, launch);
+    expect(history["claude-sonnet-5-5"]).toEqual([{ since: null, rate: sonnet }]);
+    // Seeing the same price again records nothing.
+    expect(recordRates(history, { "claude-sonnet-5-5": { ...sonnet } }, cut)).toEqual(history);
+
+    history = recordRates(history, { "claude-sonnet-5-5": { ...sonnet, cached: 0.05 } }, cut);
+    setRemoteRates(history);
+    expect(priceTokens("claude-sonnet-5-5", tokens, null, cut - 1).cost).toBeCloseTo(2.1);
+    expect(priceTokens("claude-sonnet-5-5", tokens, null, cut).cost).toBeCloseTo(2.05);
+    expect(priceTokens("claude-sonnet-5-5", tokens, null, Date.UTC(2025, 0, 1)).cost).toBeCloseTo(2.1);
+  });
+
+  it("prices a model only models.dev knows, and keeps bundled prices for the rest", () => {
+    setRemoteRates(recordRates({}, { "gpt-4.1": { input: 2, cached: 0.5, cacheWrite5m: 2, cacheWrite1h: 2, output: 8 } }, 0));
+    expect(priceTokens("openai/gpt-4.1", tokens, null).cost).toBeCloseTo(2.5);
+    expect(getRate("claude-opus-5-5")?.input).toBe(4);
+  });
+
+  it("treats rounding differences in a derived tier as the same price", () => {
+    const luna = getRate("gpt-5.6-luna");
+    expect(luna?.longContext?.rates.output).not.toBe(1.8);
+    const published = { ...luna!, longContext: { from: 272_000, rates: { ...luna!.longContext!.rates, output: 1.8 } } };
+    expect(sameRate(luna!, published)).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-.project-summary { min-height: 150px; padding: 20px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; align-items: center; gap: 28px; }
+.project-summary { min-height: 150px; padding: 20px; display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; align-items: center; gap: 28px; }
 .project-summary > div:first-child > strong { display: block; font-size: 38px; margin: 9px 0 4px; letter-spacing: -.05em; }
 .project-summary p { margin: 0; color: var(--muted); font-size: var(--text-xs); }
 .project-summary-stat { border-left: 1px solid var(--border); padding-left: 28px; display: grid; gap: 7px; }

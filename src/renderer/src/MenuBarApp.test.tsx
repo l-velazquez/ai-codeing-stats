@@ -56,3 +56,15 @@ it("retries a first-load failure without showing invented zero-dollar totals", (
   expect(screen.queryByText("$0.00")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Refresh usage" })).toBeEnabled();
 });
+
+it("shows today's commits beside the token count", () => {
+  render(<MenuBarView state={state} now={now} github={{ state: "ok", commits: 3, pullRequests: 1 }} {...actions()} />);
+  expect(screen.getByText("Commits").nextSibling).toHaveTextContent("3 · 1 PR");
+});
+
+it("explains a missing GitHub sign-in instead of showing zero commits", () => {
+  render(<MenuBarView state={state} now={now} github={{ state: "setup" }} {...actions()} />);
+  const row = screen.getByText("Commits").parentElement!;
+  expect(row).toHaveTextContent("—");
+  expect(row).toHaveAttribute("title", expect.stringContaining("Connect GitHub"));
+});

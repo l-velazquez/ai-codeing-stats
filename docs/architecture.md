@@ -26,6 +26,7 @@ flowchart LR
 | `src/main/index.ts` | App lifecycle, IPC handlers, dashboard window, shared service wiring |
 | `src/main/transcripts.ts` | Codex and Claude line parsing and normalized usage records |
 | `src/main/scanner.ts` | Source discovery, OpenCode query, allowance reads, aggregation, record cache |
+| `src/main/pricingUpdater.ts` | Live model prices from models.dev: fetch schedule, ETag revalidation, on-disk price history |
 | `src/main/statsService.ts` | Shared refresh scheduling, request coalescing, state/error broadcasts |
 | `src/main/menuBar.ts` | Native tray, panel placement/window, quick actions, theme updates |
 | `src/main/claudeStatusLine.ts` | Claude wrapper installation and capture parsing |

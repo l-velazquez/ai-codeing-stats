@@ -11,6 +11,8 @@ import { LoadingScreen } from "@renderer/components/primitives/LoadingScreen";
 import { useSnapshot } from "@renderer/hooks/useSnapshot";
 import { useGithubMonth } from "@renderer/hooks/useGithubMonth";
 import { useDailyCostIndex } from "@renderer/hooks/useDailyCostIndex";
+import { useRecentGithubDays } from "@renderer/hooks/useRecentGithubDays";
+import { RECENT_DAYS } from "@renderer/components/data/RecentWork";
 import { useHotkey } from "@renderer/hooks/useHotkey";
 import { useSidebar } from "@renderer/hooks/useSidebar";
 import { useDayOrder } from "@renderer/hooks/useDayOrder";
@@ -23,7 +25,7 @@ import { ProjectsPage } from "@renderer/pages/ProjectsPage";
 import { SessionsPage } from "@renderer/pages/SessionsPage";
 import { GithubPage } from "@renderer/pages/GithubPage";
 import { SettingsSheet } from "@renderer/components/settings/SettingsSheet";
-import { dateTime, localDayKey } from "@renderer/format";
+import { dateTime } from "@renderer/format";
 
 
 function AppInner() {
@@ -48,7 +50,10 @@ function AppInner() {
   // Shared with Contributions so both read the same full-history index rather
   // than the range-limited snapshot.daily.
   const dailyCost = useDailyCostIndex(snapshot?.generatedAt ?? null);
-  const spendToday = dailyCost.get(localDayKey()) ?? null;
+  // Overview's two-week strip reads the current weeks on its own, so stepping
+  // Contributions back to an older month no longer empties the home screen.
+  // Re-read whenever Contributions refreshes, since that busts main's cache.
+  const recentGithub = useRecentGithubDays(RECENT_DAYS, githubMonth.data?.fetchedAt ?? null);
 
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -136,8 +141,8 @@ function AppInner() {
                   {page === "overview" ? <OverviewPage
                       snapshot={snapshot}
                       navigate={setPage}
-                      github={githubMonth.data}
-                      spendToday={spendToday}
+                      github={recentGithub}
+                      dailyCost={dailyCost}
                       connectingClaude={connectingClaude}
                       onConnectClaude={() => void connectClaude()}
                     /> : null}

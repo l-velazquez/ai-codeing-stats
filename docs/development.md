@@ -37,6 +37,16 @@ The browser bridge supplies generated data when Electron's bridge is absent. Use
 
 Browser previews cannot verify native tray behavior, real filesystem ingestion, or the Electron preload. Use desktop checks for those boundaries.
 
+### README screenshots
+
+The images in `docs/images/` are captured from the populated demo, so they contain no real usage, paths, or repositories. With `npm run dev:web` running, retake them with:
+
+```bash
+env -u ELECTRON_RUN_AS_NODE npx electron scripts/capture-readme-screenshots.cjs
+```
+
+The script opens each page in a framed window and captures it, shadow included, with macOS `screencapture`, which needs Screen Recording permission for your terminal. Review the results before committing.
+
 ## Verification
 
 For application changes, run:
@@ -83,7 +93,7 @@ The blue six-arm identity uses `resources/icon.svg` and simplified `resources/ic
 
 The script needs `rsvg-convert` from librsvg plus macOS icon tools. It generates the iconset, `build/icon.icns`, app PNG, and tray templates. Keep required standard/Retina PNGs available to packaging and review small-size legibility.
 
-`package.json` holds version, product name, app ID, packaging targets, and included files. `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` are bundled. Distribution currently has DMG and ZIP targets; signing, notarization, publishing, and automatic updates are not configured as a complete release workflow in this repository. Validate the actual packaged app before sharing a release; follow [the release checklist](releasing.md).
+`package.json` holds version, product name, app ID, packaging targets, and included files. `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` are bundled. Distribution currently has DMG and ZIP targets; signing, notarization, publishing, and automatic updates are not configured as a complete release workflow in this repository. Validate the actual packaged app before sharing a release; follow [the release checklist](releasing.md).
 
 ## Keep the docs accurate
 

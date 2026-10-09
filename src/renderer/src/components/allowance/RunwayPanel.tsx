@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type { SubscriptionUsage, SubscriptionWindow } from "@shared/types";
 import { allowanceIsStale } from "@shared/menuBar";
-import { PROVIDERS, clockTime, duration, relative } from "@renderer/format";
+import { PROVIDERS, ago, clockTime, duration } from "@renderer/format";
 import { ProviderMark } from "@renderer/components/ProviderMark";
 import { AllowanceMeter } from "@renderer/components/allowance/AllowanceMeter";
 import { RunwayChart } from "@renderer/components/allowance/RunwayChart";
@@ -34,7 +34,7 @@ function copyFor(reading: Reading, now: number): { figure: string; sentence: str
   if (stale && usage.updatedAt !== null) {
     return {
       figure: `${left}% left`,
-      sentence: `${PROVIDERS[usage.provider].label} last reported this ${relative(usage.updatedAt)} ago, so the pace behind it may have moved.`,
+      sentence: `${PROVIDERS[usage.provider].label} last reported this ${ago(usage.updatedAt)}, so the pace behind it may have moved.`,
     };
   }
   if (projection === null) {
