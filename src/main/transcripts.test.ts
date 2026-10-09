@@ -184,6 +184,27 @@ describe("pricing", () => {
     expect(priced.priced).toBe(true);
   });
 
+  it("prices Claude Sonnet 5.5 with its published cache rates", () => {
+    expect(getRate("anthropic/claude-sonnet-5-5")).toEqual({
+      input: 2,
+      cached: 0.1,
+      cacheWrite5m: 2.5,
+      cacheWrite1h: 4,
+      output: 10,
+    });
+    const priced = priceTokens("claude-sonnet-5-5", {
+      uncachedInput: 100_000,
+      cachedInput: 100_000,
+      cacheWrite5m: 10_000,
+      cacheWrite1h: 10_000,
+      output: 10_000,
+      reasoning: 0,
+    }, null);
+    expect(priced.cost).toBeCloseTo(0.375);
+    expect(priced.savings).toBeCloseTo(0.165);
+    expect(priced.priced).toBe(true);
+  });
+
   it("uses discounted cache reads and reports savings", () => {
     const priced = priceTokens(
       "gpt-5.6-sol",

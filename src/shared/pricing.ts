@@ -23,6 +23,7 @@ const GPT_LONG_CONTEXT_FROM = 272_000;
 // GPT-6 Sol and Luna rates and long-context tiers were verified on 2026-09-23.
 // Claude Opus 5.5 rates were verified against Anthropic pricing on 2026-09-24.
 // GPT-6.1 Sol and the short-context GPT-5 family rates were verified on 2026-10-05.
+// Claude Sonnet 5.5 rates were verified against Anthropic pricing on 2026-10-09.
 const RATES: Record<string, ModelRate> = {
   "gpt-6-astra": { input: 10, cached: 1, cacheWrite5m: 12.5, cacheWrite1h: 12.5, output: 50, longContextFrom: GPT_LONG_CONTEXT_FROM },
   "gpt-6.1-sol": { input: 2, cached: 0.1, cacheWrite5m: 2.5, cacheWrite1h: 2.5, output: 10, longContextFrom: GPT_LONG_CONTEXT_FROM },
@@ -53,6 +54,7 @@ const RATES: Record<string, ModelRate> = {
   "claude-opus-4-8": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
   "claude-opus-4-7": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
   "claude-opus-4-6": { input: 5, cached: 0.5, cacheWrite5m: 6.25, cacheWrite1h: 10, output: 25 },
+  "claude-sonnet-5-5": { input: 2, cached: 0.1, cacheWrite5m: 2.5, cacheWrite1h: 4, output: 10 },
   "claude-sonnet-4-6": { input: 3, cached: 0.3, cacheWrite5m: 3.75, cacheWrite1h: 6, output: 15 },
 };
 
