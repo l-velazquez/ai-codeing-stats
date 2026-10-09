@@ -23,7 +23,7 @@
     "lucide-react": "1.45.0",
     "motion": "13.1.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "7.0.1",
@@ -31,7 +31,7 @@
     "@testing-library/user-event": "14.6.7",
     "@types/node": "26.5.1",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.5",
+    "@types/react-dom": "19.3.0",
     "electron": "44.3.0",
     "electron-builder": "26.15.3",
     "electron-vite": "5.0.0",
