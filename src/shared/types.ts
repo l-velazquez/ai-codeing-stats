@@ -106,7 +106,7 @@ export interface SubscriptionUsage {
   readonly windows: SubscriptionWindow[];
   readonly detail: string;
   readonly capture?: {
-    readonly kind: "claude-statusline";
+    readonly kind: "claude-statusline" | "t3-cache";
     readonly state: "not-configured" | "waiting" | "active";
   };
 }

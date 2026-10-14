@@ -26,6 +26,8 @@ Settings writes use a temporary file and rename with mode `0600`. Failed prefere
 
 ## Claude connection behavior
 
+For T3 Code's default local Claude instance, azul-code automatically reads allowance windows and their observation time from `~/.t3/caches/claudeAgent.json`. The file can contain account and configuration information, which is parsed temporarily but not retained in the dashboard data model. Azul-code does not change T3's cache, access its credentials, or make authenticated Claude requests. The newer valid report wins when both T3 and the status-line capture are available.
+
 Connecting installs a shell wrapper and changes `statusLine.command`, preserving other settings fields and chaining an existing command with the original input. Symlinked settings are updated at their resolved target.
 
 The wrapper temporarily writes the **full status-line input** to a restricted local file, extracts only `rate_limits` with macOS `plutil`, and removes temporary files through a shell trap. The retained capture contains only that allowance object. Abrupt termination can leave temporary files behind. An existing chained command receives the full input and retains its own behavior.

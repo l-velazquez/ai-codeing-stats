@@ -47,11 +47,12 @@
 .accent-heading { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); }
 .accent-heading strong { font-size: var(--text-sm); font-weight: 500; }
 .accent-heading > span { font-size: var(--text-xs); color: var(--muted); }
-.accent-options { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 9px; }
+.accent-options { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 9px; }
 .accent-option { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 6px 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--wash-1); color: var(--muted); cursor: pointer; font-size: var(--text-sm); text-transform: capitalize; transition: background .15s, border-color .15s; }
 .accent-option:hover { background: var(--wash-4); border-color: var(--accent); }
 .accent-option[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--text); }
 .accent-swatch { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(145deg, var(--brand-start), var(--brand-end)); color: #fff; box-shadow: 0 3px 10px color-mix(in srgb, var(--accent-solid) 20%, transparent); }
+.accent-option[data-accent="boring"] .accent-swatch { background: linear-gradient(145deg, #fff 0 50%, #000 50% 100%); color: var(--accent-solid); box-shadow: inset 0 0 0 1px var(--border-strong); }
 .accent-option:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 /* The custom accent picker: a saturation/value field over a hue bar. The field

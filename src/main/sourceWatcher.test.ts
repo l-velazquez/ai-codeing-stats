@@ -139,6 +139,7 @@ it("watches each provider's directory, recursing only where transcripts nest", (
     { path: "/home/.claude/projects", recursive: true },
     { path: "/home/.codex/sessions", recursive: true },
     { path: "/home/.claude/azul-code", recursive: false },
+    { path: "/home/.t3/caches", recursive: false },
     { path: "/home/.local/share/opencode", recursive: false },
   ]);
 });
