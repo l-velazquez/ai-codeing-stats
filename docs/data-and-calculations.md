@@ -64,7 +64,7 @@ Monthly pace uses cost in the trailing 30-day window, divided by elapsed days si
 
 ## Subscription allowance
 
-Codex uses the newest local rate-limit event. Claude reads captured five-hour and seven-day windows, using the capture file's modification time as report time. No token-to-quota conversion is attempted. A report stays visible after it becomes old; once its known reset timestamp passes, the UI resets that window to 0% used locally without waiting for another provider event. Refresh can read a newer report but cannot create one without agent activity.
+Codex uses the newest local rate-limit event. Claude reads captured five-hour and seven-day windows, using the capture file's modification time as report time. When T3 Code is installed, azul-code also reads `~/.t3/caches/claudeAgent.json`, using `usageLimits.checkedAt` as report time, and displays whichever valid report is newer. This supports T3's default local Claude instance automatically; separate accounts, custom T3 data directories, and remote environments are not included. The T3 cache format is app-owned and may change between versions. No token-to-quota conversion is attempted. A report stays visible after it becomes old; once its known reset timestamp passes, the UI resets that window to 0% used locally without waiting for another provider event. Refresh can read a newer report but cannot create one without agent activity.
 
 ## GitHub contributions
 

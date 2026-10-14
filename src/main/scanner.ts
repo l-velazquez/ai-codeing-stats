@@ -22,7 +22,7 @@ import type {
   TokenTotals,
   UsageRecord,
 } from "../shared/types";
-import { readClaudeStatusLineSubscription } from "./claudeStatusLine";
+import { readClaudeSubscription } from "./claudeSubscription";
 import { createCodexState, parseClaudeLine, parseCodexLine, type CodexState } from "./transcripts";
 
 const execFileAsync = promisify(execFile);
@@ -805,7 +805,7 @@ async function collect(now: number): Promise<RecordCache> {
       scanClaude(join(home, ".claude", "projects")),
       scanOpenCode(join(home, ".local", "share", "opencode", "opencode.db")),
     ]),
-    readClaudeStatusLineSubscription(join(home, ".claude")),
+    readClaudeSubscription(home),
   ]);
   const codex = results.find((result) => result.source.provider === "codex")?.subscription ?? {
       provider: "codex" as const,
@@ -854,7 +854,7 @@ export async function refreshSubscriptions(): Promise<SubscriptionUsage[]> {
   if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
   const [codex, claude] = await Promise.all([
     scanCodex(join(homedir(), ".codex", "sessions")),
-    readClaudeStatusLineSubscription(join(homedir(), ".claude")),
+    readClaudeSubscription(),
   ]);
   if (cachedRecords === null) return (await scanStats("30d")).subscriptions;
   cachedRecords.subscriptions = cachedRecords.subscriptions.map((usage) => {

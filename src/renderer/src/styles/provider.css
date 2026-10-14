@@ -15,7 +15,7 @@
 .provider-mark--small { width: 21px; height: 21px; border-radius: 6px; }
 .provider-logo { display: block; width: 17px; height: 17px; fill: currentColor; }
 .provider-logo--codex { width: 19px; height: 19px; }
-.provider-logo--claude { color: #d97757; }
+.provider-logo--claude { color: var(--provider-claude); }
 .provider-logo--opencode { width: 18px; height: 18px; border-radius: 4px; }
 .provider-mark--small .provider-logo { width: 13px; height: 13px; }
 .provider-mark--small .provider-logo--codex { width: 15px; height: 15px; }

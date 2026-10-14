@@ -37,7 +37,7 @@
           try { stored = JSON.parse(localStorage.getItem("azul-code:settings") || "{}") || {}; } catch (_) { stored = {}; }
           var hint = initial || stored;
           var accent = hint.accent;
-          var valid = ["custom", "red", "orange", "green", "blue", "pink", "violet"].includes(accent) ? accent : "blue";
+          var valid = ["custom", "red", "orange", "green", "blue", "pink", "violet", "boring"].includes(accent) ? accent : "blue";
           document.documentElement.dataset.accent = valid;
           var roles = valid === "custom" && hint.roles ? hint.roles : null;
           if (roles) {

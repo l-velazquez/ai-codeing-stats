@@ -1,7 +1,11 @@
 import type { RangeKey } from "./types";
 
 export type ThemePreference = "dark" | "light" | "system";
-export const ACCENT_COLORS = ["red", "orange", "green", "blue", "pink", "violet"] as const;
+/**
+ * "boring" is the quiet preset: neutral black/white surfaces with a single blue
+ * accent and no accent tint on the ground.
+ */
+export const ACCENT_COLORS = ["red", "orange", "green", "blue", "pink", "violet", "boring"] as const;
 export type PresetAccent = typeof ACCENT_COLORS[number];
 /** Every preset name plus "custom", which drives the theme from a picked hex. */
 export type AccentColor = PresetAccent | "custom";
@@ -153,6 +157,13 @@ export const ACCENT_SOLID: Record<PresetAccent, string> = {
   blue: "#2460ff",
   pink: "#c92b82",
   violet: "#7c3de0",
+  boring: "#2460ff",
+};
+
+/** The neutral ground of the boring preset, which tokens.css does not tint. */
+export const BORING_BACKGROUND: Record<ResolvedTheme, string> = {
+  dark: "#000000",
+  light: "#f4f4f4",
 };
 
 /** The share of the accent mixed into --bg by tokens.css. */
@@ -177,6 +188,7 @@ function channels(hex: string): [number, number, number] {
  * gamma-encoded sRGB, so the same per-channel blend reproduces --bg exactly.
  */
 export function themeBackground(theme: ResolvedTheme, accent: AccentColor, customAccent?: string): string {
+  if (accent === "boring") return BORING_BACKGROUND[theme];
   const base = channels(THEME_BACKGROUND[theme]);
   const tint = channels(accentSolidHex(accent, customAccent));
   return `#${base

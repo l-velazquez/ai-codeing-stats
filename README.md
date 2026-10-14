@@ -120,7 +120,7 @@ Open `http://localhost:4317`. See [preview states](docs/development.md#browser-p
 | Tool | Local usage source | Allowance support |
 | --- | --- | --- |
 | Codex | `~/.codex/sessions/**/*.jsonl` | Recorded short-window and weekly limits |
-| Claude Code | `~/.claude/projects/**/*.jsonl` | Choose **Connect Claude Code**, then send a message in Claude Code |
+| Claude Code | `~/.claude/projects/**/*.jsonl` | Automatic from T3 Code's default local Claude cache; otherwise choose **Connect Claude Code**, then send a message in terminal Claude Code |
 | OpenCode | `~/.local/share/opencode/opencode.db` | Usage totals only; requires `sqlite3` |
 
 Claude allowance setup installs a local status-line wrapper and updates `~/.claude/settings.json`, preserving an existing command. Review [connection behavior and removal](docs/privacy.md#claude-connection-behavior).

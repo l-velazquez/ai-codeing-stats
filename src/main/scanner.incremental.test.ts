@@ -10,7 +10,7 @@ vi.mock("node:os", async (importOriginal) => {
   return { ...actual, homedir: () => home.path };
 });
 
-const { resetStatsCache, scanStats, statsRevision } = await import("./scanner");
+const { resetStatsCache, scanStats, statsRevision, refreshStats, refreshSubscriptions } = await import("./scanner");
 
 let projects = "";
 
@@ -40,6 +40,30 @@ async function scan() {
   vi.setSystemTime(Date.now() + 10_000);
   return scanStats("30d");
 }
+
+it("loads and refreshes T3 Claude allowance without a terminal capture", async () => {
+  const caches = join(home.path, ".t3", "caches");
+  await mkdir(caches, { recursive: true });
+  const cachePath = join(caches, "claudeAgent.json");
+  async function report(usedPercent: number, checkedAt: string) {
+    await writeFile(cachePath, JSON.stringify({
+      driver: "claudeAgent", instanceId: "claudeAgent",
+      usageLimits: { checkedAt, windows: [
+        { id: "five_hour", usedPercent, resetsAt: "2026-10-14T19:00:00Z" },
+      ] },
+    }));
+  }
+  await report(15, "2026-10-14T14:00:00Z");
+  expect((await scanStats("30d")).subscriptions.find((usage) => usage.provider === "claude"))
+    .toMatchObject({ state: "live", capture: { kind: "t3-cache" }, windows: [{ usedPercent: 15 }] });
+  const revision = statsRevision();
+  await report(25, "2026-10-14T14:05:00Z");
+  await refreshStats();
+  expect(statsRevision()).toBeGreaterThan(revision);
+  expect((await scanStats("30d")).subscriptions.find((usage) => usage.provider === "claude")?.windows[0].usedPercent).toBe(25);
+  await report(30, "2026-10-14T14:10:00Z");
+  expect((await refreshSubscriptions()).find((usage) => usage.provider === "claude")?.windows[0].usedPercent).toBe(30);
+});
 
 it("picks up appended usage without re-reading what it already parsed", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });

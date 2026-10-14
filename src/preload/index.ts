@@ -14,7 +14,7 @@ function initialState(): AzulCodeBridge["initial"] {
   const theme = argValue("azul-code-theme");
   const resolved = argValue("azul-code-resolved");
   const rawAccent = argValue("azul-code-accent");
-  const accent = (["custom", "red", "orange", "green", "blue", "pink", "violet"].includes(rawAccent ?? "") ? rawAccent : "blue") as NonNullable<AzulCodeBridge["initial"]["accent"]>;
+  const accent = (["custom", "red", "orange", "green", "blue", "pink", "violet", "boring"].includes(rawAccent ?? "") ? rawAccent : "blue") as NonNullable<AzulCodeBridge["initial"]["accent"]>;
   const customAccent = normalizeHexColor(argValue("azul-code-custom"));
   return {
     accent,

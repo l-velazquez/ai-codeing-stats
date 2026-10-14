@@ -131,6 +131,11 @@ describe("themeBackground", () => {
     expect(themeBackground("dark", "custom", "garbage")).toBe(themeBackground("dark", "custom", CUSTOM_ACCENT_DEFAULT));
   });
 
+  it("paints the boring preset's neutral ground with no accent mixed in", () => {
+    expect(themeBackground("dark", "boring")).toBe("#000000");
+    expect(themeBackground("light", "boring")).toBe("#f4f4f4");
+  });
+
   it("returns a distinct six-digit hex per accent", () => {
     const grounds = ACCENT_COLORS.map((accent) => themeBackground("dark", accent));
     for (const ground of grounds) expect(ground).toMatch(/^#[0-9a-f]{6}$/);

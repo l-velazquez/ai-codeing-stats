@@ -13,7 +13,7 @@
 | Some cost is missing or marked partial | Inspect the unknown-model warning; unpriced records retain tokens but add zero cost |
 | OpenCode shows an error | Check `sqlite3` availability and that the DB has the expected `session` schema; consult the source error detail |
 | Project does not open | Its recorded workspace may have moved or been deleted; Unassigned has no known path |
-| Claude says waiting | Start/resume Claude Code, accept trust if prompted, send a message, then refresh after a response |
+| Claude says waiting | For T3 Code's default local Claude instance, open T3 so it refreshes `~/.t3/caches/claudeAgent.json`, then refresh azul-code. Otherwise start/resume Claude Code in a terminal, accept trust if prompted, and send a message after connecting the status line. Custom accounts/directories and remote T3 environments are not read automatically. |
 | Claude cannot connect | Check that `~/.claude/settings.json` is valid JSON and writable; the installer refuses malformed settings |
 | Allowance is missing | Use the relevant agent to generate a new report; a dashboard refresh cannot create the first report or recover a missing capture |
 | Menu bar is absent | Enable it in Settings on macOS; it is not a native browser-preview feature |
