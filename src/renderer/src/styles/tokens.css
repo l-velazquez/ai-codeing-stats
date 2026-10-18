@@ -48,6 +48,14 @@
      with no light-theme value. */
   --ok: #91d84c;
 
+  /* Provider identity, read through PROVIDERS in format.ts. */
+  --provider-codex: #dce1e7;
+  --provider-codex-tint: rgba(220, 225, 231, 0.1);
+  --provider-claude: #d97757;
+  --provider-claude-tint: rgba(217, 119, 87, 0.12);
+  --provider-opencode: #78bdf8;
+  --provider-opencode-tint: rgba(120, 189, 248, 0.12);
+
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
 
   /* Depth. A dark UI gets it from a lighter surface plus a top edge highlight,
@@ -196,4 +204,64 @@
   --border-tint: color-mix(in srgb, var(--accent-solid) 35%, var(--border-ink));
   --border: color-mix(in srgb, var(--border-tint) 10%, transparent);
   --border-strong: color-mix(in srgb, var(--border-tint) 20%, transparent);
+}
+
+/* Boring: black, white, and one blue. The ground is neutral grey with no
+   accent mixed in, and the secondary hues (mint, ok, warning, the second
+   accent) fold into the greys, so blue is the only colour on the page. Danger
+   keeps a muted red because an over-limit allowance still has to read as one.
+   --bg must match BORING_BACKGROUND in shared/settings.ts. */
+[data-accent="boring"] { --accent: #6695ff; --accent-light: #1f55d6; --accent-solid: #2460ff; --brand-start: #2460ff; --brand-end: #2460ff; }
+:root[data-accent="boring"] {
+  --bg-base: #000000;
+  --surface-sunken-base: #050505;
+  --sidebar-base: #0a0a0a;
+  --panel-base: #101010;
+  --panel-raised-base: #171717;
+  --panel-hover-base: #1d1d1d;
+  --text: #f2f2f2;
+  --text-2: #b0b0b0;
+  --muted: #8f8f8f;
+  --faint: #7d7d7d;
+  --border-ink: #ffffff;
+  --danger: #d9776a;
+  --shadow-hue: 0 0 0;
+
+  --bg: var(--bg-base);
+  --surface-sunken: var(--surface-sunken-base);
+  --sidebar: var(--sidebar-base);
+  --panel: var(--panel-base);
+  --panel-raised: var(--panel-raised-base);
+  --panel-hover: var(--panel-hover-base);
+  --border-tint: var(--border-ink);
+
+  --accent-2: var(--text-2);
+  --accent-tint: color-mix(in srgb, var(--accent-solid) 14%, transparent);
+  --chart: var(--accent-solid);
+  --mint: var(--text);
+  --mint-tint: var(--wash-4);
+  --ok: var(--text-2);
+  --warning: var(--text);
+
+  /* Providers are told apart by lightness alone, with Claude on the accent. */
+  --provider-codex: var(--text);
+  --provider-codex-tint: var(--wash-4);
+  --provider-claude: var(--accent);
+  --provider-claude-tint: var(--accent-tint);
+  --provider-opencode: var(--muted);
+  --provider-opencode-tint: var(--wash-4);
+}
+:root[data-theme="light"][data-accent="boring"] {
+  --bg-base: #f4f4f4;
+  --surface-sunken-base: #ececec;
+  --sidebar-base: #ededed;
+  --panel-base: #ffffff;
+  --panel-raised-base: #ffffff;
+  --panel-hover-base: #f0f0f0;
+  --text: #0a0a0a;
+  --text-2: #444444;
+  --muted: #5e5e5e;
+  --faint: #5e5e5e;
+  --border-ink: #000000;
+  --danger: #b5412f;
 }

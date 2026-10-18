@@ -31,6 +31,7 @@ export function transcriptWatchTargets(home = homedir()): WatchTarget[] {
     { path: join(home, ".codex", "sessions"), recursive: true },
     // Claude reports its allowance through the status-line capture, not a transcript.
     { path: join(home, ".claude", "azul-code"), recursive: false },
+    { path: join(home, ".t3", "caches"), recursive: false },
     // SQLite writes the -wal beside the database, so the directory is the signal.
     { path: join(home, ".local", "share", "opencode"), recursive: false },
   ];

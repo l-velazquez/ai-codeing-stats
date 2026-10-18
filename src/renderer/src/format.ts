@@ -4,9 +4,10 @@ export const PROVIDERS: Record<
   Provider,
   { label: string; color: string; tint: string }
 > = {
-  codex: { label: "Codex", color: "#dce1e7", tint: "rgba(220,225,231,.1)" },
-  claude: { label: "Claude Code", color: "#d97757", tint: "rgba(217,119,87,.12)" },
-  opencode: { label: "OpenCode", color: "#78bdf8", tint: "rgba(120,189,248,.12)" },
+  // CSS variables rather than literals so the boring theme can grey them out.
+  codex: { label: "Codex", color: "var(--provider-codex)", tint: "var(--provider-codex-tint)" },
+  claude: { label: "Claude Code", color: "var(--provider-claude)", tint: "var(--provider-claude-tint)" },
+  opencode: { label: "OpenCode", color: "var(--provider-opencode)", tint: "var(--provider-opencode-tint)" },
 };
 
 export function money(value: number, precise = false): string {
