@@ -1,5 +1,5 @@
 import { mkdtempSync, rmSync } from "node:fs";
-import { appendFile, mkdir, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, rename, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -10,7 +10,7 @@ vi.mock("node:os", async (importOriginal) => {
   return { ...actual, homedir: () => home.path };
 });
 
-const { resetStatsCache, scanStats, statsRevision, refreshStats, refreshSubscriptions } = await import("./scanner");
+const { resetStatsCache, scanStats, statsRevision, refreshStats, refreshSubscriptions, cachedStats } = await import("./scanner");
 
 let projects = "";
 
@@ -124,4 +124,79 @@ it("drops usage from a transcript that has been deleted", async () => {
   const after = await scan();
   expect(after.summary.totalTokens).toBe(0);
   expect(after.sources.find((source) => source.provider === "claude")?.files).toBe(0);
+});
+
+it("re-reads same-size edits and reports corrections with unchanged record counts", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(new Date(2026, 8, 5, 12));
+  const transcript = join(projects, "session-1.jsonl");
+  await writeFile(transcript, `${assistant("a", 100)}\n`);
+  expect((await scan()).summary.totalTokens).toBe(110);
+  const revision = statsRevision();
+
+  await writeFile(transcript, `${assistant("a", 900)}\n`);
+  // Make the metadata change deterministic even on coarse file systems.
+  await utimes(transcript, new Date(), new Date(Date.now() + 5_000));
+  expect((await scan()).summary.totalTokens).toBe(910);
+  expect(statsRevision()).toBeGreaterThan(revision);
+
+  const afterEdit = statsRevision();
+  await writeFile(transcript, `${assistant("a", 5)}\n`);
+  expect((await scan()).summary.totalTokens).toBe(15);
+  expect(statsRevision()).toBeGreaterThan(afterEdit);
+});
+
+it("re-reads a larger file atomically replacing an existing transcript", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(new Date(2026, 8, 5, 12));
+  const transcript = join(projects, "session-1.jsonl");
+  await writeFile(transcript, `${assistant("a", 100)}\n`);
+  expect((await scan()).summary.totalTokens).toBe(110);
+  const replacement = join(projects, "replacement.tmp");
+  await writeFile(replacement, `${assistant("b", 200)}\n${assistant("c", 300)}\n`);
+  await rename(replacement, transcript);
+  expect((await scan()).summary.totalTokens).toBe(520);
+});
+
+it.each(["claude", "codex"])("reports removal of the entire %s history directory", async (provider) => {
+  const root = join(home.path, `.${provider}`, provider === "claude" ? "projects" : "sessions");
+  await mkdir(root, { recursive: true });
+  await writeFile(join(root, "empty.jsonl"), "");
+  await refreshStats();
+  const revision = statsRevision();
+  rmSync(root, { recursive: true });
+  await refreshStats();
+  expect(statsRevision()).toBeGreaterThan(revision);
+  expect((await scanStats("all")).sources.find((source) => source.provider === provider)?.state).toBe("missing");
+});
+
+it("drops cached usage and changes revision when the provider directory is removed", async () => {
+  await writeFile(join(projects, "session-1.jsonl"), `${assistant("a", 100)}\n`);
+  expect((await scanStats("all")).summary.totalTokens).toBe(110);
+  const revision = statsRevision();
+  rmSync(join(home.path, ".claude", "projects"), { recursive: true });
+  await refreshStats();
+  expect((await scanStats("all")).summary.totalTokens).toBe(0);
+  expect(statsRevision()).toBeGreaterThan(revision);
+});
+
+it("projects costs from an exact cutoff, including only the in-window turns of a session", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(new Date(2026, 8, 6, 12));
+  const cutoff = Date.parse("2026-09-05T12:00:00Z");
+  const line = (id: string, at: number, costUSD: number) => JSON.stringify({
+    ...JSON.parse(assistant(id, 100, new Date(at).toISOString())), costUSD,
+  });
+  await writeFile(join(projects, "session-1.jsonl"), [
+    line("old", cutoff - 1, 1000), line("boundary", cutoff, 10), line("new", cutoff + 1, 20),
+    line("future", Date.now() + 100_000, 500),
+  ].join("\n") + "\n");
+  await refreshStats();
+  const result = cachedStats("all", false, cutoff);
+  expect(result.since).toBe(cutoff);
+  expect(result.summary.cost).toBe(30);
+  expect(result.projects[0].cost).toBe(30);
+  expect(result.sessions).toHaveLength(1);
+  expect(result.sessions[0]).toMatchObject({ cost: 30, records: 2, totalTokens: 220 });
+  expect(cachedStats("all").projects[0].cost).toBe(1030);
 });

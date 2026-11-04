@@ -129,10 +129,11 @@ function demoSubscriptions(now: number): StatsSnapshot["subscriptions"] {
   ];
 }
 
-export function demoSnapshot(range: RangeKey): StatsSnapshot {
+export function demoSnapshot(range: RangeKey, since?: number): StatsSnapshot {
   const now = Date.now();
   if (demoState() === "empty") return emptySnapshot(range, now);
-  const days = range === "7d" ? 7 : range === "90d" ? 90 : range === "all" ? 120 : 30;
+  const days = since === undefined ? (range === "7d" ? 7 : range === "90d" ? 90 : range === "all" ? 120 : 30)
+    : Math.max(1, Math.min(120, Math.ceil((now - since) / DAY)));
   const providers: Provider[] = ["codex", "claude", "opencode"];
   const daily = Array.from({ length: days }, (_, index) => {
     const wave = 4.4 + Math.sin(index * 0.72) * 2.1 + ((index * 17) % 7) * 0.38;
@@ -195,7 +196,7 @@ export function demoSnapshot(range: RangeKey): StatsSnapshot {
   return {
     generatedAt: now,
     range,
-    since: now - days * DAY,
+    since: since ?? (range === "all" ? null : now - days * DAY),
     summary: {
       cost,
       tokens: summaryTokens,

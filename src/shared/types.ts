@@ -215,7 +215,8 @@ export interface SystemCheckSnapshot {
 
 export interface AzulCodeBridge {
   resources: () => Promise<import("./diagnostics").ResourceSnapshot>;
-  scan: (range: RangeKey, refresh?: boolean) => Promise<StatsSnapshot>;
+  /** `since` restricts All history to an exact start, for matching contribution periods. */
+  scan: (range: RangeKey, refresh?: boolean, since?: number) => Promise<StatsSnapshot>;
   onStatsChanged: (listener: () => void) => () => void;
   onSettingsChanged: (listener: (settings: Settings) => void) => () => void;
   menuBar: {
@@ -243,11 +244,12 @@ export interface AzulCodeBridge {
     set: (patch: Partial<Settings>) => Promise<Settings>;
   };
   /**
-   * Resolved synchronously from process.argv, so the theme and the sidebar
-   * state are both known before the first paint. With a custom accent the
+   * Resolved synchronously from process.argv, so theme, sidebar, and selected
+   * range are known before the first paint. With a custom accent the
    * derived CSS variables come along so the first frame is already tinted.
    */
   initial: {
+    range?: RangeKey;
     accent?: import("./settings").AccentColor;
     customAccent?: string;
     roles?: import("./settings").CustomAccentVars | null;
