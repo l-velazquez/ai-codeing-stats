@@ -159,6 +159,8 @@ interface TranscriptFile<C> {
   readonly offset: number;
   readonly size: number;
   readonly mtimeMs: number;
+  readonly ino: number;
+  readonly dev: number;
   readonly records: UsageRecord[];
   readonly context: C;
 }
@@ -166,9 +168,9 @@ interface TranscriptFile<C> {
 /**
  * Re-reads only what changed since the last pass.
  *
- * Transcripts are append-only, so a file whose size and mtime still match is
- * reused verbatim and a file that only grew is read from its previous line
- * boundary. A full parse of a mature transcript directory costs seconds and used
+ * Transcripts normally append, so a file whose identity, size, and mtime still
+ * match is reused verbatim. Growth resumes from the previous line boundary;
+ * edits and replacements start over. A full parse costs seconds and used
  * to run on every tick; an unchanged pass now costs one stat() per file, which is
  * what lets the live refresh run on a short interval.
  *
@@ -203,10 +205,12 @@ async function readChangedFiles<C>(
       continue;
     }
     const cached = cache.get(path);
-    if (cached !== undefined && cached.size === info.size && cached.mtimeMs === info.mtimeMs) continue;
+    const sameFile = cached !== undefined && cached.ino === info.ino && cached.dev === info.dev;
+    if (sameFile && cached.size === info.size && cached.mtimeMs === info.mtimeMs) continue;
 
-    // Only an append can be resumed: a file that shrank was rotated or rewritten.
-    const previous = cached !== undefined && info.size >= cached.size ? cached : undefined;
+    // Resume only a growing file with the same identity. A same-size edit,
+    // truncation, or atomic replacement must be parsed from the beginning.
+    const previous = sameFile && info.size > cached.size ? cached : undefined;
     // The context is cloned so a read that throws part way leaves the cache untouched.
     const context = previous === undefined ? fresh() : resume(previous.context);
     const records: UsageRecord[] = [];
@@ -220,8 +224,8 @@ async function readChangedFiles<C>(
     }
 
     const merged = previous === undefined ? records : [...previous.records, ...records];
-    if (merged.length !== (cached?.records.length ?? 0)) changed = true;
-    cache.set(path, { offset, size: info.size, mtimeMs: info.mtimeMs, records: merged, context });
+    if ((previous === undefined && cached !== undefined) || merged.length !== (cached?.records.length ?? 0)) changed = true;
+    cache.set(path, { offset, size: info.size, mtimeMs: info.mtimeMs, ino: info.ino, dev: info.dev, records: merged, context });
   }
 
   return { files, changed };
@@ -260,10 +264,11 @@ const claudeFiles = new Map<string, TranscriptFile<null>>();
 
 async function scanCodex(root: string): Promise<ScanResult & { changed: boolean }> {
   if (!(await exists(root))) {
+    const changed = codexFiles.size > 0;
     codexFiles.clear();
     return {
       records: [],
-      changed: false,
+      changed,
       source: {
         provider: "codex",
         label: "Codex",
@@ -324,10 +329,11 @@ async function scanCodex(root: string): Promise<ScanResult & { changed: boolean 
 
 async function scanClaude(root: string): Promise<ScanResult & { changed: boolean }> {
   if (!(await exists(root))) {
+    const changed = claudeFiles.size > 0;
     claudeFiles.clear();
     return {
       records: [],
-      changed: false,
+      changed,
       source: {
         provider: "claude",
         label: "Claude Code",
@@ -780,6 +786,7 @@ const SNAPSHOT_TTL_MS = 2_000;
 
 let revision = 0;
 let subscriptionSignature = "";
+let sourceSignature = "";
 
 /**
  * Bumps whenever a pass finds different usage on disk. Callers compare it across
@@ -829,8 +836,10 @@ async function collect(now: number): Promise<RecordCache> {
   // Allowance moves without any record being written, so it is compared on its
   // own rather than inferred from the transcript pass.
   const signature = JSON.stringify(subscriptions);
-  if (results.some((result) => result.changed) || signature !== subscriptionSignature) revision += 1;
+  const sources = JSON.stringify(cache.sources);
+  if (results.some((result) => result.changed) || signature !== subscriptionSignature || sources !== sourceSignature) revision += 1;
   subscriptionSignature = signature;
+  sourceSignature = sources;
   return cache;
 }
 
@@ -871,15 +880,16 @@ export function resetStatsCache(): void {
   claudeFiles.clear();
   openCodeSignature = null;
   subscriptionSignature = "";
+  sourceSignature = "";
 }
 
 /** Projection only: all disk reads are coordinated by the main-process service. */
-export function cachedStats(range: RangeKey, today = false): StatsSnapshot {
+export function cachedStats(range: RangeKey, today = false, since?: number): StatsSnapshot {
   if (cachedRecords === null) throw new Error("Usage has not been scanned yet.");
   const now = Date.now();
   if (today) return aggregateToday(cachedRecords.records, cachedRecords.sources, cachedRecords.subscriptions, now);
   return aggregate(cachedRecords.records, cachedRecords.sources, cachedRecords.subscriptions,
-    range, rangeStart(range, now), now);
+    range, since ?? rangeStart(range, now), now);
 }
 
 export function aggregateToday(records: UsageRecord[], sources: SourceStatus[], subscriptions: SubscriptionUsage[], now: number): StatsSnapshot {

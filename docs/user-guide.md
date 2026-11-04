@@ -6,7 +6,7 @@
 
 The app opens on Overview. Use the sidebar for Overview, Plans, Models, Projects, Sessions, and Contributions. **⌘B** toggles the sidebar; **⌘,** opens Settings. The sidebar state survives relaunch. Settings can also be opened from the sidebar or menu bar panel.
 
-The 7d, 30d, 90d, and All controls filter local usage. Timed ranges are rolling periods, not whole calendar weeks or months. Contributions has its own month selector. The dashboard currently starts at 30d on each launch; the settings schema's range field is not wired to restore the selection.
+The 7d, 30d, 90d, and All controls filter local usage. Timed ranges are rolling periods, not whole calendar weeks or months. Your selection is remembered when the dashboard reopens. Contributions has its own month selector.
 
 Refresh updates local usage on the usage pages. On Contributions it refreshes the selected GitHub month. Local usage updates about a second after a provider writes to disk: azul-code watches the transcript directories and rescans only what changed, so an idle machine does almost no work. A slower poll runs behind that, at local midnight, and after wake. Changing a range projects the cached records into that range.
 
@@ -26,11 +26,11 @@ The featured models and complete ledger show cost, token volume, cache efficienc
 
 ## Projects
 
-The project ledger groups usage by workspace path. Click a project row to open its path with macOS. Missing workspace metadata appears as **Unassigned**. Projects are sorted by cost, then tokens, so the “Most active” headline refers to that ordering, not elapsed work time. Identical folder names at different paths remain separate projects. When GitHub is connected, each row also shows commits for the matching repository over the same range and the AI cost per commit; matching uses the workspace's git remote first and its folder name second.
+The project ledger groups usage by workspace path. Click a project row to open its path with macOS. Missing workspace metadata appears as **Unassigned**. Projects are sorted by cost, then tokens, so the “Most active” headline refers to that ordering, not elapsed work time. Identical folder names at different paths remain separate projects. When GitHub is connected, each row also shows commits for the matching repository and the AI cost per commit; matching uses the workspace's git remote first and its folder name second. Cost per commit uses spending and commits from the same period. On **All**, that period is limited to the current calendar month and the five before it; the displayed start date applies to both commits and cost per commit. The project's spending and token totals still cover the selected usage range.
 
 ## Sessions
 
-Search the session ledger by project, displayed model label, or provider. Search is case-insensitive. Sessions are ordered by most recent usage. A session using multiple models displays a model count. The session's times and totals reflect only records inside the selected range, not necessarily its complete lifetime.
+Search the session ledger by project, model, or provider. Search is case-insensitive and checks every model used in a session, even when the row displays a model count. Sessions are ordered by most recent usage and shown 50 per page; **Previous** and **Next** browse the results. Search checks the entire ledger and starts at the first page, as does changing the date range. The session's times and totals reflect only records inside the selected range, not necessarily its complete lifetime.
 
 ## Contributions
 

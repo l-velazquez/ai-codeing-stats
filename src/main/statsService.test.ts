@@ -79,6 +79,8 @@ it("keeps a background tick quiet until the underlying usage actually changes", 
   service.subscribe(events);
 
   await service.refresh({ silent: true });
+  events.mockClear();
+  await service.refresh({ silent: true });
   // The state still goes out -- the menu bar reads its scan time from it -- but
   // nothing tells the renderers to re-aggregate, and no spinner is raised.
   expect(events).toHaveBeenCalledTimes(1);
@@ -92,6 +94,7 @@ it("keeps a background tick quiet until the underlying usage actually changes", 
 
 it("shows the spinner for a refresh the user asked for", async () => {
   const service = new StatsService({ refresh: async () => {}, read: snapshot, revision: () => 1 });
+  await service.refresh({ silent: true });
   const events = vi.fn();
   service.subscribe(events);
   const pending = service.refresh();
@@ -100,6 +103,46 @@ it("shows the spinner for a refresh the user asked for", async () => {
   expect(events.mock.calls.at(-1)?.[0].refreshing).toBe(false);
   // An unchanged revision must not stop a manual refresh from reporting back.
   expect(events.mock.calls.at(-1)?.[1]).toBe(false);
+});
+
+it("publishes prices changed before refresh and then leaves idle scans quiet", async () => {
+  let revision = 1;
+  const service = new StatsService({ refresh: async () => {}, read: snapshot, revision: () => revision });
+  const events = vi.fn();
+  service.subscribe(events);
+  await service.refresh({ silent: true });
+  expect(events.mock.calls.at(-1)?.[1]).toBe(true);
+  events.mockClear();
+
+  revision += 1;
+  await service.refresh({ silent: true });
+  await service.refresh({ silent: true });
+  expect(events.mock.calls.map((call) => call[1])).toEqual([true, false]);
+});
+
+it("passes a contribution-period cutoff through the coordinated cache read", async () => {
+  const read = vi.fn(snapshot);
+  const service = new StatsService({ refresh: async () => {}, read });
+  const since = new Date(2026, 5, 1).getTime();
+  await service.read("all", false, since);
+  expect(read).toHaveBeenLastCalledWith("all", false, since);
+});
+
+it("notifies renderers at midnight even when the usage revision is unchanged", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date(2026, 8, 5, 23, 59, 58));
+  const service = new StatsService({ refresh: async () => {}, read: snapshot, revision: () => 7 });
+  const events = vi.fn();
+  service.subscribe(events);
+  service.start();
+  await vi.advanceTimersByTimeAsync(0);
+  events.mockClear();
+  await vi.advanceTimersByTimeAsync(2_000);
+  expect(service.getState().summary?.day).toBe("2026-09-06");
+  expect(events.mock.calls.at(-1)?.[1]).toBe(true);
+  await vi.advanceTimersByTimeAsync(LIVE_INTERVAL_MS);
+  expect(events.mock.calls.at(-1)?.[1]).toBe(false);
+  service.stop();
 });
 
 it("does not restart a timer when stopped during an in-flight scan", async () => {

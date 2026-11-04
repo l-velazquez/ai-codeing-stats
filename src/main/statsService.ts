@@ -3,7 +3,7 @@ import { menuBarSummary, type MenuBarState } from "../shared/menuBar";
 
 export interface StatsSource {
   refresh: () => Promise<unknown>;
-  read: (range: RangeKey, today?: boolean) => StatsSnapshot;
+  read: (range: RangeKey, today?: boolean, since?: number) => StatsSnapshot;
   /**
    * A counter that moves only when a refresh found different usage on disk.
    * Omit it and every refresh counts as a change.
@@ -35,6 +35,7 @@ export class StatsService {
   private running = false;
   private generation = 0;
   private intervalMs = LIVE_INTERVAL_MS;
+  private publishedRevision: number | null = null;
   private listeners = new Set<(state: MenuBarState, updated: boolean) => void>();
 
   constructor(private readonly source: StatsSource) {}
@@ -64,12 +65,16 @@ export class StatsService {
       }
       return this.pending;
     }
-    const before = this.source.revision?.() ?? null;
     if (!silent) this.state = { ...this.state, refreshing: true };
     // Defer the read so pending is set before any listener can request a refresh.
     this.pending = Promise.resolve().then(() => this.source.refresh()).then(() => {
-      const updated = before === null || (this.source.revision?.() ?? before) !== before;
-      this.state = { summary: menuBarSummary(this.source.read("7d", true)), refreshing: false, error: null };
+      const revision = this.source.revision?.() ?? null;
+      const summary = menuBarSummary(this.source.read("7d", true));
+      // Prices can change before a scan starts, and dates change without disk
+      // writes. Compare with what we published, not just the start of this scan.
+      const updated = revision === null || revision !== this.publishedRevision || summary.day !== this.state.summary?.day;
+      this.publishedRevision = revision;
+      this.state = { summary, refreshing: false, error: null };
       this.emit(updated);
       return this.state;
     }).catch((error: unknown) => {
@@ -80,11 +85,11 @@ export class StatsService {
     if (!silent) this.emit();
     return this.pending;
   };
-  async read(range: RangeKey, refresh = false): Promise<StatsSnapshot> {
+  async read(range: RangeKey, refresh = false, since?: number): Promise<StatsSnapshot> {
     if (refresh || !this.state.summary) await this.refresh();
     else if (this.pending) await this.pending;
     if (this.state.error) throw new Error(this.state.error);
-    return this.source.read(range);
+    return this.source.read(range, false, since);
   }
   start(): void {
     if (this.running) return;

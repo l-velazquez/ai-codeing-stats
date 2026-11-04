@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Info } from "lucide-react";
-import type { RangeKey } from "@shared/types";
 import { useThemePreference } from "@renderer/hooks/useThemePreference";
 import { PAGES, type PageId } from "@renderer/app/routes";
 import { Sidebar } from "@renderer/components/shell/Sidebar";
@@ -16,6 +15,7 @@ import { RECENT_DAYS } from "@renderer/components/data/RecentWork";
 import { useHotkey } from "@renderer/hooks/useHotkey";
 import { useSidebar } from "@renderer/hooks/useSidebar";
 import { useDayOrder } from "@renderer/hooks/useDayOrder";
+import { useRange } from "@renderer/hooks/useRange";
 import { useSubscriptionPoll } from "@renderer/hooks/useSubscriptionPoll";
 import { RefreshProvider, useDefaultRefresh } from "@renderer/providers/RefreshProvider";
 import { OverviewPage } from "@renderer/pages/OverviewPage";
@@ -31,7 +31,7 @@ import { dateTime } from "@renderer/format";
 function AppInner() {
   const reduceMotion = useReducedMotion();
   const [page, setPage] = useState<PageId>("overview");
-  const [range, setRange] = useState<RangeKey>("30d");
+  const { range, setRange } = useRange();
   const [connectingClaude, setConnectingClaude] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(() => new URLSearchParams(window.location.search).get("settings") === "open");
   const { theme, setTheme, accent, setAccent, customAccent, setCustomAccent } = useThemePreference();

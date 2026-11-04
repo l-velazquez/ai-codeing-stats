@@ -112,6 +112,7 @@ function createWindow(openSettings = false): void {
         `--azul-code-custom=${settings.customAccent}`,
         `--azul-code-resolved=${resolved}`,
         `--azul-code-sidebar=${settings.sidebarCollapsed ? "collapsed" : "expanded"}`,
+        `--azul-code-range=${settings.range}`,
       ],
     },
   });
@@ -169,9 +170,12 @@ app.whenReady().then(() => {
     mainWindow.setBackgroundColor(themeBackground(currentResolvedTheme(current), current.accent, current.customAccent));
   });
 
-  ipcMain.handle("azul-code:scan", (_event, range: RangeKey, refresh?: boolean) => {
+  ipcMain.handle("azul-code:scan", (_event, range: RangeKey, refresh?: boolean, since?: unknown) => {
     if (!["7d", "30d", "90d", "all"].includes(range)) throw new Error("Invalid usage range.");
-    return stats.read(range, refresh === true);
+    if (since !== undefined && (range !== "all" || typeof since !== "number" || !Number.isFinite(since) || since < 0 || since > Date.now())) {
+      throw new Error("Invalid usage start time.");
+    }
+    return stats.read(range, refresh === true, since as number | undefined);
   });
   ipcMain.handle("azul-code:subscriptions", async () => (await stats.read("7d")).subscriptions);
   ipcMain.handle("azul-code:menubar-get", () => stats.getState());

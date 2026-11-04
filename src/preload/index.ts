@@ -13,10 +13,12 @@ function argValue(flag: string): string | null {
 function initialState(): AzulCodeBridge["initial"] {
   const theme = argValue("azul-code-theme");
   const resolved = argValue("azul-code-resolved");
+  const range = argValue("azul-code-range");
   const rawAccent = argValue("azul-code-accent");
   const accent = (["custom", "red", "orange", "green", "blue", "pink", "violet", "boring"].includes(rawAccent ?? "") ? rawAccent : "blue") as NonNullable<AzulCodeBridge["initial"]["accent"]>;
   const customAccent = normalizeHexColor(argValue("azul-code-custom"));
   return {
+    range: range === "7d" || range === "90d" || range === "all" ? range : "30d",
     accent,
     customAccent,
     roles: accent === "custom" ? customAccentVars(customAccent) : null,
@@ -28,7 +30,7 @@ function initialState(): AzulCodeBridge["initial"] {
 
 const bridge: AzulCodeBridge = {
   resources: () => ipcRenderer.invoke("azul-code:resources"),
-  scan: (range: RangeKey, refresh?: boolean) => ipcRenderer.invoke("azul-code:scan", range, refresh) as Promise<StatsSnapshot>,
+  scan: (range: RangeKey, refresh?: boolean, since?: number) => ipcRenderer.invoke("azul-code:scan", range, refresh, since) as Promise<StatsSnapshot>,
   onStatsChanged: (listener) => subscribe("azul-code:stats-changed", listener),
   onSettingsChanged: (listener) => subscribe("azul-code:settings-changed", listener),
   onOpenSettings: (listener) => subscribe("azul-code:open-settings", listener),

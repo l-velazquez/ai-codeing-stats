@@ -14,3 +14,8 @@
 .session-time, .session-tokens, .session-cost { text-align: right; display: grid; gap: 3px; }
 .session-row strong { font-size: var(--text-sm); font-weight: 500; font-variant-numeric: tabular-nums; }
 .session-row span { color: var(--muted); font-size: var(--text-2xs); }
+.session-pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 18px; color: var(--muted); font-size: var(--text-xs); }
+.session-pagination > div { display: flex; align-items: center; gap: 12px; }
+.session-pagination button { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); background: transparent; }
+.session-pagination button:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 5%, transparent); }
+.session-pagination button:disabled { opacity: .4; cursor: default; }

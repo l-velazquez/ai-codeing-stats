@@ -50,11 +50,11 @@ A `SourceWatcher` watches the directories every source writes to -- both transcr
 
 The service schedules its next scan after completion, within its poll interval or at the next local midnight. That interval is five seconds when nothing is watched and fifteen when the watcher is running, because the poll is then only a safety net: a missed event, a provider installed after launch, and the midnight rollover. Suspend stops the timer; resume starts it again. Closing the dashboard does not stop the service on macOS. The scanner also has a two-second cache for direct callers, but service refresh explicitly invalidates it.
 
-Scans are incremental. The scanner keeps per-file parse results keyed by size and mtime; an unchanged transcript is reused, and a transcript that only grew is read from the byte offset of its last complete line, so a half-written line is deferred rather than lost. A pass that finds nothing new costs one `stat` per transcript instead of a re-parse of every byte, which is what allows the short interval. `statsRevision()` moves only when a pass finds different usage, and background ticks are silent: they publish a fresh scan time to the menu bar but raise no spinner and notify renderers to re-aggregate only on a real change. `resetStatsCache()` forgets every file and exists for tests.
+Scans are incremental. The scanner keeps per-file parse results keyed by file identity, size, and mtime; an unchanged transcript is reused, and a transcript that only grew is read from the byte offset of its last complete line, so a half-written line is deferred rather than lost. Same-size edits, truncations, and atomic replacements are parsed from the beginning. A pass that finds nothing new costs one `stat` per transcript instead of a re-parse of every byte, which is what allows the short interval. `statsRevision()` tracks usage, source status, and allowance changes. Background ticks publish a fresh scan time to the menu bar without a spinner; renderers re-aggregate when the revision differs from the last published revision or the local date changes. This also catches prices changed before a scan started and provider directories removed between scans. `resetStatsCache()` forgets every file and exists for tests.
 
 On failure, the service retains its previous menu bar summary and exposes an error. Renderer snapshot loading retains an existing dashboard on refresh failure and uses a retry state when the first load fails. Request IDs prevent older responses replacing a newer range/month selection.
 
-GitHub uses a separate ten-minute in-memory month cache and renderer month cursor. `useGithubMonth` lives above page transitions, preserving the selected month during navigation. The daily AI cost index reads All history so older contribution months do not depend on the dashboard range.
+GitHub uses a separate ten-minute in-memory month cache and renderer month cursor. `useGithubMonth` lives above page transitions, preserving the selected month during navigation. The daily AI cost index reads All history so older contribution months do not depend on the dashboard range. Projects caps GitHub reads at six calendar months; for All, it requests usage from the same exact cutoff so both cost-per-commit figures use comparable periods, while the ledger retains all-time totals.
 
 ## Bridge contract
 
@@ -62,15 +62,15 @@ GitHub uses a separate ten-minute in-memory month cache and renderer month curso
 
 | Bridge group | Operations |
 | --- | --- |
-| Usage | `scan(range, refresh?)`, `subscriptions()`, `onStatsChanged()` |
+| Usage | `scan(range, refresh?, since?)`, `subscriptions()`, `onStatsChanged()` |
 | Claude setup | `setupClaudeStatusLine()` |
 | GitHub/system | `github(month, refresh?)`, `systemChecks()` |
 | Preferences | `settings.get()`, `settings.set(patch)`, `onSettingsChanged()` |
 | Native actions | `openPath()`, `openUrl()`, `onOpenSettings()` |
 | Menu bar | `get`, `refresh`, `onChange`, `openDashboard`, `hide`, `quit`, `setHeight(height)` |
-| Startup state | `initial` theme/accent/sidebar values, `platform` |
+| Startup state | `initial` theme/accent/sidebar/range values, `platform` |
 
-The preload exposes specific methods, not arbitrary IPC channels or Electron event objects. Subscriptions return cleanup functions. Main handlers validate usage ranges and month input; external URLs are restricted to HTTP(S). Native path opening delegates to Electron's shell.
+The preload exposes specific methods, not arbitrary IPC channels or Electron event objects. Subscriptions return cleanup functions. Main handlers validate usage ranges and month input. The optional `since` cutoff is accepted only with All and must be a finite timestamp between the Unix epoch and now. External URLs are restricted to HTTP(S). Native path opening delegates to Electron's shell.
 
 Windows use sandboxing, context isolation, and disabled Node integration. Main points to `out/preload/index.cjs`; keeping the preload CommonJS is required for this sandboxed loader. `verify:build` checks the compiled preload reference and tray resources.
 
@@ -80,7 +80,7 @@ Settings normalize unknown/corrupt values into defaults. Main reads them synchro
 
 The app requests a single-instance lock. A second launch opens the dashboard. The macOS Dock activation event also reopens it. Quit stops the service and destroys the tray. The display name, app-data directory, bridge, IPC namespace, and packaging identity all use azul-code.
 
-The settings schema still contains `range` and `subscriptionPollSeconds`; the current dashboard starts at 30d and the refresh service uses a fixed five-second schedule. Do not assume every persisted field is a live user control.
+The dashboard persists and restores `range`, with a preload launch hint to select the correct range on its first render. The settings schema also contains `subscriptionPollSeconds`, which is not used by the refresh service's five-second fallback or fifteen-second watched schedule.
 
 ## Settings reference
 
@@ -91,7 +91,7 @@ The version-1 schema in [`settings.ts`](../src/shared/settings.ts) normalizes ea
 | `theme` | `system` | `dark`, `light`, `system` |
 | `accent` | `blue` | `red`, `orange`, `green`, `blue`, `pink`, `violet`, or `custom` |
 | `customAccent` | `#00c8ff` | Hex colour (`#rgb` or `#rrggbb`); used when `accent` is `custom` and re-derived into readable roles per theme |
-| `range` | `30d` | `7d`, `30d`, `90d`, `all`; currently not restored by App |
+| `range` | `30d` | `7d`, `30d`, `90d`, `all`; persisted and restored by App |
 | `subscriptionPollSeconds` | `15` | Positive values rounded and clamped to 5–300; not used by the current service schedule |
 | `window` | `null` | Positive width/height, optional finite x/y coordinates |
 | `sidebarCollapsed` | `false` | Boolean |

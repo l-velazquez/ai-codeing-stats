@@ -15,7 +15,7 @@ export function ProjectsPage({ snapshot }: { snapshot: StatsSnapshot }) {
   for (const project of snapshot.projects) {
     const entry = github.byProject.get(projectKey(project));
     if (entry && entry.activity.commits > 0) {
-      pairedCost += project.cost;
+      pairedCost += entry.cost;
       pairedCommits += entry.activity.commits;
     }
   }
@@ -35,10 +35,10 @@ export function ProjectsPage({ snapshot }: { snapshot: StatsSnapshot }) {
         <div><span className="hero-label">Workspaces detected</span><strong>{snapshot.projects.length}</strong><p>Local paths stay on this Mac.</p></div>
         <div className="project-summary-stat"><span>Most active</span><strong>{snapshot.projects[0]?.name ?? "—"}</strong><small>{snapshot.projects[0] ? money(snapshot.projects[0].cost) : "$0.00"}</small></div>
         <div className="project-summary-stat"><span>Average / project</span><strong>{money(snapshot.summary.cost / Math.max(1, snapshot.projects.length))}</strong><small>API equivalent</small></div>
-        <div className="project-summary-stat"><span>AI cost per commit</span><strong>{githubStat.value}</strong><small>{githubStat.detail}</small></div>
+        <div className="project-summary-stat"><span>AI cost per commit · since {shortDate(github.since)}</span><strong>{githubStat.value}</strong><small>{githubStat.detail}</small></div>
       </section>
       <section className="panel list-panel project-panel">
-        <CardTitle action={<span className="muted-label">commits since {shortDate(github.since)} · matched by git remote, then folder name</span>}>Project ledger</CardTitle>
+        <CardTitle action={<span className="muted-label">commits & cost/commit since {shortDate(github.since)} · matched by git remote, then folder name</span>}>Project ledger</CardTitle>
         {snapshot.projects.map((project) => {
           const entry = github.byProject.get(projectKey(project)) ?? null;
           return (

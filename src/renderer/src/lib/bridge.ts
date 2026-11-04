@@ -20,15 +20,15 @@ function requireBridge(): void {
   if (!window.azulCode && IS_ELECTRON) throw missingBridgeError();
 }
 
-export async function scan(range: RangeKey, refresh = false): Promise<StatsSnapshot> {
+export async function scan(range: RangeKey, refresh = false, since?: number): Promise<StatsSnapshot> {
   requireBridge();
-  if (window.azulCode) return window.azulCode.scan(range, refresh);
+  if (window.azulCode) return window.azulCode.scan(range, refresh, since);
   if (demoState() === "error") {
     throw new Error(
       "azul-code could not read local usage metadata. Check that the coding agents on this Mac have written transcripts.",
     );
   }
-  return demoSnapshot(range);
+  return demoSnapshot(range, since);
 }
 
 export async function fetchGithubMonth(month: string, refresh = false): Promise<GitHubMonthSnapshot> {
